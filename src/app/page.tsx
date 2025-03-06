@@ -16,8 +16,8 @@ export default function Home() {
               priority
             />
             <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/30"></div>
-            <div className="absolute bottom-0 left-0 p-6">
-              <Logo size="medium" showText={true} className="text-white" />
+            <div className="absolute bottom-0 left-0 p-6 w-full flex justify-center">
+              <Logo size="large" showText={true} vertical={true} className="text-white" />
             </div>
           </div>
           

@@ -25,8 +25,8 @@ export default function RootLayout({
       <head>
         <title>{metadata.title as string}</title>
         <meta name="description" content={metadata.description as string} />
-        <link rel="icon" href="/images/greenhearts-logo.jpg" />
-        <link rel="apple-touch-icon" href="/images/greenhearts-logo.jpg" />
+        <link rel="icon" href="/images/greenhearts-logo.png" />
+        <link rel="apple-touch-icon" href="/images/greenhearts-logo.png" />
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
