@@ -1,0 +1,20 @@
+---
+description: github rules
+globs: 
+alwaysApply: false
+---
+
+# Github Rules
+
+When working with Git in this project, follow these rules strictly:
+
+1. All new work must be done in branches prefixed with:
+   - `feature/` for new features (e.g., `feature/add-login-page`).
+   - `bug/` for bug fixes (e.g., `bug/fix-login-crash`).
+   - `fix/` for minor fixes or refactoring (e.g., `fix/update-deps`).
+2. Always create new branches from the `develop` branch, never from `main`.
+3. Do not commit or merge directly into `main`. The `main` branch is reserved for production-ready code and must only be updated via pull requests.
+4. After completing work on a branch, push it to the remote repository and create a pull request targeting `develop` for review.
+5. Merge branches into `develop` only after a pull request is approved. Use `git merge` or rebase as needed, but never bypass the pull request process.
+6. Keep branch names descriptive and related to the task (e.g., `feature/user-authentication`, `bug/navbar-overlap`).
+7. If I ask for a Git operation, suggest commands that align with this workflow and explain why they fit the process.
