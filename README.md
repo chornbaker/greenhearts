@@ -1,36 +1,85 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# GreenHearts - Plant Watering App
+
+GreenHearts is a web application that helps users keep track of their plants' watering schedules and overall health. The app provides reminders, plant care tips, and personalized recommendations using AI.
+
+## Tech Stack
+
+- **Frontend**: Next.js, TypeScript, Tailwind CSS
+- **Backend**: Firebase (Authentication, Firestore, Storage)
+- **AI**: Anthropic's Claude API
+- **Deployment**: Vercel
+
+## Features (Planned)
+
+- User authentication and profile management
+- Plant management (add, edit, delete plants)
+- Watering schedule and reminders
+- Plant health tracking
+- AI-powered plant care recommendations
+- Image recognition for plant identification
+- Community features (sharing, tips, etc.)
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+- Node.js (v18 or higher)
+- npm or yarn
+- Firebase account
+- Anthropic API key
+
+### Installation
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/yourusername/greenhearts.git
+   cd greenhearts
+   ```
+
+2. Install dependencies:
+   ```bash
+   npm install
+   # or
+   yarn install
+   ```
+
+3. Create a `.env.local` file in the root directory and add your environment variables (see `.env.local.example` for reference).
+
+4. Start the development server:
+   ```bash
+   npm run dev
+   # or
+   yarn dev
+   ```
+
+5. Open [http://localhost:3000](http://localhost:3000) in your browser to see the application.
+
+## Project Structure
+
+```
+greenhearts/
+├── src/
+│   ├── app/              # Next.js App Router
+│   ├── components/       # Reusable UI components
+│   ├── context/          # React context providers
+│   ├── hooks/            # Custom React hooks
+│   ├── lib/              # Library code (Firebase, etc.)
+│   ├── services/         # API and service functions
+│   ├── styles/           # Global styles
+│   ├── types/            # TypeScript type definitions
+│   └── utils/            # Utility functions
+├── public/               # Static assets
+├── .env.local.example    # Example environment variables
+└── README.md             # Project documentation
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## License
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+This project is licensed under the MIT License - see the LICENSE file for details.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Acknowledgements
 
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- [Next.js](https://nextjs.org/)
+- [Firebase](https://firebase.google.com/)
+- [Anthropic](https://www.anthropic.com/)
+- [Tailwind CSS](https://tailwindcss.com/)
