@@ -31,12 +31,9 @@ export default function Home() {
           <div className="flex flex-col items-center gap-4 mt-8">
             <Link 
               href="/signup" 
-              className="btn-glass text-white py-4 px-10 rounded-full text-xl font-medium w-full max-w-xs flex items-center justify-center"
+              className="bg-green-600 hover:bg-green-700 text-white py-4 px-10 rounded-full text-xl font-medium transition-all shadow-lg hover:shadow-xl w-full max-w-xs"
             >
               Get Started
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
-              </svg>
             </Link>
             <p className="text-white text-shadow">
               Already have an account? <Link href="/login" className="text-white underline hover:text-green-200 font-medium">Sign In</Link>
@@ -196,7 +193,7 @@ export default function Home() {
           </p>
           <Link 
             href="/signup" 
-            className="inline-block bg-white/20 backdrop-blur-md border border-white/30 text-white hover:bg-white/30 py-4 px-10 rounded-full text-xl font-medium transition-all shadow-lg hover:shadow-xl hover:-translate-y-1"
+            className="inline-block bg-white text-green-700 hover:bg-gray-100 py-4 px-10 rounded-full text-xl font-medium transition-all shadow-lg hover:shadow-xl"
           >
             Get Started for Free
           </Link>
