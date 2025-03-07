@@ -55,3 +55,8 @@ body {
 .text-green-secondary {
   color: var(--green-secondary);
 }
+
+/* Text shadow for better visibility on images */
+.text-shadow {
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5), 0 0 2px rgba(0, 0, 0, 0.3);
+}

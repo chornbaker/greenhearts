@@ -12,13 +12,13 @@ export default function Logo({ showText = false, size = 'medium', className = ''
   const sizes = {
     small: { width: 32, height: 32, textClass: 'text-lg' },
     medium: { width: 64, height: 64, textClass: 'text-xl' },
-    large: { width: 96, height: 96, textClass: 'text-2xl' },
+    large: { width: 96, height: 96, textClass: 'text-3xl font-bold' },
   };
 
   const { width, height, textClass } = sizes[size];
 
   return (
-    <div className={`flex ${vertical ? 'flex-col' : 'items-center'} ${className}`}>
+    <div className={`flex ${vertical ? 'flex-col items-center' : 'items-center'} ${className}`}>
       <div className="relative" style={{ width, height }}>
         <Image
           src="/images/greenhearts-logo.png"
@@ -31,7 +31,7 @@ export default function Logo({ showText = false, size = 'medium', className = ''
       </div>
       
       {showText && (
-        <h1 className={`${vertical ? 'mt-2 text-center' : 'ml-2'} font-bold text-green-700 ${textClass}`}>
+        <h1 className={`${vertical ? 'mt-3 text-center font-serif' : 'ml-3 font-serif'} font-bold ${textClass} ${className.includes('text-white') ? 'text-shadow' : 'text-green-700'}`}>
           GreenHearts
         </h1>
       )}
