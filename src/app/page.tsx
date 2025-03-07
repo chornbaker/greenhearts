@@ -9,36 +9,35 @@ export default function Home() {
       <section className="relative h-screen flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0 z-0">
           <Image 
-            src="/images/landing/hero-bg-new.jpg" 
-            alt="Beautiful houseplant in a pot" 
+            src="/images/landing/hero-bg-better.jpg" 
+            alt="Beautiful houseplants" 
             fill 
             style={{ objectFit: 'cover' }}
             priority
+            className="brightness-[0.9]"
           />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-black/30"></div>
         </div>
         
         <div className="relative z-10 text-center px-6 max-w-4xl mx-auto">
-          <div className="mb-8 flex justify-center">
+          <div className="mb-6 flex justify-center">
             <Logo size="large" showText={true} vertical={true} className="text-white" />
           </div>
           
-          <h2 className="text-white text-2xl md:text-3xl font-light mb-6 leading-relaxed text-shadow">
+          <h2 className="text-white text-2xl md:text-3xl font-light mb-8 leading-relaxed text-shadow">
             Keep your plants happy and healthy with personalized care reminders and AI-powered recommendations
           </h2>
           
-          <div className="flex flex-col sm:flex-row gap-4 justify-center mt-8">
+          <div className="flex flex-col items-center gap-4 mt-8">
             <Link 
               href="/signup" 
-              className="bg-green-600 hover:bg-green-700 text-white py-3 px-8 rounded-full text-lg font-medium transition-all shadow-lg hover:shadow-xl"
+              className="bg-green-600 hover:bg-green-700 text-white py-4 px-10 rounded-full text-xl font-medium transition-all shadow-lg hover:shadow-xl w-full max-w-xs"
             >
               Get Started
             </Link>
-            <Link 
-              href="/login" 
-              className="bg-white hover:bg-gray-100 text-green-700 py-3 px-8 rounded-full text-lg font-medium transition-all shadow-lg hover:shadow-xl"
-            >
-              Sign In
-            </Link>
+            <p className="text-white text-shadow">
+              Already have an account? <Link href="/login" className="text-white underline hover:text-green-200 font-medium">Sign In</Link>
+            </p>
           </div>
         </div>
         
@@ -194,7 +193,7 @@ export default function Home() {
           </p>
           <Link 
             href="/signup" 
-            className="inline-block bg-white text-green-700 hover:bg-gray-100 py-3 px-8 rounded-full text-lg font-medium transition-all shadow-lg hover:shadow-xl"
+            className="inline-block bg-white text-green-700 hover:bg-gray-100 py-4 px-10 rounded-full text-xl font-medium transition-all shadow-lg hover:shadow-xl"
           >
             Get Started for Free
           </Link>

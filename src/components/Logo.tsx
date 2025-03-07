@@ -12,7 +12,7 @@ export default function Logo({ showText = false, size = 'medium', className = ''
   const sizes = {
     small: { width: 32, height: 32, textClass: 'text-lg' },
     medium: { width: 64, height: 64, textClass: 'text-xl' },
-    large: { width: 96, height: 96, textClass: 'text-3xl font-bold' },
+    large: { width: 96, height: 96, textClass: 'text-4xl font-bold' },
   };
 
   const { width, height, textClass } = sizes[size];
@@ -31,7 +31,7 @@ export default function Logo({ showText = false, size = 'medium', className = ''
       </div>
       
       {showText && (
-        <h1 className={`${vertical ? 'mt-3 text-center font-serif' : 'ml-3 font-serif'} font-bold ${textClass} ${className.includes('text-white') ? 'text-shadow' : 'text-green-700'}`}>
+        <h1 className={`${vertical ? 'mt-1 text-center font-sans' : 'ml-3 font-sans'} font-bold tracking-tight ${textClass} ${className.includes('text-white') ? 'text-shadow' : 'text-green-700'}`}>
           GreenHearts
         </h1>
       )}
