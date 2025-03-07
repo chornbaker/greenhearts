@@ -10,9 +10,9 @@ interface LogoProps {
 export default function Logo({ showText = false, size = 'medium', className = '', vertical = false }: LogoProps) {
   // Define sizes for different variants
   const sizes = {
-    small: { width: 36, height: 36, textClass: 'text-lg sm:text-xl' },
-    medium: { width: 72, height: 72, textClass: 'text-xl sm:text-2xl' },
-    large: { width: 110, height: 110, textClass: 'text-3xl sm:text-5xl' },
+    small: { width: 36, height: 36, textClass: 'text-xl' },
+    medium: { width: 72, height: 72, textClass: 'text-2xl' },
+    large: { width: 110, height: 110, textClass: 'text-4xl' },
   };
 
   const { width, height, textClass } = sizes[size];
