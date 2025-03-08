@@ -444,7 +444,7 @@ export default function Dashboard() {
     };
     
     generateMessages();
-  }, [plantsNeedingWater, loading, generateDailyMessages, user]);
+  }, [plantsNeedingWater, loading, user]);
 
   // Handle plant archive
   const handleArchivePlant = (plantId: string) => {

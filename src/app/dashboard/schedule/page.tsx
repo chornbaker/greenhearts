@@ -60,7 +60,7 @@ export default function Schedule() {
     };
 
     fetchPlants();
-  }, [user, generateDailyMessages]);
+  }, [user]);
 
   // Generate dates for the next 14 days
   const dates = Array.from({ length: 14 }, (_, i) => {

@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { Plant } from '@/types';
 import { getDaysOverdue, isDueToday } from '@/utils/dateUtils';
 import { generateThirstyPlantMessage } from '@/services/claude';
@@ -140,6 +140,8 @@ const WaterMessageContext = createContext<WaterMessageContextType | undefined>(u
 export function WaterMessageProvider({ children }: { children: React.ReactNode }) {
   const [messages, setMessages] = useState<Record<string, WaterMessage>>({});
   const [isGenerating, setIsGenerating] = useState(false);
+  const isMounted = useRef(true);
+  const lastGeneratedDate = useRef<string | null>(null);
 
   // Load messages from localStorage on mount
   useEffect(() => {
@@ -152,10 +154,16 @@ export function WaterMessageProvider({ children }: { children: React.ReactNode }
     } catch (error) {
       console.error('Error loading water messages:', error);
     }
+    
+    return () => {
+      isMounted.current = false;
+    };
   }, []);
 
   // Save messages to localStorage when they change
   useEffect(() => {
+    if (Object.keys(messages).length === 0) return;
+    
     try {
       // Create a safe copy for serialization
       localStorage.setItem('waterMessages', JSON.stringify(messages));
@@ -164,15 +172,13 @@ export function WaterMessageProvider({ children }: { children: React.ReactNode }
     }
   }, [messages]);
 
-  const isMessageExpired = (message: WaterMessage) => {
-    const today = new Date();
-    const messageDate = new Date(message.generatedDate);
-    return messageDate.getDate() !== today.getDate() ||
-           messageDate.getMonth() !== today.getMonth() ||
-           messageDate.getFullYear() !== today.getFullYear();
-  };
+  const isMessageExpired = useCallback((message: WaterMessage) => {
+    const today = new Date().toISOString().split('T')[0];
+    const messageDate = new Date(message.generatedDate).toISOString().split('T')[0];
+    return messageDate !== today;
+  }, []);
 
-  const getWaterMessage = (plant: Plant): string | null => {
+  const getWaterMessage = useCallback((plant: Plant): string | null => {
     if (!plant || !plant.id) return null;
     
     const message = messages[plant.id];
@@ -180,14 +186,29 @@ export function WaterMessageProvider({ children }: { children: React.ReactNode }
       return null;
     }
     return message.message;
-  };
+  }, [messages, isMessageExpired]);
 
-  const generateDailyMessages = async (plants: Plant[]) => {
+  const generateDailyMessages = useCallback(async (plants: Plant[]) => {
     if (isGenerating || !plants || plants.length === 0) return;
+    
+    // Check if we've already generated messages today
+    const todayStr = new Date().toISOString().split('T')[0];
+    if (lastGeneratedDate.current === todayStr) {
+      // Check if all plants already have messages
+      const allHaveMessages = plants.every(plant => {
+        if (!plant || !plant.id) return true;
+        const message = messages[plant.id];
+        return message && !isMessageExpired(message);
+      });
+      
+      if (allHaveMessages) return;
+    }
+    
     setIsGenerating(true);
     
-    const today = new Date();
+    const currentDate = new Date();
     const newMessages = { ...messages };
+    let hasChanges = false;
     
     try {
       // Process plants in sequence to avoid overwhelming the API
@@ -212,36 +233,50 @@ export function WaterMessageProvider({ children }: { children: React.ReactNode }
               
               newMessages[plant.id] = {
                 message,
-                generatedDate: today.toISOString() // Store as ISO string
+                generatedDate: currentDate.toISOString() // Store as ISO string
               };
+              hasChanges = true;
             } else {
               // Fallback to template if no personality type
               newMessages[plant.id] = {
                 message: generateFallbackMessageForPlant(plant, isOverdue),
-                generatedDate: today.toISOString() // Store as ISO string
+                generatedDate: currentDate.toISOString() // Store as ISO string
               };
+              hasChanges = true;
             }
           } catch (error) {
             console.error(`Error generating message for ${plant.name}:`, error);
             // Use fallback message generator if API call fails
             newMessages[plant.id] = {
               message: generateFallbackMessageForPlant(plant, isOverdue),
-              generatedDate: today.toISOString() // Store as ISO string
+              generatedDate: currentDate.toISOString() // Store as ISO string
             };
+            hasChanges = true;
           }
         }
       }
       
-      setMessages(newMessages);
+      // Only update state if there are changes and component is still mounted
+      if (hasChanges && isMounted.current) {
+        setMessages(newMessages);
+        lastGeneratedDate.current = todayStr;
+      }
     } catch (error) {
       console.error('Error generating daily messages:', error);
     } finally {
-      setIsGenerating(false);
+      if (isMounted.current) {
+        setIsGenerating(false);
+      }
     }
+  }, [messages, isMessageExpired, isGenerating]);
+
+  const contextValue = {
+    getWaterMessage,
+    generateDailyMessages
   };
 
   return (
-    <WaterMessageContext.Provider value={{ getWaterMessage, generateDailyMessages }}>
+    <WaterMessageContext.Provider value={contextValue}>
       {children}
     </WaterMessageContext.Provider>
   );
