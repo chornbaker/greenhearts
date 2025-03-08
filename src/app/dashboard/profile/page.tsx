@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { getUserProfile, updateUserProfile } from '@/services/user';
+import Link from 'next/link';
 
 export default function Profile() {
   const { user, signOut } = useAuth();
@@ -238,6 +239,34 @@ export default function Profile() {
               Connect
             </button>
           </div>
+        </div>
+      </div>
+      
+      <div className="bg-white rounded-2xl p-6 shadow-sm">
+        <div className="space-y-4">
+          <div>
+            <h2 className="text-lg font-medium text-gray-800">Plant Management</h2>
+            <p className="text-sm text-gray-500 mt-1">Manage your plant collection</p>
+          </div>
+          
+          <Link 
+            href="/dashboard/archive" 
+            className="flex items-center justify-between pt-2 hover:bg-gray-50 p-2 rounded-lg"
+          >
+            <div className="flex items-center gap-3">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-amber-600" viewBox="0 0 20 20" fill="currentColor">
+                <path d="M4 3a2 2 0 100 4h12a2 2 0 100-4H4z" />
+                <path fillRule="evenodd" d="M3 8h14v7a2 2 0 01-2 2H5a2 2 0 01-2-2V8zm5 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z" clipRule="evenodd" />
+              </svg>
+              <div>
+                <p className="font-medium">Plant Archive</p>
+                <p className="text-sm text-gray-500">View and manage archived plants</p>
+              </div>
+            </div>
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
+            </svg>
+          </Link>
         </div>
       </div>
       

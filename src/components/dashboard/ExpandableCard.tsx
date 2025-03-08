@@ -515,7 +515,11 @@ export default function ExpandableCard({
     <>
       <motion.div 
         ref={cardRef}
-        className={`bg-white rounded-xl overflow-hidden shadow-sm border border-gray-200 mb-4 w-full ${isUpdating ? 'opacity-70' : ''}`}
+        className={`bg-white rounded-xl overflow-hidden shadow-sm border border-gray-200 mb-4 w-full relative ${
+          isUpdating ? 'opacity-70' : ''
+        } ${
+          expansionState === ExpansionState.FullyExpanded ? 'z-10' : ''
+        }`}
         initial={{ borderRadius: 12 }}
         animate={{ 
           minHeight: expansionState === ExpansionState.Collapsed 
@@ -532,6 +536,20 @@ export default function ExpandableCard({
         }}
         onClick={handleClick}
       >
+        {/* Trash icon in the lower right corner */}
+        <button
+          onClick={(e) => {
+            e.stopPropagation(); // Prevent card expansion
+            handleArchiveClick(e);
+          }}
+          className="absolute bottom-2 right-2 text-gray-400 hover:text-gray-600 z-20"
+          aria-label="Archive or delete plant"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+            <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+          </svg>
+        </button>
+        
         {/* Content Container - Different layout based on expansion state */}
         {expansionState !== ExpansionState.FullyExpanded ? (
           // Collapsed and Expanded views - horizontal layout
@@ -1104,37 +1122,7 @@ export default function ExpandableCard({
         )}
       </motion.div>
 
-      {/* Add archive and delete buttons in the fully expanded view */}
-      {expansionState === ExpansionState.FullyExpanded && (
-        <div className="mt-6 border-t border-gray-200 pt-4">
-          <div className="flex justify-between">
-            <button
-              onClick={handleArchiveClick}
-              className="text-sm px-3 py-1 bg-amber-100 text-amber-800 rounded-lg hover:bg-amber-200 flex items-center gap-1"
-              disabled={isUpdating || isArchiving || isDeleting}
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                <path d="M4 3a2 2 0 100 4h12a2 2 0 100-4H4z" />
-                <path fillRule="evenodd" d="M3 8h14v7a2 2 0 01-2 2H5a2 2 0 01-2-2V8zm5 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z" clipRule="evenodd" />
-              </svg>
-              Archive Plant
-            </button>
-            
-            <button
-              onClick={handleDeleteClick}
-              className="text-sm px-3 py-1 bg-red-100 text-red-800 rounded-lg hover:bg-red-200 flex items-center gap-1"
-              disabled={isUpdating || isArchiving || isDeleting}
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
-              </svg>
-              Delete Permanently
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Archive Confirmation Dialog */}
+      {/* Archive/Delete Options Dialog */}
       <Transition appear show={showArchiveDialog} as={Fragment}>
         <Dialog as="div" className="relative z-10" onClose={() => setShowArchiveDialog(false)}>
           <Transition.Child
@@ -1165,48 +1153,81 @@ export default function ExpandableCard({
                     as="h3"
                     className="text-lg font-medium leading-6 text-gray-900"
                   >
-                    Archive {plant.name}
+                    Manage {plant.name}
                   </Dialog.Title>
-                  <div className="mt-2">
-                    <p className="text-sm text-gray-500">
-                      Archiving a plant will remove it from your active plants list but keep its history. You can view archived plants in the Archive section.
-                    </p>
-                    
-                    <div className="mt-4">
-                      <label htmlFor="archiveReason" className="block text-sm font-medium text-gray-700">
-                        Reason for archiving (optional)
-                      </label>
-                      <select
-                        id="archiveReason"
-                        value={archiveReason}
-                        onChange={(e) => setArchiveReason(e.target.value)}
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm"
+                  <div className="mt-4 space-y-4">
+                    <div className="bg-amber-50 p-4 rounded-lg">
+                      <h4 className="font-medium text-amber-800 flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                          <path d="M4 3a2 2 0 100 4h12a2 2 0 100-4H4z" />
+                          <path fillRule="evenodd" d="M3 8h14v7a2 2 0 01-2 2H5a2 2 0 01-2-2V8zm5 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z" clipRule="evenodd" />
+                        </svg>
+                        Archive Plant
+                      </h4>
+                      <p className="text-sm text-gray-600 mt-1">
+                        Archiving will remove this plant from your active collection but keep its history. You can restore it later.
+                      </p>
+                      
+                      <div className="mt-3">
+                        <label htmlFor="archiveReason" className="block text-sm font-medium text-gray-700">
+                          Reason for archiving
+                        </label>
+                        <select
+                          id="archiveReason"
+                          value={archiveReason}
+                          onChange={(e) => setArchiveReason(e.target.value)}
+                          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm"
+                        >
+                          <option value="">Select a reason...</option>
+                          <option value="Died">Plant died</option>
+                          <option value="Given away">Given away</option>
+                          <option value="Sold">Sold</option>
+                          <option value="Lost">Lost</option>
+                          <option value="Other">Other</option>
+                        </select>
+                      </div>
+                      
+                      <button
+                        type="button"
+                        className="mt-3 w-full inline-flex justify-center rounded-md border border-transparent bg-amber-100 px-4 py-2 text-sm font-medium text-amber-900 hover:bg-amber-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2"
+                        onClick={handleArchiveConfirm}
+                        disabled={isArchiving || !archiveReason}
                       >
-                        <option value="">Select a reason...</option>
-                        <option value="Died">Plant died</option>
-                        <option value="Given away">Given away</option>
-                        <option value="Sold">Sold</option>
-                        <option value="Lost">Lost</option>
-                        <option value="Other">Other</option>
-                      </select>
+                        {isArchiving ? 'Archiving...' : 'Archive Plant'}
+                      </button>
+                    </div>
+                    
+                    <div className="bg-red-50 p-4 rounded-lg">
+                      <h4 className="font-medium text-red-800 flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                          <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+                        </svg>
+                        Delete Permanently
+                      </h4>
+                      <p className="text-sm text-gray-600 mt-1">
+                        This action cannot be undone. This will permanently delete {plant.name} and all of its data from your account.
+                      </p>
+                      
+                      <button
+                        type="button"
+                        className="mt-3 w-full inline-flex justify-center rounded-md border border-transparent bg-red-100 px-4 py-2 text-sm font-medium text-red-900 hover:bg-red-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2"
+                        onClick={() => {
+                          setShowArchiveDialog(false);
+                          setShowDeleteDialog(true);
+                        }}
+                      >
+                        Delete Permanently
+                      </button>
                     </div>
                   </div>
 
-                  <div className="mt-4 flex justify-end gap-2">
+                  <div className="mt-4 flex justify-end">
                     <button
                       type="button"
                       className="inline-flex justify-center rounded-md border border-transparent bg-gray-100 px-4 py-2 text-sm font-medium text-gray-900 hover:bg-gray-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-500 focus-visible:ring-offset-2"
                       onClick={() => setShowArchiveDialog(false)}
                     >
                       Cancel
-                    </button>
-                    <button
-                      type="button"
-                      className="inline-flex justify-center rounded-md border border-transparent bg-amber-100 px-4 py-2 text-sm font-medium text-amber-900 hover:bg-amber-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2"
-                      onClick={handleArchiveConfirm}
-                      disabled={isArchiving}
-                    >
-                      {isArchiving ? 'Archiving...' : 'Archive Plant'}
                     </button>
                   </div>
                 </Dialog.Panel>
@@ -1251,7 +1272,7 @@ export default function ExpandableCard({
                   </Dialog.Title>
                   <div className="mt-2">
                     <p className="text-sm text-gray-500">
-                      This action cannot be undone. This will permanently delete {plant.name} and all of its data from your account.
+                      Are you absolutely sure? This action cannot be undone. This will permanently delete {plant.name} and all of its data from your account.
                     </p>
                     <p className="text-sm text-gray-500 mt-2">
                       Consider archiving the plant instead if you want to keep its history.
@@ -1272,7 +1293,7 @@ export default function ExpandableCard({
                       onClick={handleDeleteConfirm}
                       disabled={isDeleting}
                     >
-                      {isDeleting ? 'Deleting...' : 'Delete Permanently'}
+                      {isDeleting ? 'Deleting...' : 'Yes, Delete Permanently'}
                     </button>
                   </div>
                 </Dialog.Panel>
