@@ -209,19 +209,6 @@ export default function Dashboard() {
 
   const organizedPlants = getOrganizedPlants();
 
-  // Get view title based on selected organization
-  const getViewTitle = () => {
-    switch (organizationView) {
-      case 'alphabetical':
-        return 'Alphabetical View';
-      case 'wateringPriority':
-        return 'Watering Priority';
-      case 'location':
-      default:
-        return 'By Location';
-    }
-  };
-
   // Render a single plant card
   const renderPlantCard = (plant: Plant, index: number) => (
     <Link 
@@ -261,40 +248,6 @@ export default function Dashboard() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold text-green-800">{gardenName}</h1>
-        
-        {/* View selector buttons */}
-        <div className="flex items-center space-x-2">
-          <button
-            onClick={() => setOrganizationView('location')}
-            className={`px-3 py-1.5 text-sm rounded-lg ${
-              organizationView === 'location' 
-                ? 'bg-green-600 text-white' 
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-            }`}
-          >
-            Location
-          </button>
-          <button
-            onClick={() => setOrganizationView('alphabetical')}
-            className={`px-3 py-1.5 text-sm rounded-lg ${
-              organizationView === 'alphabetical' 
-                ? 'bg-green-600 text-white' 
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-            }`}
-          >
-            A-Z
-          </button>
-          <button
-            onClick={() => setOrganizationView('wateringPriority')}
-            className={`px-3 py-1.5 text-sm rounded-lg ${
-              organizationView === 'wateringPriority' 
-                ? 'bg-green-600 text-white' 
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-            }`}
-          >
-            Watering
-          </button>
-        </div>
       </div>
 
       {error && (
@@ -311,7 +264,7 @@ export default function Dashboard() {
         <>
           {/* Plants needing water */}
           {plantsNeedingWater.length > 0 && (
-            <div className="bg-amber-50 p-4 rounded-2xl border border-amber-200">
+            <div className="bg-amber-50 p-4 rounded-2xl border border-amber-200 mb-6">
               <h2 className="text-lg font-semibold text-amber-800 mb-3">Plants Needing Water</h2>
               <div className="space-y-3">
                 {plantsNeedingWater.map((plant) => (
@@ -343,10 +296,42 @@ export default function Dashboard() {
             </div>
           )}
 
+          {/* View selector buttons */}
+          <div className="flex items-center space-x-2 mb-4">
+            <button
+              onClick={() => setOrganizationView('location')}
+              className={`px-3 py-1.5 text-sm rounded-lg ${
+                organizationView === 'location' 
+                  ? 'bg-green-600 text-white' 
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              Location
+            </button>
+            <button
+              onClick={() => setOrganizationView('alphabetical')}
+              className={`px-3 py-1.5 text-sm rounded-lg ${
+                organizationView === 'alphabetical' 
+                  ? 'bg-green-600 text-white' 
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              A-Z
+            </button>
+            <button
+              onClick={() => setOrganizationView('wateringPriority')}
+              className={`px-3 py-1.5 text-sm rounded-lg ${
+                organizationView === 'wateringPriority' 
+                  ? 'bg-green-600 text-white' 
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              Watering
+            </button>
+          </div>
+
           {/* Plant collection */}
           <div>
-            <h2 className="text-lg font-semibold text-green-800 mb-3">{getViewTitle()}</h2>
-            
             {/* Location View (Grouped by Location) */}
             {organizationView === 'location' && (
               <div className="space-y-6">
