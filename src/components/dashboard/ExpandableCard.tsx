@@ -4,7 +4,7 @@ import { useState, useRef } from 'react';
 import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plant, PlantHealth } from '@/types';
-import { updatePlant } from '@/services/plants';
+import { updatePlant, waterPlant } from '@/services/plants';
 
 // Water droplet icon component
 const WaterDropIcon = ({ className = "h-5 w-5" }: { className?: string }) => (
@@ -22,10 +22,22 @@ const WaterDropIcon = ({ className = "h-5 w-5" }: { className?: string }) => (
   </div>
 );
 
+// Calendar icon component
+const CalendarIcon = ({ className = "h-5 w-5" }: { className?: string }) => (
+  <div className={className}>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+      <line x1="16" y1="2" x2="16" y2="6"></line>
+      <line x1="8" y1="2" x2="8" y2="6"></line>
+      <line x1="3" y1="10" x2="21" y2="10"></line>
+    </svg>
+  </div>
+);
+
 type ExpandableCardProps = {
   plant: Plant;
   onWater: (plantId: string) => void;
-  onUpdate?: (plantId: string, updatedPlant: Partial<Plant>) => void;
+  onUpdate?: (plantId: string, updates: Partial<Plant>) => void;
 };
 
 enum ExpansionState {
@@ -36,18 +48,12 @@ enum ExpansionState {
 
 export default function ExpandableCard({ plant, onWater, onUpdate }: ExpandableCardProps) {
   const [expansionState, setExpansionState] = useState<ExpansionState>(ExpansionState.Collapsed);
-  const [isEditing, setIsEditing] = useState(false);
-  const [hasChanges, setHasChanges] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
-  
-  // Editable fields
-  const [lastWateredDate, setLastWateredDate] = useState<string>(
-    plant.lastWatered ? plant.lastWatered.toISOString().split('T')[0] : ''
-  );
-  const [comments, setComments] = useState<string>(plant.notes || '');
-  
-  // Refs for focus management
-  const commentsRef = useRef<HTMLTextAreaElement>(null);
+  const [isEditingWateringDate, setIsEditingWateringDate] = useState(false);
+  const [selectedDate, setSelectedDate] = useState<string>('');
+  const [comment, setComment] = useState('');
+  const [isAddingComment, setIsAddingComment] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
+  const commentInputRef = useRef<HTMLTextAreaElement>(null);
 
   // Calculate if the plant needs water
   const needsWater = plant.nextWateringDate && plant.nextWateringDate <= new Date();
@@ -62,104 +68,171 @@ export default function ExpandableCard({ plant, onWater, onUpdate }: ExpandableC
     });
   };
 
+  // Convert date to YYYY-MM-DD format for input
+  const dateToInputValue = (date: Date | undefined) => {
+    if (!date) return '';
+    return date.toISOString().split('T')[0];
+  };
+
   // Handle card clicks
   const handleClick = () => {
-    if (isEditing) return; // Don't change state if we're editing
+    // Don't change state if we're editing
+    if (isEditingWateringDate || isAddingComment) return;
     
     // Cycle through expansion states: Collapsed -> Expanded -> FullyExpanded -> Collapsed
     setExpansionState((current) => (current + 1) % 3);
   };
 
   // Handle water button click
-  const handleWaterClick = (e: React.MouseEvent) => {
-    e.stopPropagation(); // Prevent the card click event
-    onWater(plant.id);
-  };
-  
-  // Handle edit button click
-  const handleEditClick = (e: React.MouseEvent) => {
-    e.stopPropagation(); // Prevent the card click event
-    setIsEditing(true);
-  };
-  
-  // Handle cancel button click
-  const handleCancelClick = (e: React.MouseEvent) => {
-    e.stopPropagation(); // Prevent the card click event
-    setIsEditing(false);
-    setHasChanges(false);
-    
-    // Reset editable fields to original values
-    setLastWateredDate(plant.lastWatered ? plant.lastWatered.toISOString().split('T')[0] : '');
-    setComments(plant.notes || '');
-  };
-  
-  // Handle save button click
-  const handleSaveClick = async (e: React.MouseEvent) => {
+  const handleWaterClick = async (e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent the card click event
     
-    if (!hasChanges) {
-      setIsEditing(false);
+    try {
+      setIsUpdating(true);
+      await onWater(plant.id);
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  // Handle last watered date click
+  const handleLastWateredClick = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent the card click event
+    
+    if (expansionState >= ExpansionState.Expanded) {
+      setSelectedDate(dateToInputValue(plant.lastWatered));
+      setIsEditingWateringDate(true);
+    }
+  };
+
+  // Handle date change
+  const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSelectedDate(e.target.value);
+  };
+
+  // Handle date update
+  const handleDateUpdate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    e.stopPropagation(); // Prevent the card click event
+    
+    if (!selectedDate) {
+      setIsEditingWateringDate(false);
       return;
     }
     
-    setIsSaving(true);
+    try {
+      setIsUpdating(true);
+      
+      // Update the watering date
+      const newDate = new Date(selectedDate);
+      await waterPlant(plant.id, newDate);
+      
+      // Update local state if onUpdate is provided
+      if (onUpdate) {
+        const nextWateringDate = new Date(newDate);
+        nextWateringDate.setDate(newDate.getDate() + (plant.wateringSchedule?.frequency || 7));
+        
+        onUpdate(plant.id, {
+          lastWatered: newDate,
+          nextWateringDate,
+          wateringSchedule: {
+            ...plant.wateringSchedule,
+            lastWatered: newDate,
+            nextWateringDate,
+          },
+        });
+      }
+    } catch (error) {
+      console.error('Error updating watering date:', error);
+    } finally {
+      setIsUpdating(false);
+      setIsEditingWateringDate(false);
+    }
+  };
+
+  // Handle cancel date edit
+  const handleCancelDateEdit = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent the card click event
+    setIsEditingWateringDate(false);
+  };
+
+  // Handle add comment button click
+  const handleAddCommentClick = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent the card click event
+    setIsAddingComment(true);
+    
+    // Focus the comment input after a short delay to allow the animation to complete
+    setTimeout(() => {
+      if (commentInputRef.current) {
+        commentInputRef.current.focus();
+      }
+    }, 100);
+  };
+
+  // Handle comment change
+  const handleCommentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setComment(e.target.value);
+  };
+
+  // Handle comment submit
+  const handleCommentSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    e.stopPropagation(); // Prevent the card click event
+    
+    if (!comment.trim()) {
+      setIsAddingComment(false);
+      return;
+    }
     
     try {
-      // Calculate next watering date based on last watered date and frequency
-      const newLastWatered = new Date(lastWateredDate);
-      const newNextWateringDate = new Date(newLastWatered);
-      newNextWateringDate.setDate(newLastWatered.getDate() + (plant.wateringSchedule?.frequency || 7));
+      setIsUpdating(true);
       
-      // Create updates object
-      const updates: Partial<Plant> = {
-        lastWatered: newLastWatered,
-        nextWateringDate: newNextWateringDate,
-        notes: comments,
-      };
+      // Combine existing notes with new comment
+      const updatedNotes = plant.notes 
+        ? `${plant.notes}\n\n${new Date().toLocaleDateString()}: ${comment}`
+        : `${new Date().toLocaleDateString()}: ${comment}`;
       
-      // Update plant in database
-      await updatePlant(plant.id, updates);
+      // Update the plant notes
+      await updatePlant(plant.id, { notes: updatedNotes });
       
-      // Notify parent component of update
+      // Update local state if onUpdate is provided
       if (onUpdate) {
-        onUpdate(plant.id, updates);
+        onUpdate(plant.id, { notes: updatedNotes });
       }
       
-      setHasChanges(false);
-      setIsEditing(false);
+      // Clear the comment input
+      setComment('');
     } catch (error) {
-      console.error('Error saving plant updates:', error);
-      // Could add error handling UI here
+      console.error('Error adding comment:', error);
     } finally {
-      setIsSaving(false);
+      setIsUpdating(false);
+      setIsAddingComment(false);
     }
   };
-  
-  // Handle last watered date change
-  const handleLastWateredChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setLastWateredDate(e.target.value);
-    setHasChanges(true);
+
+  // Handle cancel comment
+  const handleCancelComment = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent the card click event
+    setIsAddingComment(false);
+    setComment('');
   };
-  
-  // Handle comments change
-  const handleCommentsChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setComments(e.target.value);
-    setHasChanges(true);
-  };
-  
-  // Focus comments field when editing starts
-  const focusComments = () => {
-    if (isEditing && commentsRef.current) {
-      commentsRef.current.focus();
-    }
+
+  // Prevent propagation for form elements
+  const handleFormClick = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent the card click event
   };
 
   return (
     <motion.div 
-      className="bg-white rounded-xl overflow-hidden shadow-sm border border-gray-200 mb-4 w-full"
+      className={`bg-white rounded-xl overflow-hidden shadow-sm border border-gray-200 mb-4 w-full ${isUpdating ? 'opacity-70' : ''}`}
       initial={{ borderRadius: 12 }}
       animate={{ 
-        borderRadius: expansionState === ExpansionState.FullyExpanded ? 16 : 12,
+        minHeight: expansionState === ExpansionState.Collapsed 
+          ? '100px' 
+          : expansionState === ExpansionState.Expanded 
+            ? '180px' 
+            : 'auto',
+        borderRadius: 12,
       }}
       transition={{ 
         type: "spring", 
@@ -167,23 +240,21 @@ export default function ExpandableCard({ plant, onWater, onUpdate }: ExpandableC
         damping: 30 
       }}
       onClick={handleClick}
-      layout
     >
+      {/* Content Container - Different layout based on expansion state */}
       {expansionState !== ExpansionState.FullyExpanded ? (
-        // Collapsed and Expanded Views
+        // Collapsed and Expanded views - horizontal layout
         <div className="flex h-full">
           {/* Image Section */}
           <motion.div 
             className="relative bg-gray-100"
-            initial={{ width: '100px', height: '100%' }}
+            initial={{ width: '100px' }}
             animate={{ 
               width: expansionState === ExpansionState.Collapsed 
                 ? '100px' 
-                : '120px',
-              height: '100%'
+                : '120px'
             }}
             transition={{ type: "spring", stiffness: 300, damping: 30 }}
-            layout
           >
             {plant.image ? (
               <Image 
@@ -215,10 +286,7 @@ export default function ExpandableCard({ plant, onWater, onUpdate }: ExpandableC
           </motion.div>
           
           {/* Content Section */}
-          <motion.div 
-            className="flex-1 p-4 flex flex-col"
-            layout
-          >
+          <div className="flex-1 p-4 flex flex-col">
             {/* Basic Info */}
             <div className="flex justify-between items-start">
               <div>
@@ -233,6 +301,7 @@ export default function ExpandableCard({ plant, onWater, onUpdate }: ExpandableC
                   onClick={handleWaterClick}
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
+                  disabled={isUpdating}
                 >
                   <WaterDropIcon className="h-4 w-4 text-white" />
                   <span>Water</span>
@@ -254,24 +323,58 @@ export default function ExpandableCard({ plant, onWater, onUpdate }: ExpandableC
                   animate={{ opacity: 1, height: 'auto' }}
                   exit={{ opacity: 0, height: 0 }}
                   transition={{ duration: 0.2 }}
-                  layout
                 >
                   <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
                     <div>
                       <span className="text-gray-500">Last watered:</span>
-                      <p className="font-medium text-gray-700">{formatDate(plant.lastWatered)}</p>
+                      {isEditingWateringDate ? (
+                        <form onSubmit={handleDateUpdate} onClick={handleFormClick} className="mt-1">
+                          <input
+                            type="date"
+                            value={selectedDate}
+                            onChange={handleDateChange}
+                            className="w-full p-1 text-sm border border-gray-300 rounded"
+                            max={new Date().toISOString().split('T')[0]}
+                          />
+                          <div className="flex gap-2 mt-1">
+                            <button
+                              type="submit"
+                              className="px-2 py-1 text-xs bg-green-500 text-white rounded hover:bg-green-600"
+                              disabled={isUpdating}
+                            >
+                              Save
+                            </button>
+                            <button
+                              type="button"
+                              onClick={handleCancelDateEdit}
+                              className="px-2 py-1 text-xs bg-gray-200 text-gray-700 rounded hover:bg-gray-300"
+                              disabled={isUpdating}
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        </form>
+                      ) : (
+                        <button
+                          onClick={handleLastWateredClick}
+                          className="font-medium text-gray-700 hover:text-blue-500 flex items-center gap-1 mt-1"
+                        >
+                          <span>{formatDate(plant.lastWatered)}</span>
+                          <CalendarIcon className="h-3 w-3 text-gray-400" />
+                        </button>
+                      )}
                     </div>
                     <div>
                       <span className="text-gray-500">Next watering:</span>
-                      <p className="font-medium text-gray-700">{formatDate(plant.nextWateringDate)}</p>
+                      <p className="font-medium text-gray-700 mt-1">{formatDate(plant.nextWateringDate)}</p>
                     </div>
                     <div>
                       <span className="text-gray-500">Health:</span>
-                      <p className="font-medium text-gray-700">{plant.health || 'Unknown'}</p>
+                      <p className="font-medium text-gray-700 mt-1">{plant.health || 'Unknown'}</p>
                     </div>
                     <div>
                       <span className="text-gray-500">Watering frequency:</span>
-                      <p className="font-medium text-gray-700">
+                      <p className="font-medium text-gray-700 mt-1">
                         {plant.wateringSchedule?.frequency 
                           ? `Every ${plant.wateringSchedule.frequency} days` 
                           : 'Not set'}
@@ -281,20 +384,13 @@ export default function ExpandableCard({ plant, onWater, onUpdate }: ExpandableC
                 </motion.div>
               )}
             </AnimatePresence>
-          </motion.div>
+          </div>
         </div>
       ) : (
-        // Fully Expanded View (Full Width)
-        <motion.div 
-          className="flex flex-col w-full"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.3 }}
-          layout
-        >
-          {/* Full Width Image */}
-          <div className="relative w-full h-64 bg-gray-100">
+        // Fully Expanded view - vertical layout with full-width image
+        <div className="flex flex-col">
+          {/* Full-width image */}
+          <div className="relative w-full h-48 md:h-64 bg-gray-100">
             {plant.image ? (
               <Image 
                 src={plant.image} 
@@ -302,242 +398,272 @@ export default function ExpandableCard({ plant, onWater, onUpdate }: ExpandableC
                 fill 
                 sizes="100vw"
                 className="object-cover"
-                priority
               />
             ) : (
-              <div className="absolute inset-0 flex items-center justify-center text-gray-400 bg-gray-50">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-24 w-24" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <div className="absolute inset-0 flex items-center justify-center text-gray-400">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
               </div>
             )}
             
-            {/* Plant name overlay */}
-            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-4">
-              <h2 className="text-white text-xl font-semibold">{plant.name}</h2>
-              <p className="text-white/90 text-sm">{plant.species}</p>
-            </div>
-            
-            {/* Close button */}
-            <button 
-              className="absolute top-3 right-3 bg-black/30 hover:bg-black/50 text-white rounded-full p-2 transition-colors"
-              onClick={(e) => {
-                e.stopPropagation();
-                setExpansionState(ExpansionState.Collapsed);
-                setIsEditing(false);
-              }}
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-              </svg>
-            </button>
+            {/* Water indicator */}
+            {needsWater && (
+              <motion.div 
+                className="absolute top-4 right-4 w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center shadow-lg"
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ type: "spring", stiffness: 500, damping: 25 }}
+              >
+                <WaterDropIcon className="h-6 w-6 text-white" />
+              </motion.div>
+            )}
           </div>
           
           {/* Content Section */}
           <div className="p-5">
-            {/* Edit/Save/Cancel Buttons */}
-            <div className="flex justify-end mb-4">
-              {!isEditing ? (
-                <motion.button
-                  className="bg-green-50 text-green-700 hover:bg-green-100 px-3 py-1.5 rounded-lg text-sm font-medium flex items-center gap-1"
-                  onClick={handleEditClick}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
+            {/* Header with name and water button */}
+            <div className="flex justify-between items-center mb-4">
+              <div>
+                <h2 className="text-xl font-semibold text-gray-800">{plant.name}</h2>
+                <p className="text-sm text-gray-500">{plant.species || 'Unknown species'}</p>
+              </div>
+              
+              {/* Water button for plants that need water */}
+              {needsWater && (
+                <motion.button 
+                  className="bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-lg flex items-center gap-2"
+                  onClick={handleWaterClick}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  disabled={isUpdating}
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                    <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
-                  </svg>
-                  Edit
+                  <WaterDropIcon className="h-5 w-5 text-white" />
+                  <span>Water Now</span>
                 </motion.button>
-              ) : (
-                <div className="flex gap-2">
-                  <motion.button
-                    className="bg-gray-100 text-gray-700 hover:bg-gray-200 px-3 py-1.5 rounded-lg text-sm font-medium"
-                    onClick={handleCancelClick}
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    disabled={isSaving}
-                  >
-                    Cancel
-                  </motion.button>
-                  <motion.button
-                    className={`${hasChanges ? 'bg-green-600 hover:bg-green-700' : 'bg-green-400'} text-white px-3 py-1.5 rounded-lg text-sm font-medium flex items-center gap-1`}
-                    onClick={handleSaveClick}
-                    whileHover={hasChanges ? { scale: 1.02 } : {}}
-                    whileTap={hasChanges ? { scale: 0.98 } : {}}
-                    disabled={!hasChanges || isSaving}
-                  >
-                    {isSaving ? (
-                      <>
-                        <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                        Saving...
-                      </>
-                    ) : (
-                      <>
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                        </svg>
-                        Save
-                      </>
-                    )}
-                  </motion.button>
-                </div>
               )}
             </div>
             
+            {/* Personality Quote - Prominent display */}
+            {plant.bio && (
+              <motion.div 
+                className="mb-6 p-4 bg-green-50 border-l-4 border-green-400 rounded-r-lg"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 }}
+              >
+                <p className="text-green-800 italic relative">
+                  <span className="text-3xl absolute -top-2 -left-2 text-green-300">"</span>
+                  <span className="ml-3">{plant.bio}</span>
+                  <span className="text-3xl absolute -bottom-5 -right-2 text-green-300">"</span>
+                </p>
+                {plant.personalityType && (
+                  <div className="mt-2 flex justify-end">
+                    <span className="inline-block px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs font-medium">
+                      {plant.personalityType.charAt(0).toUpperCase() + plant.personalityType.slice(1)}
+                    </span>
+                  </div>
+                )}
+              </motion.div>
+            )}
+            
             {/* Basic Info Cards */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-              <div className="bg-green-50 p-3 rounded-xl">
-                <h4 className="text-xs font-medium text-green-700 mb-1">Health</h4>
-                <p className="text-green-900 font-medium">{plant.health || 'Unknown'}</p>
+            <div className="grid grid-cols-2 gap-4 mb-6">
+              <div className="bg-gray-50 p-3 rounded-lg">
+                <h3 className="text-sm font-medium text-gray-500 mb-1">Location</h3>
+                <p className="text-gray-800">{plant.location || 'Not specified'}</p>
               </div>
               
-              <div className="bg-blue-50 p-3 rounded-xl">
-                <h4 className="text-xs font-medium text-blue-700 mb-1">Watering</h4>
-                <p className="text-blue-900 font-medium">Every {plant.wateringSchedule?.frequency || '7'} days</p>
+              <div className="bg-gray-50 p-3 rounded-lg">
+                <h3 className="text-sm font-medium text-gray-500 mb-1">Health</h3>
+                <p className="text-gray-800">{plant.health || 'Unknown'}</p>
               </div>
               
-              <div className="bg-purple-50 p-3 rounded-xl">
-                <h4 className="text-xs font-medium text-purple-700 mb-1">Location</h4>
-                <p className="text-purple-900 font-medium">{plant.location || 'Not set'}</p>
+              <div className="bg-gray-50 p-3 rounded-lg">
+                <h3 className="text-sm font-medium text-gray-500 mb-1">Last Watered</h3>
+                {isEditingWateringDate ? (
+                  <form onSubmit={handleDateUpdate} onClick={handleFormClick} className="mt-1">
+                    <input
+                      type="date"
+                      value={selectedDate}
+                      onChange={handleDateChange}
+                      className="w-full p-1 text-sm border border-gray-300 rounded"
+                      max={new Date().toISOString().split('T')[0]}
+                    />
+                    <div className="flex gap-2 mt-2">
+                      <button
+                        type="submit"
+                        className="px-2 py-1 text-xs bg-green-500 text-white rounded hover:bg-green-600"
+                        disabled={isUpdating}
+                      >
+                        Save
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleCancelDateEdit}
+                        className="px-2 py-1 text-xs bg-gray-200 text-gray-700 rounded hover:bg-gray-300"
+                        disabled={isUpdating}
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </form>
+                ) : (
+                  <button
+                    onClick={handleLastWateredClick}
+                    className="text-gray-800 hover:text-blue-500 flex items-center gap-1"
+                  >
+                    <span>{formatDate(plant.lastWatered)}</span>
+                    <CalendarIcon className="h-4 w-4 text-gray-400" />
+                  </button>
+                )}
               </div>
               
-              <div className="bg-amber-50 p-3 rounded-xl">
-                <h4 className="text-xs font-medium text-amber-700 mb-1">Personality</h4>
-                <p className="text-amber-900 font-medium capitalize">{plant.personalityType || 'Not set'}</p>
+              <div className="bg-gray-50 p-3 rounded-lg">
+                <h3 className="text-sm font-medium text-gray-500 mb-1">Next Watering</h3>
+                <p className="text-gray-800">{formatDate(plant.nextWateringDate)}</p>
               </div>
             </div>
             
             {/* Watering Schedule */}
-            <div className="mb-6">
-              <h3 className="text-lg font-medium text-gray-800 mb-3">Watering Schedule</h3>
-              <div className="bg-white border border-gray-200 rounded-lg p-4 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                <div>
-                  <h4 className="text-sm font-medium text-gray-500">Last Watered</h4>
-                  {isEditing ? (
-                    <input
-                      type="date"
-                      value={lastWateredDate}
-                      onChange={handleLastWateredChange}
-                      className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm"
-                    />
-                  ) : (
-                    <p className="text-gray-900">{formatDate(plant.lastWatered)}</p>
-                  )}
-                </div>
-                
-                <div className="flex-1 flex justify-center">
-                  <div className="h-0.5 w-full max-w-xs bg-gray-200 relative">
-                    <div className="absolute -top-2 left-0 w-4 h-4 bg-blue-500 rounded-full transform -translate-x-1/2"></div>
-                    <div className="absolute -top-2 right-0 w-4 h-4 bg-green-500 rounded-full transform translate-x-1/2"></div>
+            {plant.wateringSchedule && (
+              <div className="mb-6">
+                <h3 className="text-md font-medium text-gray-700 mb-2">Watering Schedule</h3>
+                <div className="bg-blue-50 p-4 rounded-lg">
+                  <div className="flex items-start gap-3">
+                    <WaterDropIcon className="h-5 w-5 text-blue-500 mt-1 flex-shrink-0" />
+                    <div>
+                      <p className="text-blue-800 font-medium">Every {plant.wateringSchedule.frequency} days</p>
+                      {plant.wateringSchedule.description && (
+                        <p className="text-blue-600 text-sm mt-1">{plant.wateringSchedule.description}</p>
+                      )}
+                    </div>
                   </div>
                 </div>
-                
-                <div>
-                  <h4 className="text-sm font-medium text-gray-500">Next Watering</h4>
-                  <p className="text-gray-900">{formatDate(plant.nextWateringDate)}</p>
-                </div>
               </div>
-              
-              {plant.wateringSchedule?.description && (
-                <div className="mt-3 text-sm text-gray-600 bg-blue-50 p-3 rounded-lg">
-                  <span className="font-medium">Watering Tip:</span> {plant.wateringSchedule.description}
-                </div>
-              )}
-            </div>
+            )}
             
             {/* Care Instructions */}
             {plant.careInstructions && Object.keys(plant.careInstructions).length > 0 && (
               <div className="mb-6">
-                <h3 className="text-lg font-medium text-gray-800 mb-3">Care Instructions</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {plant.careInstructions.light && (
-                    <div className="bg-white border border-gray-200 rounded-lg p-3">
-                      <h4 className="text-sm font-medium text-gray-700 mb-1">Light</h4>
-                      <p className="text-sm text-gray-600">{plant.careInstructions.light}</p>
-                    </div>
-                  )}
-                  
-                  {plant.careInstructions.soil && (
-                    <div className="bg-white border border-gray-200 rounded-lg p-3">
-                      <h4 className="text-sm font-medium text-gray-700 mb-1">Soil</h4>
-                      <p className="text-sm text-gray-600">{plant.careInstructions.soil}</p>
-                    </div>
-                  )}
-                  
-                  {plant.careInstructions.humidity && (
-                    <div className="bg-white border border-gray-200 rounded-lg p-3">
-                      <h4 className="text-sm font-medium text-gray-700 mb-1">Humidity</h4>
-                      <p className="text-sm text-gray-600">{plant.careInstructions.humidity}</p>
-                    </div>
-                  )}
-                  
-                  {plant.careInstructions.temperature && (
-                    <div className="bg-white border border-gray-200 rounded-lg p-3">
-                      <h4 className="text-sm font-medium text-gray-700 mb-1">Temperature</h4>
-                      <p className="text-sm text-gray-600">{plant.careInstructions.temperature}</p>
-                    </div>
-                  )}
-                  
-                  {plant.careInstructions.fertilizer && (
-                    <div className="bg-white border border-gray-200 rounded-lg p-3">
-                      <h4 className="text-sm font-medium text-gray-700 mb-1">Fertilizer</h4>
-                      <p className="text-sm text-gray-600">{plant.careInstructions.fertilizer}</p>
-                    </div>
-                  )}
-                  
-                  {plant.careInstructions.pruning && (
-                    <div className="bg-white border border-gray-200 rounded-lg p-3">
-                      <h4 className="text-sm font-medium text-gray-700 mb-1">Pruning</h4>
-                      <p className="text-sm text-gray-600">{plant.careInstructions.pruning}</p>
-                    </div>
-                  )}
+                <h3 className="text-md font-medium text-gray-700 mb-2">Care Instructions</h3>
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <div className="space-y-3">
+                    {plant.careInstructions.light && (
+                      <div>
+                        <h4 className="text-sm font-medium text-gray-700">Light</h4>
+                        <p className="text-sm text-gray-600">{plant.careInstructions.light}</p>
+                      </div>
+                    )}
+                    
+                    {plant.careInstructions.soil && (
+                      <div>
+                        <h4 className="text-sm font-medium text-gray-700">Soil</h4>
+                        <p className="text-sm text-gray-600">{plant.careInstructions.soil}</p>
+                      </div>
+                    )}
+                    
+                    {plant.careInstructions.humidity && (
+                      <div>
+                        <h4 className="text-sm font-medium text-gray-700">Humidity</h4>
+                        <p className="text-sm text-gray-600">{plant.careInstructions.humidity}</p>
+                      </div>
+                    )}
+                    
+                    {plant.careInstructions.temperature && (
+                      <div>
+                        <h4 className="text-sm font-medium text-gray-700">Temperature</h4>
+                        <p className="text-sm text-gray-600">{plant.careInstructions.temperature}</p>
+                      </div>
+                    )}
+                    
+                    {plant.careInstructions.fertilizer && (
+                      <div>
+                        <h4 className="text-sm font-medium text-gray-700">Fertilizer</h4>
+                        <p className="text-sm text-gray-600">{plant.careInstructions.fertilizer}</p>
+                      </div>
+                    )}
+                    
+                    {plant.careInstructions.pruning && (
+                      <div>
+                        <h4 className="text-sm font-medium text-gray-700">Pruning</h4>
+                        <p className="text-sm text-gray-600">{plant.careInstructions.pruning}</p>
+                      </div>
+                    )}
+                    
+                    {plant.careInstructions.repotting && (
+                      <div>
+                        <h4 className="text-sm font-medium text-gray-700">Repotting</h4>
+                        <p className="text-sm text-gray-600">{plant.careInstructions.repotting}</p>
+                      </div>
+                    )}
+                    
+                    {plant.careInstructions.commonIssues && (
+                      <div>
+                        <h4 className="text-sm font-medium text-gray-700">Common Issues</h4>
+                        <p className="text-sm text-gray-600">{plant.careInstructions.commonIssues}</p>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             )}
             
-            {/* Comments/Notes Section */}
+            {/* Notes and Comments */}
             <div className="mb-4">
-              <h3 className="text-lg font-medium text-gray-800 mb-3">Notes</h3>
-              {isEditing ? (
-                <textarea
-                  ref={commentsRef}
-                  value={comments}
-                  onChange={handleCommentsChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                  rows={4}
-                  placeholder="Add notes about your plant here..."
-                />
+              <div className="flex justify-between items-center mb-2">
+                <h3 className="text-md font-medium text-gray-700">Notes & Comments</h3>
+                {!isAddingComment && (
+                  <button
+                    onClick={handleAddCommentClick}
+                    className="text-sm text-green-600 hover:text-green-700"
+                    disabled={isUpdating}
+                  >
+                    + Add Comment
+                  </button>
+                )}
+              </div>
+              
+              {isAddingComment ? (
+                <form onSubmit={handleCommentSubmit} onClick={handleFormClick} className="mb-4">
+                  <textarea
+                    ref={commentInputRef}
+                    value={comment}
+                    onChange={handleCommentChange}
+                    placeholder="Add your comment here..."
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    rows={3}
+                  />
+                  <div className="flex justify-end gap-2 mt-2">
+                    <button
+                      type="button"
+                      onClick={handleCancelComment}
+                      className="px-3 py-1 text-sm bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
+                      disabled={isUpdating}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      className="px-3 py-1 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700"
+                      disabled={isUpdating || !comment.trim()}
+                    >
+                      Save Comment
+                    </button>
+                  </div>
+                </form>
               ) : (
-                <div className="bg-white border border-gray-200 rounded-lg p-4 min-h-[100px]">
+                <div className="bg-gray-50 p-4 rounded-lg">
                   {plant.notes ? (
-                    <p className="text-gray-700">{plant.notes}</p>
+                    <p className="text-sm text-gray-600 whitespace-pre-line">{plant.notes}</p>
                   ) : (
-                    <p className="text-gray-400 italic">No notes yet. Click Edit to add some!</p>
+                    <p className="text-sm text-gray-400 italic">No notes or comments yet.</p>
                   )}
                 </div>
               )}
             </div>
-            
-            {/* Personality and Bio */}
-            {plant.personalityType && plant.bio && (
-              <div className="mb-4">
-                <h3 className="text-lg font-medium text-gray-800 mb-3">Personality</h3>
-                <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="inline-block px-2 py-0.5 bg-amber-100 text-amber-800 rounded-full text-xs font-medium capitalize">
-                      {plant.personalityType}
-                    </span>
-                  </div>
-                  <p className="text-amber-800 italic">{plant.bio}</p>
-                </div>
-              </div>
-            )}
           </div>
-        </motion.div>
+        </div>
       )}
     </motion.div>
   );

@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useAuth } from '@/context/AuthContext';
-import { getUserPlants, waterPlant } from '@/services/plants';
+import { getUserPlants, waterPlant, updatePlant } from '@/services/plants';
 import { getUserProfile } from '@/services/user';
 import { Plant } from '@/types';
 import ExpandableCard from '@/components/dashboard/ExpandableCard';
@@ -106,25 +106,19 @@ export default function Dashboard() {
   };
 
   // Handle updating a plant
-  const handleUpdatePlant = async (plantId: string, updates: Partial<Plant>) => {
-    if (!user) return;
+  const handleUpdatePlant = (plantId: string, updates: Partial<Plant>) => {
+    // Update the local state to reflect the changes
+    const updatedPlants = plants.map(plant => {
+      if (plant.id === plantId) {
+        return {
+          ...plant,
+          ...updates
+        };
+      }
+      return plant;
+    });
     
-    try {
-      // Update the local state to reflect the changes
-      const updatedPlants = plants.map(plant => {
-        if (plant.id === plantId) {
-          return {
-            ...plant,
-            ...updates
-          };
-        }
-        return plant;
-      });
-      
-      setPlants(updatedPlants);
-    } catch (error) {
-      console.error('Error updating plant:', error);
-    }
+    setPlants(updatedPlants);
   };
 
   // Get plants organized by the selected view
