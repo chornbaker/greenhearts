@@ -86,7 +86,9 @@ export default function DashboardNavigation({ userId }: DashboardNavigationProps
         <div style={{
           display: 'flex',
           justifyContent: 'space-around',
-          position: 'relative'
+          position: 'relative',
+          alignItems: 'flex-end',
+          paddingBottom: '0.5rem'
         }}>
           <Link
             href="/dashboard"
@@ -99,35 +101,37 @@ export default function DashboardNavigation({ userId }: DashboardNavigationProps
             <span style={textStyle}>Home</span>
           </Link>
           
-          <Link
-            href="/dashboard/add"
-            style={{
-              ...navLinkStyle,
-              position: 'relative',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-            }}
-          >
-            <div style={{
-              backgroundColor: '#65a30d', // bg-green-600 to match other buttons
-              borderRadius: '50%',
-              width: '48px',
-              height: '48px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              marginBottom: '0.25rem',
-              boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
-              position: 'relative',
-              zIndex: 20
-            }}>
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            width: '60px'
+          }}>
+            <Link
+              href="/dashboard/add"
+              style={{
+                backgroundColor: '#65a30d', // bg-green-600 to match other buttons
+                borderRadius: '50%',
+                width: '48px',
+                height: '48px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                marginBottom: '0.25rem',
+                boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+                position: 'relative',
+                zIndex: 20,
+                transform: 'translateY(-12px)'
+              }}
+            >
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="white">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
               </svg>
-            </div>
-            <span style={textStyle}>Add Plant</span>
-          </Link>
+            </Link>
+            <span style={textStyle}>
+              Add Plant
+            </span>
+          </div>
           
           <Link
             href="/dashboard/reminders"
