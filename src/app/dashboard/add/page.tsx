@@ -333,7 +333,7 @@ export default function AddPlant() {
         {/* Optional Section - Name and Personality */}
         <div className="mt-8 bg-green-50 p-4 rounded-xl border border-green-200">
           <div className="flex justify-between items-center mb-3">
-            <h3 className="text-lg font-medium text-green-800">Personalize Your Plant</h3>
+            <h3 className="text-lg font-medium text-green-800">Give Your Plant a Heart</h3>
             <div className="flex items-center">
               <span className="text-sm text-gray-600 mr-2">
                 {manualMode ? 'Manual Mode' : 'AI Mode'}
@@ -353,21 +353,24 @@ export default function AddPlant() {
               <div className="flex justify-between items-center mb-2">
                 <p className="text-sm text-gray-600">
                   {aiGenerated 
-                    ? "AI has generated a personality for your plant!" 
+                    ? "AI has brought your plant to life!" 
                     : requiredFieldsFilled 
                       ? aiGenerating 
-                        ? "Generating personality..." 
-                        : "Fill in the required fields to generate a personality" 
-                      : "Fill in the required fields to generate a personality"}
+                        ? "Creating your plant's personality..." 
+                        : "Fill in the required fields to give your plant a personality" 
+                      : "Fill in the required fields to give your plant a personality"}
                 </p>
                 {aiGenerated && (
                   <button
                     type="button"
                     onClick={generateAiPersonality}
                     disabled={aiGenerating || !requiredFieldsFilled}
-                    className="text-xs bg-green-600 text-white px-2 py-1 rounded hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="text-xs bg-green-600 text-white p-1 rounded-full hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                    aria-label="Refresh personality"
                   >
-                    {aiGenerating ? 'Generating...' : 'Regenerate'}
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
                   </button>
                 )}
               </div>
@@ -384,7 +387,7 @@ export default function AddPlant() {
           {!manualMode && aiGenerated && !aiGenerating && (
             <div className="bg-white rounded-lg p-4 mb-4 border border-green-100 shadow-sm">
               <div className="mb-4">
-                <h4 className="text-sm font-medium text-gray-500 mb-1">Plant Nickname</h4>
+                <h4 className="text-sm font-medium text-gray-500 mb-1">Nickname</h4>
                 <p className="text-lg font-medium text-green-800">{name}</p>
               </div>
               
@@ -396,7 +399,7 @@ export default function AddPlant() {
               </div>
               
               <div>
-                <h4 className="text-sm font-medium text-gray-500 mb-1">Plant Bio</h4>
+                <h4 className="text-sm font-medium text-gray-500 mb-1">Bio</h4>
                 <p className="text-sm text-gray-700 italic">{bio}</p>
               </div>
             </div>
@@ -412,8 +415,8 @@ export default function AddPlant() {
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder={species ? `Defaults to "${species}"` : "Enter plant name"}
-                  label="Plant Nickname"
+                  placeholder={species ? `Defaults to "${species}"` : "Enter nickname"}
+                  label="Nickname"
                   disabled={aiGenerating}
                 />
                 <p className="text-xs text-gray-500 mt-1">
@@ -427,7 +430,7 @@ export default function AddPlant() {
               <div className="space-y-2 w-full mb-4">
                 <div className="flex justify-between items-center">
                   <label className="block text-sm font-medium text-gray-800">
-                    Plant Personality
+                    Personality Type
                   </label>
                   {personality && (
                     <button
@@ -462,7 +465,7 @@ export default function AddPlant() {
               {/* Plant Bio */}
               <div className="w-full">
                 <label htmlFor="bio" className="block text-sm font-medium text-gray-800 mb-1">
-                  Plant Bio
+                  Bio
                 </label>
                 <textarea
                   id="bio"
