@@ -120,20 +120,25 @@ export default function Dashboard() {
     }
   };
   
-  // Water droplet SVG icon
-  const WaterDropletIcon = ({ className = "h-5 w-5" }: { className?: string }) => (
-    <svg 
-      xmlns="http://www.w3.org/2000/svg" 
+  // Inline water droplet SVG for Safari compatibility
+  const WaterDropIcon = ({ className = "h-5 w-5" }: { className?: string }) => (
+    <div 
       className={className} 
-      viewBox="0 0 24 24" 
-      fill="currentColor"
       style={{ 
-        WebkitUserSelect: 'none',
-        display: 'block' // Ensure SVG is displayed in Safari
+        display: 'flex', 
+        alignItems: 'center', 
+        justifyContent: 'center',
+        WebkitBoxAlign: 'center',
+        WebkitBoxPack: 'center'
       }}
-    >
-      <path d="M12 2.5c-1.7 2.3-6 7.6-6 11.5 0 3.3 2.7 6 6 6s6-2.7 6-6c0-3.9-4.3-9.2-6-11.5z" />
-    </svg>
+      dangerouslySetInnerHTML={{ 
+        __html: `
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style="width: 100%; height: 100%;">
+            <path d="M12 2.5c-1.7 2.3-6 7.6-6 11.5 0 3.3 2.7 6 6 6s6-2.7 6-6c0-3.9-4.3-9.2-6-11.5z" />
+          </svg>
+        `
+      }}
+    />
   );
   
   // Render a plant card
@@ -142,6 +147,10 @@ export default function Dashboard() {
       href={`/dashboard/plants/${plant.id}`} 
       key={plant.id || index}
       className="bg-white rounded-xl overflow-hidden shadow-sm border border-gray-200 hover:shadow-md transition-shadow"
+      style={{
+        WebkitBorderRadius: '0.75rem',
+        borderRadius: '0.75rem'
+      }}
     >
       <div className="aspect-square bg-gray-100 relative">
         {plant.image ? (
@@ -166,12 +175,16 @@ export default function Dashboard() {
             className="absolute top-2 right-2 bg-blue-500 rounded-full w-8 h-8 flex items-center justify-center shadow-md"
             style={{
               WebkitBorderRadius: '9999px',
+              borderRadius: '9999px',
               display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
               WebkitBoxAlign: 'center',
-              WebkitBoxPack: 'center'
+              WebkitBoxPack: 'center',
+              backgroundColor: '#3b82f6'
             }}
           >
-            <WaterDropletIcon className="h-5 w-5 text-white" />
+            <WaterDropIcon className="h-5 w-5 text-white" />
           </div>
         )}
       </div>
@@ -272,8 +285,8 @@ export default function Dashboard() {
                     borderRadius: '0.5rem',
                     WebkitTapHighlightColor: 'transparent',
                     display: 'flex',
-                    WebkitBoxAlign: 'center',
                     alignItems: 'center',
+                    WebkitBoxAlign: 'center',
                     gap: '0.25rem',
                     backgroundColor: '#3b82f6', // Explicit blue color for Safari
                     color: 'white'
@@ -284,7 +297,24 @@ export default function Dashboard() {
                     alert(`Watering ${plant.name}! This is a placeholder for the actual watering functionality.`);
                   }}
                 >
-                  <WaterDropletIcon className="h-4 w-4" />
+                  <div 
+                    style={{ 
+                      width: '16px', 
+                      height: '16px', 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      justifyContent: 'center',
+                      WebkitBoxAlign: 'center',
+                      WebkitBoxPack: 'center'
+                    }}
+                    dangerouslySetInnerHTML={{ 
+                      __html: `
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style="width: 100%; height: 100%;">
+                          <path d="M12 2.5c-1.7 2.3-6 7.6-6 11.5 0 3.3 2.7 6 6 6s6-2.7 6-6c0-3.9-4.3-9.2-6-11.5z" />
+                        </svg>
+                      `
+                    }}
+                  />
                   <span>Water</span>
                 </button>
               </div>
