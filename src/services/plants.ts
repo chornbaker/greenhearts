@@ -175,4 +175,60 @@ export async function waterPlant(
     console.error('Error watering plant:', error);
     throw error;
   }
+}
+
+/**
+ * Save thirsty messages for a user's plants
+ * @param userId The user ID
+ * @param messages Object mapping plant IDs to thirsty messages
+ * @returns Promise that resolves when the update is complete
+ */
+export async function saveThirstyMessages(
+  userId: string,
+  messages: Record<string, string>
+): Promise<void> {
+  try {
+    if (!db) throw new Error('Firestore is not initialized');
+    
+    const userRef = doc(db, 'users', userId);
+    await updateDoc(userRef, {
+      thirstyMessages: messages,
+      thirstyMessagesUpdatedAt: serverTimestamp()
+    });
+  } catch (error) {
+    console.error('Error saving thirsty messages:', error);
+    throw error;
+  }
+}
+
+/**
+ * Get thirsty messages for a user's plants
+ * @param userId The user ID
+ * @returns Object mapping plant IDs to thirsty messages
+ */
+export async function getThirstyMessages(
+  userId: string
+): Promise<{
+  messages: Record<string, string>;
+  updatedAt: Date | null;
+}> {
+  try {
+    if (!db) throw new Error('Firestore is not initialized');
+    
+    const userRef = doc(db, 'users', userId);
+    const userDoc = await getDoc(userRef);
+    
+    if (!userDoc.exists()) {
+      return { messages: {}, updatedAt: null };
+    }
+    
+    const data = userDoc.data();
+    return {
+      messages: data.thirstyMessages || {},
+      updatedAt: data.thirstyMessagesUpdatedAt?.toDate() || null
+    };
+  } catch (error) {
+    console.error('Error getting thirsty messages:', error);
+    return { messages: {}, updatedAt: null };
+  }
 } 
