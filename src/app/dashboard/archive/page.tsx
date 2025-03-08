@@ -7,6 +7,8 @@ import { getUserPlants, unarchivePlant, deletePlant } from '@/services/plants';
 import { Plant } from '@/types';
 import { Dialog, Transition } from '@headlessui/react';
 import { Fragment } from 'react';
+import { getDaysOverdue, getWateringStatusText } from '@/utils/dateUtils';
+import { motion } from 'framer-motion';
 
 export default function Archive() {
   const { user } = useAuth();
@@ -108,7 +110,7 @@ export default function Archive() {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="space-y-6 pb-24">
       <h1 className="text-2xl font-bold text-gray-800 mb-6">Plant Archive</h1>
       
       {error && (
@@ -129,78 +131,120 @@ export default function Archive() {
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="space-y-3">
           {archivedPlants.map((plant) => (
-            <div key={plant.id} className="bg-white rounded-lg shadow-sm overflow-hidden">
-              <div className="flex">
-                {/* Plant image */}
-                <div className="w-24 h-24 bg-gray-100 relative">
+            <motion.div 
+              key={plant.id} 
+              className="bg-white rounded-xl overflow-hidden shadow-sm border border-gray-200 mb-4 w-full"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3 }}
+            >
+              <div className="flex h-full">
+                {/* Image Section */}
+                <div className="relative bg-gray-100 w-[100px]">
                   {plant.image ? (
                     <Image 
                       src={plant.image} 
                       alt={plant.name} 
                       fill 
-                      sizes="96px"
-                      style={{ objectFit: 'cover' }}
+                      sizes="100px"
+                      className="object-cover"
                     />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center bg-gray-200">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
-                        <path fillRule="evenodd" d="M4 5a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V7a2 2 0 00-2-2h-1.586a1 1 0 01-.707-.293l-1.121-1.121A2 2 0 0011.172 3H8.828a2 2 0 00-1.414.586L6.293 4.707A1 1 0 015.586 5H4zm6 9a3 3 0 100-6 3 3 0 000 6z" clipRule="evenodd" />
+                    <div className="absolute inset-0 flex items-center justify-center text-gray-400">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                       </svg>
                     </div>
                   )}
                 </div>
                 
-                {/* Plant info */}
-                <div className="flex-1 p-4">
-                  <h2 className="text-lg font-medium text-gray-800">{plant.name}</h2>
-                  <p className="text-sm text-gray-500">{plant.species || 'Unknown species'}</p>
+                {/* Content Section */}
+                <div className="flex-1 p-4 flex flex-col">
+                  {/* Basic Info */}
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <h2 className="text-xl font-semibold text-gray-800">{plant.name}</h2>
+                      <p className="text-sm text-gray-500">{plant.species || 'Unknown species'}</p>
+                    </div>
+                    
+                    {/* Archive badge */}
+                    <div className="bg-amber-100 text-amber-800 text-xs px-2 py-1 rounded-full flex items-center">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M4 3a2 2 0 100 4h12a2 2 0 100-4H4z" />
+                        <path fillRule="evenodd" d="M3 8h14v7a2 2 0 01-2 2H5a2 2 0 01-2-2V8zm5 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z" clipRule="evenodd" />
+                      </svg>
+                      Archived
+                    </div>
+                  </div>
                   
-                  <div className="mt-2 space-y-1">
-                    <p className="text-xs text-gray-500">
-                      <span className="font-medium">Archived:</span> {formatDate(plant.archivedAt)}
-                    </p>
+                  {/* Archive info */}
+                  <div className="flex items-center space-x-2 mt-1">
+                    <div className="flex items-center">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 text-amber-500 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                      <span className="text-xs text-gray-500">
+                        {formatDate(plant.archivedAt)}
+                      </span>
+                    </div>
                     {plant.archivedReason && (
-                      <p className="text-xs text-gray-500">
-                        <span className="font-medium">Reason:</span> {plant.archivedReason}
-                      </p>
-                    )}
-                    {plant.location && (
-                      <p className="text-xs text-gray-500">
-                        <span className="font-medium">Location:</span> {plant.location}
-                      </p>
+                      <div className="flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 text-gray-500 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <span className="text-xs text-gray-500">
+                          {plant.archivedReason}
+                        </span>
+                      </div>
                     )}
                   </div>
                   
+                  {/* Location info if available */}
+                  {plant.location && (
+                    <div className="flex items-center mt-1">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 text-gray-500 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                      </svg>
+                      <span className="text-xs text-gray-500">
+                        {plant.location}
+                      </span>
+                    </div>
+                  )}
+                  
                   {/* Action buttons */}
-                  <div className="mt-3 flex gap-2">
+                  <div className="mt-3 flex gap-2 justify-end">
                     <button
                       onClick={() => handleUnarchiveClick(plant)}
-                      className="text-xs px-2 py-1 bg-green-100 text-green-800 rounded hover:bg-green-200"
+                      className="text-xs px-3 py-1 bg-green-100 text-green-800 rounded-lg hover:bg-green-200 flex items-center"
                     >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clipRule="evenodd" />
+                      </svg>
                       Restore
                     </button>
                     <button
                       onClick={() => handleDeleteClick(plant)}
-                      className="text-xs px-2 py-1 bg-red-100 text-red-800 rounded hover:bg-red-200"
+                      className="text-xs px-3 py-1 bg-red-100 text-red-800 rounded-lg hover:bg-red-200 flex items-center"
                     >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+                      </svg>
                       Delete
                     </button>
                   </div>
                 </div>
               </div>
-            </div>
+            </motion.div>
           ))}
         </div>
       )}
       
-      {/* Add padding at the bottom to ensure content is not hidden behind the menu bar */}
-      <div className="h-24"></div>
-      
       {/* Unarchive Confirmation Dialog */}
       <Transition appear show={showUnarchiveDialog} as={Fragment}>
-        <Dialog as="div" className="relative z-10" onClose={() => setShowUnarchiveDialog(false)}>
+        <Dialog as="div" className="relative z-100" onClose={() => setShowUnarchiveDialog(false)}>
           <Transition.Child
             as={Fragment}
             enter="ease-out duration-300"
@@ -263,7 +307,7 @@ export default function Archive() {
 
       {/* Delete Confirmation Dialog */}
       <Transition appear show={showDeleteDialog} as={Fragment}>
-        <Dialog as="div" className="relative z-10" onClose={() => setShowDeleteDialog(false)}>
+        <Dialog as="div" className="relative z-100" onClose={() => setShowDeleteDialog(false)}>
           <Transition.Child
             as={Fragment}
             enter="ease-out duration-300"
