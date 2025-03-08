@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Plant } from '@/types';
-import { generateWaterReminderMessage } from '@/services/claude';
+import { generateThirstyPlantMessage } from '@/services/claude';
 
 type WaterReminderMessages = {
   [plantId: string]: {
@@ -93,10 +93,10 @@ export function WaterReminderProvider({ children }: { children: React.ReactNode 
     
     // Generate a new message
     try {
-      const message = await generateWaterReminderMessage({
+      const message = await generateThirstyPlantMessage({
         name: plant.name,
         species: plant.species || 'plant',
-        personalityType: plant.personalityType,
+        personalityType: plant.personalityType || 'cheerful',
         daysOverdue
       });
       
