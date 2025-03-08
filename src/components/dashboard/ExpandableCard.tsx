@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plant, PlantHealth } from '@/types';
@@ -54,7 +54,14 @@ export default function ExpandableCard({ plant, onWater, onUpdate }: ExpandableC
   const [isAddingComment, setIsAddingComment] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
   const [showWaterTooltip, setShowWaterTooltip] = useState(false);
+  const [isEditingLocation, setIsEditingLocation] = useState(false);
+  const [isEditingHealth, setIsEditingHealth] = useState(false);
+  const [editedLocation, setEditedLocation] = useState(plant.location || '');
+  const [editedHealth, setEditedHealth] = useState<PlantHealth | undefined>(plant.health);
+  
   const commentInputRef = useRef<HTMLTextAreaElement>(null);
+  const cardRef = useRef<HTMLDivElement>(null);
+  const locationInputRef = useRef<HTMLInputElement>(null);
 
   // Calculate if the plant needs water
   const needsWater = plant.nextWateringDate && plant.nextWateringDate <= new Date();
@@ -74,6 +81,35 @@ export default function ExpandableCard({ plant, onWater, onUpdate }: ExpandableC
     if (!date) return '';
     return date.toISOString().split('T')[0];
   };
+
+  // Effect to handle clicks outside the card
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (cardRef.current && !cardRef.current.contains(event.target as Node)) {
+        // Don't collapse if we're editing
+        if (isEditingWateringDate || isAddingComment || isEditingLocation || isEditingHealth) {
+          return;
+        }
+        
+        // Collapse the card if it's expanded
+        if (expansionState !== ExpansionState.Collapsed) {
+          setExpansionState(ExpansionState.Collapsed);
+        }
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [expansionState, isEditingWateringDate, isAddingComment, isEditingLocation, isEditingHealth]);
+
+  // Effect to focus input when editing location
+  useEffect(() => {
+    if (isEditingLocation && locationInputRef.current) {
+      locationInputRef.current.focus();
+    }
+  }, [isEditingLocation]);
 
   // Handle card clicks
   const handleClick = () => {
@@ -223,8 +259,77 @@ export default function ExpandableCard({ plant, onWater, onUpdate }: ExpandableC
     e.stopPropagation(); // Prevent the card click event
   };
 
+  // Handle location click
+  const handleLocationClick = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent the card click event
+    setIsEditingLocation(true);
+  };
+
+  // Handle location change
+  const handleLocationChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setEditedLocation(e.target.value);
+  };
+
+  // Handle location update
+  const handleLocationUpdate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (!onUpdate) return;
+    
+    try {
+      setIsUpdating(true);
+      await onUpdate(plant.id, { location: editedLocation });
+    } finally {
+      setIsUpdating(false);
+      setIsEditingLocation(false);
+    }
+  };
+
+  // Handle cancel location edit
+  const handleCancelLocationEdit = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIsEditingLocation(false);
+    setEditedLocation(plant.location || '');
+  };
+
+  // Handle health click
+  const handleHealthClick = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent the card click event
+    setIsEditingHealth(true);
+  };
+
+  // Handle health change
+  const handleHealthChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setEditedHealth(e.target.value as PlantHealth);
+  };
+
+  // Handle health update
+  const handleHealthUpdate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (!onUpdate) return;
+    
+    try {
+      setIsUpdating(true);
+      await onUpdate(plant.id, { health: editedHealth });
+    } finally {
+      setIsUpdating(false);
+      setIsEditingHealth(false);
+    }
+  };
+
+  // Handle cancel health edit
+  const handleCancelHealthEdit = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIsEditingHealth(false);
+    setEditedHealth(plant.health);
+  };
+
   return (
     <motion.div 
+      ref={cardRef}
       className={`bg-white rounded-xl overflow-hidden shadow-sm border border-gray-200 mb-4 w-full ${isUpdating ? 'opacity-70' : ''}`}
       initial={{ borderRadius: 12 }}
       animate={{ 
@@ -308,9 +413,42 @@ export default function ExpandableCard({ plant, onWater, onUpdate }: ExpandableC
             </div>
             
             {/* Location info (always shown) */}
-            <p className="text-xs text-gray-500 mt-1">
-              {plant.location || 'No location assigned'}
-            </p>
+            {isEditingLocation ? (
+              <form onSubmit={handleLocationUpdate} onClick={handleFormClick} className="mt-1">
+                <input
+                  ref={locationInputRef}
+                  type="text"
+                  value={editedLocation}
+                  onChange={handleLocationChange}
+                  className="w-full p-1 text-xs border border-gray-300 rounded"
+                  placeholder="Enter location"
+                />
+                <div className="flex gap-2 mt-1">
+                  <button
+                    type="submit"
+                    className="px-2 py-1 text-xs bg-green-500 text-white rounded hover:bg-green-600"
+                    disabled={isUpdating}
+                  >
+                    Save
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleCancelLocationEdit}
+                    className="px-2 py-1 text-xs bg-gray-200 text-gray-700 rounded hover:bg-gray-300"
+                    disabled={isUpdating}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            ) : (
+              <button
+                onClick={handleLocationClick}
+                className="text-xs text-gray-500 mt-1 hover:text-blue-500 text-left"
+              >
+                {plant.location || 'No location assigned'}
+              </button>
+            )}
             
             {/* Expanded Content */}
             <AnimatePresence>
@@ -368,7 +506,44 @@ export default function ExpandableCard({ plant, onWater, onUpdate }: ExpandableC
                     </div>
                     <div>
                       <span className="text-gray-500">Health:</span>
-                      <p className="font-medium text-gray-700 mt-1">{plant.health || 'Unknown'}</p>
+                      {isEditingHealth ? (
+                        <form onSubmit={handleHealthUpdate} onClick={handleFormClick} className="mt-1">
+                          <select
+                            value={editedHealth}
+                            onChange={handleHealthChange}
+                            className="w-full p-1 text-sm border border-gray-300 rounded"
+                          >
+                            <option value={PlantHealth.Excellent}>Excellent</option>
+                            <option value={PlantHealth.Good}>Good</option>
+                            <option value={PlantHealth.Fair}>Fair</option>
+                            <option value={PlantHealth.Poor}>Poor</option>
+                          </select>
+                          <div className="flex gap-2 mt-1">
+                            <button
+                              type="submit"
+                              className="px-2 py-1 text-xs bg-green-500 text-white rounded hover:bg-green-600"
+                              disabled={isUpdating}
+                            >
+                              Save
+                            </button>
+                            <button
+                              type="button"
+                              onClick={handleCancelHealthEdit}
+                              className="px-2 py-1 text-xs bg-gray-200 text-gray-700 rounded hover:bg-gray-300"
+                              disabled={isUpdating}
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        </form>
+                      ) : (
+                        <button
+                          onClick={handleHealthClick}
+                          className="font-medium text-gray-700 hover:text-blue-500 mt-1 block"
+                        >
+                          {plant.health || 'Unknown'}
+                        </button>
+                      )}
                     </div>
                     <div>
                       <span className="text-gray-500">Watering frequency:</span>
@@ -466,12 +641,84 @@ export default function ExpandableCard({ plant, onWater, onUpdate }: ExpandableC
             <div className="grid grid-cols-2 gap-4 mb-6">
               <div className="bg-gray-50 p-3 rounded-lg">
                 <h3 className="text-sm font-medium text-gray-500 mb-1">Location</h3>
-                <p className="text-gray-800">{plant.location || 'Not specified'}</p>
+                {isEditingLocation ? (
+                  <form onSubmit={handleLocationUpdate} onClick={handleFormClick} className="mt-1">
+                    <input
+                      ref={locationInputRef}
+                      type="text"
+                      value={editedLocation}
+                      onChange={handleLocationChange}
+                      className="w-full p-2 text-sm border border-gray-300 rounded"
+                      placeholder="Enter location"
+                    />
+                    <div className="flex gap-2 mt-2">
+                      <button
+                        type="submit"
+                        className="px-2 py-1 text-xs bg-green-500 text-white rounded hover:bg-green-600"
+                        disabled={isUpdating}
+                      >
+                        Save
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleCancelLocationEdit}
+                        className="px-2 py-1 text-xs bg-gray-200 text-gray-700 rounded hover:bg-gray-300"
+                        disabled={isUpdating}
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </form>
+                ) : (
+                  <button
+                    onClick={handleLocationClick}
+                    className="text-gray-800 hover:text-blue-500"
+                  >
+                    {plant.location || 'No location assigned'}
+                  </button>
+                )}
               </div>
               
               <div className="bg-gray-50 p-3 rounded-lg">
                 <h3 className="text-sm font-medium text-gray-500 mb-1">Health</h3>
-                <p className="text-gray-800">{plant.health || 'Unknown'}</p>
+                {isEditingHealth ? (
+                  <form onSubmit={handleHealthUpdate} onClick={handleFormClick} className="mt-1">
+                    <select
+                      value={editedHealth}
+                      onChange={handleHealthChange}
+                      className="w-full p-2 text-sm border border-gray-300 rounded"
+                    >
+                      <option value={PlantHealth.Excellent}>Excellent</option>
+                      <option value={PlantHealth.Good}>Good</option>
+                      <option value={PlantHealth.Fair}>Fair</option>
+                      <option value={PlantHealth.Poor}>Poor</option>
+                    </select>
+                    <div className="flex gap-2 mt-2">
+                      <button
+                        type="submit"
+                        className="px-2 py-1 text-xs bg-green-500 text-white rounded hover:bg-green-600"
+                        disabled={isUpdating}
+                      >
+                        Save
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleCancelHealthEdit}
+                        className="px-2 py-1 text-xs bg-gray-200 text-gray-700 rounded hover:bg-gray-300"
+                        disabled={isUpdating}
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </form>
+                ) : (
+                  <button
+                    onClick={handleHealthClick}
+                    className="text-gray-800 hover:text-blue-500"
+                  >
+                    {plant.health || 'Unknown'}
+                  </button>
+                )}
               </div>
               
               <div className="bg-gray-50 p-3 rounded-lg">
@@ -650,9 +897,22 @@ export default function ExpandableCard({ plant, onWater, onUpdate }: ExpandableC
               ) : (
                 <div className="bg-gray-50 p-4 rounded-lg">
                   {plant.notes ? (
-                    <p className="text-sm text-gray-600 whitespace-pre-line">{plant.notes}</p>
+                    <div className="text-sm text-gray-600 whitespace-pre-line">
+                      {/* Add plant creation date as first comment if it doesn't already exist */}
+                      {!plant.notes.includes("Added on:") && (
+                        <p className="mb-2 text-gray-500 italic">
+                          Added on: {formatDate(plant.createdAt)}
+                        </p>
+                      )}
+                      {plant.notes}
+                    </div>
                   ) : (
-                    <p className="text-sm text-gray-400 italic">No notes or comments yet.</p>
+                    <div className="text-sm text-gray-600 whitespace-pre-line">
+                      <p className="mb-2 text-gray-500 italic">
+                        Added on: {formatDate(plant.createdAt)}
+                      </p>
+                      <p className="text-gray-400 italic">No additional notes or comments yet.</p>
+                    </div>
                   )}
                 </div>
               )}
