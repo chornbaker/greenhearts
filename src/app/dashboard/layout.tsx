@@ -104,7 +104,7 @@ export default function DashboardLayout({
   return (
     <div className="min-h-screen bg-[#f8f8f5] flex flex-col">
       {/* Header */}
-      <header className="bg-white shadow-sm sticky top-0 z-10">
+      <header className="bg-white shadow-sm sticky top-0 z-50">
         <div className="max-w-md mx-auto px-4 py-4 flex justify-between items-center">
           <Logo size="small" showText={true} href="/dashboard" />
           

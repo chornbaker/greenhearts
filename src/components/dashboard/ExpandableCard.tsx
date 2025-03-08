@@ -517,8 +517,6 @@ export default function ExpandableCard({
         ref={cardRef}
         className={`bg-white rounded-xl overflow-hidden shadow-sm border border-gray-200 mb-4 w-full relative ${
           isUpdating ? 'opacity-70' : ''
-        } ${
-          expansionState === ExpansionState.FullyExpanded ? 'z-10' : ''
         }`}
         initial={{ borderRadius: 12 }}
         animate={{ 
@@ -528,6 +526,7 @@ export default function ExpandableCard({
               ? '180px' 
               : 'auto',
           borderRadius: 12,
+          zIndex: expansionState === ExpansionState.FullyExpanded ? 5 : 1,
         }}
         transition={{ 
           type: "spring", 
@@ -536,19 +535,21 @@ export default function ExpandableCard({
         }}
         onClick={handleClick}
       >
-        {/* Trash icon in the lower right corner */}
-        <button
-          onClick={(e) => {
-            e.stopPropagation(); // Prevent card expansion
-            handleArchiveClick(e);
-          }}
-          className="absolute bottom-2 right-2 text-gray-400 hover:text-gray-600 z-20"
-          aria-label="Archive or delete plant"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-            <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
-          </svg>
-        </button>
+        {/* Trash icon - only show in fully expanded view */}
+        {expansionState === ExpansionState.FullyExpanded && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation(); // Prevent card expansion
+              handleArchiveClick(e);
+            }}
+            className="absolute bottom-2 right-2 text-gray-400 hover:text-gray-600 z-10"
+            aria-label="Archive or delete plant"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+            </svg>
+          </button>
+        )}
         
         {/* Content Container - Different layout based on expansion state */}
         {expansionState !== ExpansionState.FullyExpanded ? (
@@ -1124,7 +1125,7 @@ export default function ExpandableCard({
 
       {/* Archive/Delete Options Dialog */}
       <Transition appear show={showArchiveDialog} as={Fragment}>
-        <Dialog as="div" className="relative z-10" onClose={() => setShowArchiveDialog(false)}>
+        <Dialog as="div" className="relative z-100" onClose={() => setShowArchiveDialog(false)}>
           <Transition.Child
             as={Fragment}
             enter="ease-out duration-300"
@@ -1239,7 +1240,7 @@ export default function ExpandableCard({
 
       {/* Delete Confirmation Dialog */}
       <Transition appear show={showDeleteDialog} as={Fragment}>
-        <Dialog as="div" className="relative z-10" onClose={() => setShowDeleteDialog(false)}>
+        <Dialog as="div" className="relative z-100" onClose={() => setShowDeleteDialog(false)}>
           <Transition.Child
             as={Fragment}
             enter="ease-out duration-300"
