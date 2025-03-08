@@ -1,8 +1,9 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useAuth } from '@/context/AuthContext';
 import Logo from '@/components/Logo';
 
@@ -13,12 +14,28 @@ export default function DashboardLayout({
 }) {
   const { user, loading, signOut } = useAuth();
   const router = useRouter();
+  const [showDropdown, setShowDropdown] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!loading && !user) {
       router.push('/login');
     }
   }, [user, loading, router]);
+
+  useEffect(() => {
+    // Close dropdown when clicking outside
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setShowDropdown(false);
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   const handleSignOut = async () => {
     try {
@@ -49,12 +66,58 @@ export default function DashboardLayout({
       <header className="bg-white shadow-sm">
         <div className="max-w-md mx-auto px-4 py-4 flex justify-between items-center">
           <Logo size="small" showText={true} href="/dashboard" />
-          <button
-            onClick={handleSignOut}
-            className="text-sm text-gray-700 hover:text-gray-900"
-          >
-            Sign Out
-          </button>
+          
+          {/* Profile dropdown */}
+          <div className="relative" ref={dropdownRef}>
+            <button 
+              onClick={() => setShowDropdown(!showDropdown)}
+              className="flex items-center focus:outline-none"
+            >
+              <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center overflow-hidden border border-green-200">
+                {user.photoURL ? (
+                  <Image 
+                    src={user.photoURL} 
+                    alt="Profile" 
+                    width={32} 
+                    height={32}
+                    className="object-cover"
+                  />
+                ) : (
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-green-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                  </svg>
+                )}
+              </div>
+            </button>
+            
+            {showDropdown && (
+              <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-1 z-10">
+                <Link 
+                  href="/dashboard/profile" 
+                  className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  onClick={() => setShowDropdown(false)}
+                >
+                  Profile
+                </Link>
+                <Link 
+                  href="/dashboard/profile/settings" 
+                  className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  onClick={() => setShowDropdown(false)}
+                >
+                  Settings
+                </Link>
+                <button
+                  onClick={() => {
+                    setShowDropdown(false);
+                    handleSignOut();
+                  }}
+                  className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                >
+                  Sign Out
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </header>
 
@@ -90,18 +153,6 @@ export default function DashboardLayout({
             </Link>
             
             <Link
-              href="/dashboard/add"
-              className="flex flex-col items-center py-3 px-2 text-gray-700"
-            >
-              <div className="bg-green-600 rounded-full p-2 -mt-8 shadow-lg border-4 border-[#f8f8f5]">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                </svg>
-              </div>
-              <span className="text-xs mt-3 text-gray-800">Add</span>
-            </Link>
-            
-            <Link
               href="/dashboard/reminders"
               className="flex flex-col items-center py-3 px-2 text-gray-700"
             >
@@ -109,16 +160,6 @@ export default function DashboardLayout({
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
               <span className="text-xs mt-1 text-gray-800">Reminders</span>
-            </Link>
-            
-            <Link
-              href="/dashboard/profile"
-              className="flex flex-col items-center py-3 px-2 text-gray-700"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-              </svg>
-              <span className="text-xs mt-1 text-gray-800">Profile</span>
             </Link>
           </div>
         </div>
