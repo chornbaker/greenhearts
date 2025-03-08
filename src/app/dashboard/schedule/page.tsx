@@ -377,6 +377,9 @@ export default function Schedule() {
           <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">Coming Soon</span>
         </div>
       </div>
+      
+      {/* Add padding at the bottom to ensure content is not hidden behind the menu bar */}
+      <div className="h-24"></div>
     </div>
   );
 } 
