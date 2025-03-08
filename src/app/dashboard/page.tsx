@@ -269,9 +269,21 @@ export default function Dashboard() {
       case 'wateringPriority':
         // Group by watering status: overdue first, then by date
         const today = new Date();
+        const tomorrow = new Date(today);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        
         const overduePlants: Plant[] = [];
-        const wateringGroups: { [key: string]: Plant[] } = {};
+        const tomorrowPlants: Plant[] = [];
+        const thisWeekPlants: { [key: string]: Plant[] } = {};
+        const laterPlants: { [key: string]: Plant[] } = {};
         const noDatePlants: Plant[] = [];
+        
+        // Days of the week for formatting
+        const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+        
+        // Calculate the date one week from today
+        const oneWeekFromNow = new Date(today);
+        oneWeekFromNow.setDate(oneWeekFromNow.getDate() + 7);
         
         plants.forEach((plant) => {
           if (!plant.nextWateringDate) {
@@ -287,16 +299,34 @@ export default function Dashboard() {
             return;
           }
           
-          // Format date as key for grouping
+          // Check if tomorrow
+          if (nextWatering.getDate() === tomorrow.getDate() && 
+              nextWatering.getMonth() === tomorrow.getMonth() && 
+              nextWatering.getFullYear() === tomorrow.getFullYear()) {
+            tomorrowPlants.push(plant);
+            return;
+          }
+          
+          // Check if within a week
+          if (nextWatering < oneWeekFromNow) {
+            const dayOfWeek = daysOfWeek[nextWatering.getDay()];
+            if (!thisWeekPlants[dayOfWeek]) {
+              thisWeekPlants[dayOfWeek] = [];
+            }
+            thisWeekPlants[dayOfWeek].push(plant);
+            return;
+          }
+          
+          // Beyond a week, format with full month and day
           const dateKey = nextWatering.toLocaleDateString(undefined, { 
-            month: 'short', 
+            month: 'long', 
             day: 'numeric' 
           });
           
-          if (!wateringGroups[dateKey]) {
-            wateringGroups[dateKey] = [];
+          if (!laterPlants[dateKey]) {
+            laterPlants[dateKey] = [];
           }
-          wateringGroups[dateKey].push(plant);
+          laterPlants[dateKey].push(plant);
         });
         
         // Create groups array with overdue first, then by date
@@ -313,19 +343,41 @@ export default function Dashboard() {
           });
         }
         
-        // Add plants by watering date
-        const sortedDates = Object.keys(wateringGroups).sort((a, b) => {
-          const dateA = new Date(wateringGroups[a][0].nextWateringDate!);
-          const dateB = new Date(wateringGroups[b][0].nextWateringDate!);
-          return dateA.getTime() - dateB.getTime();
+        // Add tomorrow plants if any
+        if (tomorrowPlants.length > 0) {
+          wateringGroupsArray.push({
+            title: 'Water tomorrow',
+            plants: tomorrowPlants.sort((a, b) => a.name.localeCompare(b.name))
+          });
+        }
+        
+        // Add this week plants by day of week
+        // Get days from tomorrow until the end of the week, then days from beginning of week
+        const todayIndex = today.getDay();
+        const dayOrder = daysOfWeek.slice(todayIndex + 1).concat(daysOfWeek.slice(0, todayIndex));
+        
+        dayOrder.forEach(day => {
+          if (thisWeekPlants[day] && thisWeekPlants[day].length > 0) {
+            wateringGroupsArray.push({
+              title: `Water on ${day}`,
+              plants: thisWeekPlants[day].sort((a, b) => a.name.localeCompare(b.name))
+            });
+          }
         });
         
-        sortedDates.forEach(dateKey => {
-          wateringGroupsArray.push({
-            title: `Water on ${dateKey}`,
-            plants: wateringGroups[dateKey].sort((a, b) => a.name.localeCompare(b.name))
+        // Add later plants by date
+        Object.keys(laterPlants)
+          .sort((a, b) => {
+            const dateA = new Date(laterPlants[a][0].nextWateringDate!);
+            const dateB = new Date(laterPlants[b][0].nextWateringDate!);
+            return dateA.getTime() - dateB.getTime();
+          })
+          .forEach(dateKey => {
+            wateringGroupsArray.push({
+              title: `Water on ${dateKey}`,
+              plants: laterPlants[dateKey].sort((a, b) => a.name.localeCompare(b.name))
+            });
           });
-        });
         
         // Add plants with no watering date if any
         if (noDatePlants.length > 0) {
