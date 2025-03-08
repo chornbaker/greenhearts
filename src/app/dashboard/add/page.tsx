@@ -7,6 +7,28 @@ import { useAuth } from '@/context/AuthContext';
 import { createPlant } from '@/services/plants';
 import { PlantHealth } from '@/types';
 
+// Predefined room/space options
+const INDOOR_LOCATIONS = [
+  'Living Room',
+  'Bedroom',
+  'Kitchen',
+  'Bathroom',
+  'Office',
+  'Dining Room',
+  'Hallway',
+  'Other'
+];
+
+const OUTDOOR_LOCATIONS = [
+  'Patio',
+  'Balcony',
+  'Front Yard',
+  'Back Yard',
+  'Garden',
+  'Porch',
+  'Other'
+];
+
 export default function AddPlant() {
   const { user } = useAuth();
   const router = useRouter();
@@ -14,10 +36,17 @@ export default function AddPlant() {
   const [error, setError] = useState('');
   const [name, setName] = useState('');
   const [species, setSpecies] = useState('');
-  const [location, setLocation] = useState('Indoor');
+  const [locationType, setLocationType] = useState('Indoor');
+  const [locationSpace, setLocationSpace] = useState(INDOOR_LOCATIONS[0]);
   const [sunlight, setSunlight] = useState('Medium');
   const [soil, setSoil] = useState('Loamy');
   const [potSize, setPotSize] = useState('Medium');
+  
+  // Update location space options when location type changes
+  const handleLocationTypeChange = (type: string) => {
+    setLocationType(type);
+    setLocationSpace(type === 'Indoor' ? INDOOR_LOCATIONS[0] : OUTDOOR_LOCATIONS[0]);
+  };
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -42,13 +71,14 @@ export default function AddPlant() {
         userId: user.uid,
         name,
         species: species || undefined,
+        location: locationSpace, // Store the specific room/space
         wateringSchedule: {
           frequency: 7, // Default to weekly watering
         },
         lastWatered: new Date(),
         nextWateringDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
         health: PlantHealth.Good,
-        notes: `Location: ${location}, Sunlight: ${sunlight}, Soil: ${soil}, Pot Size: ${potSize}`,
+        notes: `Location Type: ${locationType}, Sunlight: ${sunlight}, Soil: ${soil}, Pot Size: ${potSize}`,
       });
       
       router.push('/dashboard');
@@ -102,13 +132,13 @@ export default function AddPlant() {
         
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label htmlFor="location" className="block text-sm font-medium text-gray-700 mb-1">
-              Location
+            <label htmlFor="locationType" className="block text-sm font-medium text-gray-700 mb-1">
+              Location Type
             </label>
             <select
-              id="location"
-              value={location}
-              onChange={(e) => setLocation(e.target.value)}
+              id="locationType"
+              value={locationType}
+              onChange={(e) => handleLocationTypeChange(e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500"
             >
               <option value="Indoor">Indoor</option>
@@ -116,6 +146,24 @@ export default function AddPlant() {
             </select>
           </div>
           
+          <div>
+            <label htmlFor="locationSpace" className="block text-sm font-medium text-gray-700 mb-1">
+              Room/Space
+            </label>
+            <select
+              id="locationSpace"
+              value={locationSpace}
+              onChange={(e) => setLocationSpace(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500"
+            >
+              {(locationType === 'Indoor' ? INDOOR_LOCATIONS : OUTDOOR_LOCATIONS).map((loc) => (
+                <option key={loc} value={loc}>{loc}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+        
+        <div className="grid grid-cols-2 gap-4">
           <div>
             <label htmlFor="sunlight" className="block text-sm font-medium text-gray-700 mb-1">
               Sunlight
@@ -131,9 +179,7 @@ export default function AddPlant() {
               <option value="High">High</option>
             </select>
           </div>
-        </div>
-        
-        <div className="grid grid-cols-2 gap-4">
+          
           <div>
             <label htmlFor="soil" className="block text-sm font-medium text-gray-700 mb-1">
               Soil Type
@@ -149,22 +195,22 @@ export default function AddPlant() {
               <option value="Clay">Clay</option>
             </select>
           </div>
-          
-          <div>
-            <label htmlFor="potSize" className="block text-sm font-medium text-gray-700 mb-1">
-              Pot Size
-            </label>
-            <select
-              id="potSize"
-              value={potSize}
-              onChange={(e) => setPotSize(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500"
-            >
-              <option value="Small">Small</option>
-              <option value="Medium">Medium</option>
-              <option value="Large">Large</option>
-            </select>
-          </div>
+        </div>
+        
+        <div>
+          <label htmlFor="potSize" className="block text-sm font-medium text-gray-700 mb-1">
+            Pot Size
+          </label>
+          <select
+            id="potSize"
+            value={potSize}
+            onChange={(e) => setPotSize(e.target.value)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500"
+          >
+            <option value="Small">Small</option>
+            <option value="Medium">Medium</option>
+            <option value="Large">Large</option>
+          </select>
         </div>
         
         <div className="bg-gray-50 p-4 rounded-xl border border-gray-200">

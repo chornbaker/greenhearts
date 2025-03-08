@@ -15,6 +15,7 @@ export interface Plant {
   name: string;
   species?: string;
   image?: string;
+  location?: string; // Room or space where the plant is located
   wateringSchedule: WateringSchedule;
   notes?: string;
   health?: PlantHealth;

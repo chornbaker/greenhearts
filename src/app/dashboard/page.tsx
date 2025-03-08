@@ -7,12 +7,16 @@ import { useAuth } from '@/context/AuthContext';
 import { getUserPlants } from '@/services/plants';
 import { Plant } from '@/types';
 
+// Organization view types
+type OrganizationView = 'plantHaven' | 'alphabetical' | 'wateringPriority';
+
 export default function Dashboard() {
   const { user } = useAuth();
   const [plants, setPlants] = useState<Plant[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [gardenName, setGardenName] = useState('My Garden');
+  const [organizationView, setOrganizationView] = useState<OrganizationView>('plantHaven');
 
   useEffect(() => {
     const fetchPlants = async () => {
@@ -32,28 +36,103 @@ export default function Dashboard() {
     fetchPlants();
   }, [user]);
 
-  // Placeholder plants for demo
-  const demoPlants = [
+  // Placeholder plants for demo with location information
+  const demoPlants: Plant[] = [
     {
       id: '1',
+      userId: user?.uid || 'demo-user',
       name: 'Monstera Deliciosa',
+      species: 'Monstera Deliciosa',
       image: '/images/plants-header.jpg',
+      location: 'Living Room',
+      wateringSchedule: { frequency: 7 },
+      createdAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
       lastWatered: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000), // 3 days ago
       nextWateringDate: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000), // 2 days from now
     },
     {
       id: '2',
+      userId: user?.uid || 'demo-user',
       name: 'Snake Plant',
+      species: 'Sansevieria Trifasciata',
       image: '/images/plants-header.jpg',
+      location: 'Bedroom',
+      wateringSchedule: { frequency: 14 },
+      createdAt: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000),
       lastWatered: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000), // 10 days ago
       nextWateringDate: new Date(Date.now() + 4 * 24 * 60 * 60 * 1000), // 4 days from now
     },
     {
       id: '3',
+      userId: user?.uid || 'demo-user',
       name: 'Fiddle Leaf Fig',
+      species: 'Ficus Lyrata',
       image: '/images/plants-header.jpg',
+      location: 'Living Room',
+      wateringSchedule: { frequency: 7 },
+      createdAt: new Date(Date.now() - 45 * 24 * 60 * 60 * 1000),
       lastWatered: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000), // 5 days ago
       nextWateringDate: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000), // 1 day ago (needs water)
+    },
+    {
+      id: '4',
+      userId: user?.uid || 'demo-user',
+      name: 'Pothos',
+      species: 'Epipremnum Aureum',
+      image: '/images/plants-header.jpg',
+      location: 'Kitchen',
+      wateringSchedule: { frequency: 7 },
+      createdAt: new Date(Date.now() - 20 * 24 * 60 * 60 * 1000),
+      lastWatered: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), // 7 days ago
+      nextWateringDate: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000), // 1 day from now
+    },
+    {
+      id: '5',
+      userId: user?.uid || 'demo-user',
+      name: 'Aloe Vera',
+      species: 'Aloe Vera',
+      image: '/images/plants-header.jpg',
+      location: 'Bathroom',
+      wateringSchedule: { frequency: 21 },
+      createdAt: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000),
+      lastWatered: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000), // 14 days ago
+      nextWateringDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days from now
+    },
+    {
+      id: '6',
+      userId: user?.uid || 'demo-user',
+      name: 'ZZ Plant',
+      species: 'Zamioculcas Zamiifolia',
+      image: '/images/plants-header.jpg',
+      location: 'Office',
+      wateringSchedule: { frequency: 30 },
+      createdAt: new Date(Date.now() - 120 * 24 * 60 * 60 * 1000),
+      lastWatered: new Date(Date.now() - 20 * 24 * 60 * 60 * 1000), // 20 days ago
+      nextWateringDate: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000), // 10 days from now
+    },
+    {
+      id: '7',
+      userId: user?.uid || 'demo-user',
+      name: 'Boston Fern',
+      species: 'Nephrolepis Exaltata',
+      image: '/images/plants-header.jpg',
+      location: 'Patio',
+      wateringSchedule: { frequency: 3 },
+      createdAt: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000),
+      lastWatered: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000), // 2 days ago
+      nextWateringDate: new Date(Date.now() - 0.5 * 24 * 60 * 60 * 1000), // 12 hours ago (needs water)
+    },
+    {
+      id: '8',
+      userId: user?.uid || 'demo-user',
+      name: 'Jade Plant',
+      species: 'Crassula Ovata',
+      image: '/images/plants-header.jpg',
+      location: 'Backyard',
+      wateringSchedule: { frequency: 30 },
+      createdAt: new Date(Date.now() - 180 * 24 * 60 * 60 * 1000),
+      lastWatered: new Date(Date.now() - 25 * 24 * 60 * 60 * 1000), // 25 days ago
+      nextWateringDate: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000), // 5 days from now
     },
   ];
 
@@ -67,10 +146,105 @@ export default function Dashboard() {
     return plant.nextWateringDate <= today;
   });
 
+  // Organize plants based on selected view
+  const getOrganizedPlants = () => {
+    switch (organizationView) {
+      case 'alphabetical':
+        return [...displayPlants].sort((a, b) => a.name.localeCompare(b.name));
+      
+      case 'wateringPriority':
+        return [...displayPlants].sort((a, b) => {
+          if (!a.nextWateringDate) return 1;
+          if (!b.nextWateringDate) return -1;
+          return a.nextWateringDate.getTime() - b.nextWateringDate.getTime();
+        });
+      
+      case 'plantHaven':
+      default:
+        // Group by location
+        const plantsByLocation: Record<string, Plant[]> = {};
+        
+        displayPlants.forEach(plant => {
+          const location = plant.location || 'Unassigned';
+          if (!plantsByLocation[location]) {
+            plantsByLocation[location] = [];
+          }
+          plantsByLocation[location].push(plant);
+        });
+        
+        return plantsByLocation;
+    }
+  };
+
+  const organizedPlants = getOrganizedPlants();
+
+  // Get view title based on selected organization
+  const getViewTitle = () => {
+    switch (organizationView) {
+      case 'alphabetical':
+        return 'Alphabetical View';
+      case 'wateringPriority':
+        return 'Watering Priority';
+      case 'plantHaven':
+      default:
+        return 'Plant Haven';
+    }
+  };
+
+  // Render a single plant card
+  const renderPlantCard = (plant: Plant, index: number) => (
+    <Link 
+      key={plant.id} 
+      href={`/dashboard/plants/${plant.id}`}
+      className="bg-white rounded-2xl overflow-hidden shadow-sm flex flex-col"
+    >
+      <div className="h-24 relative">
+        {plant.image && (
+          <Image 
+            src={plant.image} 
+            alt={plant.name} 
+            fill 
+            sizes="(max-width: 768px) 33vw, 96px"
+            priority={index === 0}
+            style={{ objectFit: 'cover' }}
+          />
+        )}
+      </div>
+      <div className="p-2 text-center">
+        <p className="text-xs font-medium text-gray-800 truncate">{plant.name}</p>
+        {organizationView === 'plantHaven' && plant.location && (
+          <p className="text-xs text-gray-500 truncate">{plant.location}</p>
+        )}
+        {organizationView === 'wateringPriority' && plant.nextWateringDate && (
+          <p className={`text-xs ${plant.nextWateringDate <= new Date() ? 'text-red-500' : 'text-gray-500'} truncate`}>
+            {plant.nextWateringDate <= new Date() 
+              ? 'Overdue' 
+              : `Water in ${Math.ceil((plant.nextWateringDate.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))} days`}
+          </p>
+        )}
+      </div>
+    </Link>
+  );
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold text-green-800">{gardenName}</h1>
+        
+        {/* Organization selector */}
+        <div className="flex items-center space-x-2">
+          <label htmlFor="organization" className="text-sm text-gray-600">View:</label>
+          <select
+            id="organization"
+            value={organizationView}
+            onChange={(e) => setOrganizationView(e.target.value as OrganizationView)}
+            className="text-sm border border-gray-300 rounded-lg px-2 py-1 bg-white focus:outline-none focus:ring-2 focus:ring-green-500"
+          >
+            <option value="plantHaven">Plant Haven</option>
+            <option value="alphabetical">Alphabetical</option>
+            <option value="wateringPriority">Watering Priority</option>
+          </select>
+        </div>
       </div>
 
       {error && (
@@ -121,34 +295,34 @@ export default function Dashboard() {
 
           {/* Plant collection */}
           <div>
-            <h2 className="text-lg font-semibold text-green-800 mb-3">My Plants</h2>
-            <div className="grid grid-cols-3 gap-3">
-              {displayPlants.map((plant, index) => (
-                <Link 
-                  key={plant.id} 
-                  href={`/dashboard/plants/${plant.id}`}
-                  className="bg-white rounded-2xl overflow-hidden shadow-sm flex flex-col"
-                >
-                  <div className="h-24 relative">
-                    {plant.image && (
-                      <Image 
-                        src={plant.image} 
-                        alt={plant.name} 
-                        fill 
-                        sizes="(max-width: 768px) 33vw, 96px"
-                        priority={false}
-                        style={{ objectFit: 'cover' }}
-                      />
-                    )}
+            <h2 className="text-lg font-semibold text-green-800 mb-3">{getViewTitle()}</h2>
+            
+            {/* Plant Haven View (Grouped by Location) */}
+            {organizationView === 'plantHaven' && (
+              <div className="space-y-6">
+                {Object.entries(organizedPlants as Record<string, Plant[]>).map(([location, plants]) => (
+                  <div key={location} className="space-y-2">
+                    <h3 className="text-md font-medium text-green-700">{location}</h3>
+                    <div className="grid grid-cols-3 gap-3">
+                      {plants.map((plant, index) => renderPlantCard(plant, index))}
+                    </div>
                   </div>
-                  <div className="p-2 text-center">
-                    <p className="text-xs font-medium text-gray-800 truncate">{plant.name}</p>
-                  </div>
-                </Link>
-              ))}
+                ))}
+              </div>
+            )}
+            
+            {/* Alphabetical or Watering Priority Views */}
+            {(organizationView === 'alphabetical' || organizationView === 'wateringPriority') && (
+              <div className="grid grid-cols-3 gap-3">
+                {(organizedPlants as Plant[]).map((plant, index) => renderPlantCard(plant, index))}
+              </div>
+            )}
+            
+            {/* Add Plant Button */}
+            <div className="mt-4">
               <Link 
                 href="/dashboard/add"
-                className="bg-gray-50 rounded-2xl overflow-hidden shadow-sm flex flex-col items-center justify-center h-full aspect-square"
+                className="bg-gray-50 rounded-2xl overflow-hidden shadow-sm flex flex-col items-center justify-center h-24 w-full"
               >
                 <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center mb-1">
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
