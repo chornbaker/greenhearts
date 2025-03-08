@@ -77,21 +77,40 @@ export default function DashboardLayout({
           <div className="relative" ref={dropdownRef}>
             <button 
               onClick={() => setShowDropdown(!showDropdown)}
-              className="flex items-center focus:outline-none focus:ring-2 focus:ring-green-500 rounded-full"
+              className="flex items-center focus:outline-none"
               aria-label="Profile menu"
+              style={{ 
+                WebkitTapHighlightColor: 'transparent' // Prevent tap highlight on mobile Safari
+              }}
             >
-              <div className="w-9 h-9 rounded-full bg-green-100 flex items-center justify-center overflow-hidden border-2 border-green-500 shadow-sm">
+              {/* Safari-compatible styling with inline styles for consistency */}
+              <div 
+                style={{
+                  width: '40px',
+                  height: '40px',
+                  borderRadius: '50%',
+                  backgroundColor: '#f0fdf4', // Light green background
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  overflow: 'hidden',
+                  border: '2px solid #22c55e', // Green-500 equivalent
+                  boxShadow: '0 1px 2px rgba(0, 0, 0, 0.05)'
+                }}
+              >
                 {user && user.photoURL && !imageError ? (
-                  <Image 
-                    src={user.photoURL} 
-                    alt="Profile" 
-                    width={32} 
-                    height={32}
-                    className="object-cover"
-                    onError={() => setImageError(true)}
-                  />
+                  <div style={{ width: '32px', height: '32px', position: 'relative' }}>
+                    <Image 
+                      src={user.photoURL} 
+                      alt="Profile" 
+                      width={32} 
+                      height={32}
+                      className="rounded-full object-cover"
+                      onError={() => setImageError(true)}
+                    />
+                  </div>
                 ) : (
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-green-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <svg xmlns="http://www.w3.org/2000/svg" style={{ width: '20px', height: '20px', color: '#15803d' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                   </svg>
                 )}
@@ -99,11 +118,29 @@ export default function DashboardLayout({
             </button>
             
             {showDropdown && (
-              <div className="absolute right-0 mt-2 min-w-[160px] w-auto whitespace-nowrap bg-white rounded-lg shadow-lg py-1 z-10 border border-gray-100">
+              <div 
+                style={{
+                  position: 'absolute',
+                  right: 0,
+                  marginTop: '8px',
+                  minWidth: '180px',
+                  width: 'auto',
+                  whiteSpace: 'nowrap',
+                  backgroundColor: 'white',
+                  borderRadius: '0.5rem',
+                  boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+                  padding: '4px 0',
+                  zIndex: 10,
+                  border: '1px solid #f3f4f6'
+                }}
+              >
                 <Link 
                   href="/dashboard/profile" 
                   className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                   onClick={() => setShowDropdown(false)}
+                  style={{ display: 'block', padding: '8px 16px', fontSize: '0.875rem', color: '#374151' }}
+                  onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#f3f4f6'}
+                  onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
                 >
                   Profile
                 </Link>
@@ -113,6 +150,19 @@ export default function DashboardLayout({
                     handleSignOut();
                   }}
                   className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  style={{ 
+                    display: 'block', 
+                    width: '100%', 
+                    textAlign: 'left', 
+                    padding: '8px 16px', 
+                    fontSize: '0.875rem', 
+                    color: '#374151',
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer'
+                  }}
+                  onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#f3f4f6'}
+                  onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
                 >
                   Sign Out
                 </button>
