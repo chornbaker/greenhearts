@@ -5,18 +5,42 @@ import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plant, PlantHealth } from '@/types';
 import { updatePlant, waterPlant } from '@/services/plants';
+import AutocompleteInput from '@/components/AutocompleteInput';
+
+// Predefined room/space options
+const INDOOR_LOCATIONS = [
+  'Living Room',
+  'Bedroom',
+  'Kitchen',
+  'Bathroom',
+  'Office',
+  'Dining Room',
+  'Hallway',
+  'Other'
+];
+
+const OUTDOOR_LOCATIONS = [
+  'Patio',
+  'Balcony',
+  'Front Yard',
+  'Back Yard',
+  'Garden',
+  'Porch',
+  'Other'
+];
 
 // Water droplet icon component
 const WaterDropIcon = ({ className = "h-5 w-5" }: { className?: string }) => (
   <div 
-    className={className} 
+    className={className}
     style={{ 
-      display: 'flex', 
+      display: 'inline-flex',
       alignItems: 'center', 
       justifyContent: 'center',
+      lineHeight: 1
     }}
   >
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style={{ width: '100%', height: '100%'}}>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style={{ width: '100%', height: '100%', display: 'block' }}>
       <path d="M12 2.5c-1.7 2.3-6 7.6-6 11.5 0 3.3 2.7 6 6 6s6-2.7 6-6c0-3.9-4.3-9.2-6-11.5z" />
     </svg>
   </div>
@@ -46,6 +70,16 @@ enum ExpansionState {
   Expanded = 1,
   FullyExpanded = 2,
 }
+
+// Get location options based on current location
+const getLocationOptions = (currentLocation: string) => {
+  // Check if current location is in outdoor locations
+  if (OUTDOOR_LOCATIONS.includes(currentLocation)) {
+    return OUTDOOR_LOCATIONS;
+  }
+  // Default to indoor locations
+  return INDOOR_LOCATIONS;
+};
 
 export default function ExpandableCard({ plant, onWater, onUpdate, organizationView }: ExpandableCardProps) {
   const [expansionState, setExpansionState] = useState<ExpansionState>(ExpansionState.Collapsed);
@@ -110,10 +144,10 @@ export default function ExpandableCard({ plant, onWater, onUpdate, organizationV
           <div className="flex items-center space-x-2 mt-1">
             <div className="flex items-center">
               <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 text-green-500 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
               </svg>
               <span className="text-xs text-gray-500">
-                {plant.health ? plant.health.charAt(0).toUpperCase() + plant.health.slice(1) : 'No health data'}
+                {plant.health ? plant.health.charAt(0).toUpperCase() + plant.health.slice(1).toLowerCase() : 'No health data'}
               </span>
             </div>
             <div className="flex items-center">
@@ -142,10 +176,10 @@ export default function ExpandableCard({ plant, onWater, onUpdate, organizationV
           <div className="flex items-center space-x-2 mt-1">
             <div className="flex items-center">
               <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 text-green-500 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
               </svg>
               <span className="text-xs text-gray-500">
-                {plant.health ? plant.health.charAt(0).toUpperCase() + plant.health.slice(1) : 'No health data'}
+                {plant.health ? plant.health.charAt(0).toUpperCase() + plant.health.slice(1).toLowerCase() : 'No health data'}
               </span>
             </div>
             <div className="flex items-center">
@@ -174,8 +208,8 @@ export default function ExpandableCard({ plant, onWater, onUpdate, organizationV
               </span>
             </div>
             <div className="flex items-center">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 text-blue-500 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 2.5c-1.7 2.3-6 7.6-6 11.5 0 3.3 2.7 6 6 6s6-2.7 6-6c0-3.9-4.3-9.2-6-11.5z" />
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 text-green-500 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
               </svg>
               <span className={`text-xs ${isOverdue ? 'text-red-500' : 'text-gray-500'}`}>
                 {daysUntilWatering === null 
@@ -507,7 +541,7 @@ export default function ExpandableCard({ plant, onWater, onUpdate, organizationV
               {/* Water button for plants that need water - moved here */}
               {needsWater && (
                 <motion.button
-                  className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center shadow-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                  className="w-10 h-10 bg-blue-500 rounded-full inline-flex items-center justify-center shadow-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400"
                   onClick={handleWaterClick}
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.9 }}
@@ -515,7 +549,12 @@ export default function ExpandableCard({ plant, onWater, onUpdate, organizationV
                   onMouseEnter={() => setShowWaterTooltip(true)}
                   onMouseLeave={() => setShowWaterTooltip(false)}
                   aria-label="Mark as watered"
-                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                  style={{ 
+                    display: 'inline-flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'center',
+                    lineHeight: 1
+                  }}
                 >
                   <WaterDropIcon className="h-6 w-6 text-white" />
                   
@@ -634,7 +673,7 @@ export default function ExpandableCard({ plant, onWater, onUpdate, organizationV
                           onClick={handleHealthClick}
                           className="font-medium text-gray-700 hover:text-blue-500 mt-1 block"
                         >
-                          {plant.health || 'Unknown'}
+                          {plant.health ? plant.health.charAt(0).toUpperCase() + plant.health.slice(1).toLowerCase() : 'Unknown'}
                         </button>
                       )}
                     </div>
@@ -686,7 +725,7 @@ export default function ExpandableCard({ plant, onWater, onUpdate, organizationV
               {/* Water button for plants that need water - moved here */}
               {needsWater && (
                 <motion.button
-                  className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center shadow-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                  className="w-10 h-10 bg-blue-500 rounded-full inline-flex items-center justify-center shadow-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400"
                   onClick={handleWaterClick}
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.9 }}
@@ -694,7 +733,12 @@ export default function ExpandableCard({ plant, onWater, onUpdate, organizationV
                   onMouseEnter={() => setShowWaterTooltip(true)}
                   onMouseLeave={() => setShowWaterTooltip(false)}
                   aria-label="Mark as watered"
-                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                  style={{ 
+                    display: 'inline-flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'center',
+                    lineHeight: 1
+                  }}
                 >
                   <WaterDropIcon className="h-6 w-6 text-white" />
                   
@@ -737,13 +781,11 @@ export default function ExpandableCard({ plant, onWater, onUpdate, organizationV
                 <h3 className="text-sm font-medium text-gray-500 mb-1">Location</h3>
                 {isEditingLocation ? (
                   <form onSubmit={handleLocationUpdate} onClick={handleFormClick} className="mt-1">
-                    <input
-                      ref={locationInputRef}
-                      type="text"
+                    <AutocompleteInput
                       value={editedLocation}
-                      onChange={handleLocationChange}
-                      className="w-full p-2 text-sm border border-gray-300 rounded"
-                      placeholder="Enter location"
+                      onChange={setEditedLocation}
+                      options={getLocationOptions(plant.location || '')}
+                      placeholder="Enter or select a room/space"
                     />
                     <div className="flex gap-2 mt-2">
                       <button
@@ -810,7 +852,7 @@ export default function ExpandableCard({ plant, onWater, onUpdate, organizationV
                     onClick={handleHealthClick}
                     className="text-gray-800 hover:text-blue-500"
                   >
-                    {plant.health || 'Unknown'}
+                    {plant.health ? plant.health.charAt(0).toUpperCase() + plant.health.slice(1).toLowerCase() : 'Unknown'}
                   </button>
                 )}
               </div>

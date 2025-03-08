@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { useAuth } from '@/context/AuthContext';
 import { getUserPlants, waterPlant as waterPlantService } from '@/services/plants';
 import { Plant } from '@/types';
+import { useWaterMessages } from '@/context/WaterMessageContext';
 
 // Water droplet icon component
 const WaterDropIcon = ({ className = "h-5 w-5" }: { className?: string }) => (
@@ -24,6 +25,7 @@ const WaterDropIcon = ({ className = "h-5 w-5" }: { className?: string }) => (
 
 export default function Schedule() {
   const { user } = useAuth();
+  const { getWaterMessage, generateDailyMessages } = useWaterMessages();
   const [plants, setPlants] = useState<Plant[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -38,6 +40,18 @@ export default function Schedule() {
       try {
         const userPlants = await getUserPlants(user.uid);
         setPlants(userPlants);
+        
+        // Generate messages for plants that need watering today
+        const plantsNeedingWater = userPlants.filter(plant => {
+          if (!plant.nextWateringDate) return false;
+          const wateringDate = new Date(plant.nextWateringDate);
+          const today = new Date();
+          wateringDate.setHours(0, 0, 0, 0);
+          today.setHours(0, 0, 0, 0);
+          return wateringDate <= today;
+        });
+        
+        generateDailyMessages(plantsNeedingWater);
       } catch (error) {
         console.error('Error fetching plants:', error);
         setError('Failed to load your plants. Please try again later.');
@@ -47,7 +61,7 @@ export default function Schedule() {
     };
 
     fetchPlants();
-  }, [user]);
+  }, [user, generateDailyMessages]);
 
   // Generate dates for the next 14 days
   const dates = Array.from({ length: 14 }, (_, i) => {
@@ -256,45 +270,85 @@ export default function Schedule() {
                 {plantsToWater.map((plant) => (
                   <div 
                     key={plant.id} 
-                    className="bg-white rounded-2xl overflow-hidden shadow-sm p-4"
+                    className="bg-white rounded-2xl overflow-hidden shadow-sm flex"
                   >
-                    <div className="flex items-center">
-                      <div className="w-14 h-14 bg-green-100 rounded-xl overflow-hidden relative mr-4">
-                        {plant.image && (
-                          <Image 
-                            src={plant.image} 
-                            alt={plant.name} 
-                            fill 
-                            sizes="(max-width: 768px) 33vw, 56px"
-                            priority={plantsToWater.indexOf(plant) === 0}
-                            style={{ objectFit: 'cover' }}
-                          />
-                        )}
-                      </div>
+                    <div className="w-24 bg-green-100 relative">
+                      {plant.image && (
+                        <Image 
+                          src={plant.image} 
+                          alt={plant.name} 
+                          fill 
+                          sizes="(max-width: 768px) 33vw, 96px"
+                          priority={plantsToWater.indexOf(plant) === 0}
+                          style={{ objectFit: 'cover' }}
+                        />
+                      )}
+                    </div>
+                    <div className="flex-1 p-4">
                       <div className="flex-1">
                         <h3 className="font-medium text-gray-800">{plant.name}</h3>
-                        <p className="text-xs text-gray-500">{plant.species}</p>
-                        <p className="text-xs text-green-600 mt-1">
-                          {selectedDay === 0 && plant.nextWateringDate && new Date() > plant.nextWateringDate 
-                            ? 'Watering overdue' 
-                            : `Water every ${plant.wateringSchedule.frequency} days`
-                          }
-                        </p>
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-xs text-gray-500">{plant.species}</p>
+                            {selectedDay === 0 && (
+                              <p className={`text-xs mt-1 ${
+                                (() => {
+                                  const today = new Date();
+                                  today.setHours(0, 0, 0, 0);
+                                  const nextWatering = new Date(plant.nextWateringDate!);
+                                  nextWatering.setHours(0, 0, 0, 0);
+                                  const isToday = nextWatering.getTime() === today.getTime();
+                                  return isToday ? 'text-green-600' : 'text-red-600';
+                                })()
+                              }`}>
+                                {(() => {
+                                  const today = new Date();
+                                  today.setHours(0, 0, 0, 0);
+                                  const nextWatering = new Date(plant.nextWateringDate!);
+                                  nextWatering.setHours(0, 0, 0, 0);
+                                  const isToday = nextWatering.getTime() === today.getTime();
+                                  
+                                  if (isToday) {
+                                    return 'Water Today';
+                                  } else {
+                                    const diffTime = today.getTime() - nextWatering.getTime();
+                                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                                    return diffDays === 1 ? '1 day overdue' : `${diffDays} days overdue`;
+                                  }
+                                })()}
+                              </p>
+                            )}
+                            {selectedDay !== 0 && (
+                              <p className="text-xs mt-1 text-green-600">
+                                Water every {plant.wateringSchedule.frequency} days
+                              </p>
+                            )}
+                          </div>
+                          <button
+                            onClick={() => handleWaterPlant(plant.id)}
+                            disabled={wateringPlant === plant.id}
+                            className={`
+                              w-10 h-10 rounded-full flex items-center justify-center ml-4
+                              ${wateringPlant === plant.id 
+                                ? 'bg-blue-300' 
+                                : 'bg-blue-500 hover:bg-blue-600'
+                              }
+                            `}
+                            aria-label="Water plant"
+                          >
+                            <WaterDropIcon className={`h-5 w-5 ${wateringPlant === plant.id ? 'text-blue-800' : 'text-white'}`} />
+                          </button>
+                        </div>
+                        {/* Add water message */}
+                        {selectedDay === 0 && getWaterMessage(plant) && (
+                          <div className="mt-2 bg-gray-50 rounded-lg p-3">
+                            <p className="text-sm text-gray-600 italic relative pl-2">
+                              <span className="absolute left-0 top-0 text-gray-400">"</span>
+                              {getWaterMessage(plant)}
+                            </p>
+                          </div>
+                        )}
                       </div>
-                      <button
-                        onClick={() => handleWaterPlant(plant.id)}
-                        disabled={wateringPlant === plant.id}
-                        className={`
-                          w-10 h-10 rounded-full flex items-center justify-center
-                          ${wateringPlant === plant.id 
-                            ? 'bg-blue-300' 
-                            : 'bg-blue-500 hover:bg-blue-600'
-                          }
-                        `}
-                        aria-label="Water plant"
-                      >
-                        <WaterDropIcon className={`h-5 w-5 ${wateringPlant === plant.id ? 'text-blue-800' : 'text-white'}`} />
-                      </button>
                     </div>
                   </div>
                 ))}
@@ -319,36 +373,38 @@ export default function Schedule() {
                 </div>
                 <div className="divide-y divide-gray-100">
                   {event.plants.map((plant) => (
-                    <div key={plant.id} className="p-4 flex items-center">
-                      <div className="w-12 h-12 bg-green-100 rounded-lg overflow-hidden relative mr-3">
+                    <div key={plant.id} className="flex bg-white rounded-2xl overflow-hidden shadow-sm">
+                      <div className="w-20 bg-green-100 relative">
                         {plant.image && (
                           <Image 
                             src={plant.image} 
                             alt={plant.name} 
                             fill 
-                            sizes="(max-width: 768px) 33vw, 48px"
+                            sizes="(max-width: 768px) 33vw, 80px"
                             style={{ objectFit: 'cover' }}
                           />
                         )}
                       </div>
-                      <div className="flex-1">
-                        <h4 className="font-medium text-gray-800">{plant.name}</h4>
-                        <p className="text-xs text-gray-500">{plant.species}</p>
+                      <div className="flex-1 p-4 flex items-center">
+                        <div className="flex-1">
+                          <h4 className="font-medium text-gray-800">{plant.name}</h4>
+                          <p className="text-xs text-gray-500">{plant.species}</p>
+                        </div>
+                        <button
+                          onClick={() => handleWaterPlant(plant.id)}
+                          disabled={wateringPlant === plant.id}
+                          className={`
+                            w-8 h-8 rounded-full flex items-center justify-center
+                            ${wateringPlant === plant.id 
+                              ? 'bg-blue-300' 
+                              : 'bg-blue-500 hover:bg-blue-600'
+                            }
+                          `}
+                          aria-label="Water plant"
+                        >
+                          <WaterDropIcon className={`h-4 w-4 ${wateringPlant === plant.id ? 'text-blue-800' : 'text-white'}`} />
+                        </button>
                       </div>
-                      <button
-                        onClick={() => handleWaterPlant(plant.id)}
-                        disabled={wateringPlant === plant.id}
-                        className={`
-                          w-8 h-8 rounded-full flex items-center justify-center
-                          ${wateringPlant === plant.id 
-                            ? 'bg-blue-300' 
-                            : 'bg-blue-500 hover:bg-blue-600'
-                          }
-                        `}
-                        aria-label="Water plant"
-                      >
-                        <WaterDropIcon className={`h-4 w-4 ${wateringPlant === plant.id ? 'text-blue-800' : 'text-white'}`} />
-                      </button>
                     </div>
                   ))}
                 </div>

@@ -25,6 +25,7 @@ export interface Plant {
   personalityType?: string; // Plant personality type
   bio?: string; // Plant bio/description
   careInstructions?: CareInstructions; // New field for care instructions
+  userDisplayName?: string;
 }
 
 export interface WateringSchedule {

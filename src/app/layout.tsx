@@ -6,6 +6,7 @@ import "./globals.css";
 import { AuthProvider } from "@/context/AuthContext";
 import { WaterReminderProvider } from '@/context/WaterReminderContext';
 import { metadata } from "./metadata";
+import { WaterMessageProvider } from '@/context/WaterMessageContext';
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -40,9 +41,11 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} ${figtree.variable} antialiased`}
       >
         <AuthProvider>
-          <WaterReminderProvider>
-            {children}
-          </WaterReminderProvider>
+          <WaterMessageProvider>
+            <WaterReminderProvider>
+              {children}
+            </WaterReminderProvider>
+          </WaterMessageProvider>
         </AuthProvider>
       </body>
     </html>

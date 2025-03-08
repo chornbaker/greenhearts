@@ -84,11 +84,14 @@ export default function Dashboard() {
     }
   }, [plants, loading, router, user]);
 
-  // Plants that need watering (past due)
+  // Plants that need watering (past due or due today)
   const plantsNeedingWater = plants.filter((plant) => {
     if (!plant.nextWateringDate) return false;
     const today = new Date();
-    return plant.nextWateringDate <= today;
+    today.setHours(0, 0, 0, 0);
+    const nextWatering = new Date(plant.nextWateringDate);
+    nextWatering.setHours(0, 0, 0, 0);
+    return nextWatering <= today;
   });
 
   // Handle watering a plant
@@ -269,10 +272,14 @@ export default function Dashboard() {
       case 'wateringPriority':
         // Group by watering status: overdue first, then by date
         const today = new Date();
+        today.setHours(0, 0, 0, 0);
         const tomorrow = new Date(today);
         tomorrow.setDate(tomorrow.getDate() + 1);
+        const yesterday = new Date(today);
+        yesterday.setDate(yesterday.getDate() - 1);
         
         const overduePlants: Plant[] = [];
+        const todayPlants: Plant[] = [];
         const tomorrowPlants: Plant[] = [];
         const thisWeekPlants: { [key: string]: Plant[] } = {};
         const laterPlants: { [key: string]: Plant[] } = {};
@@ -292,17 +299,22 @@ export default function Dashboard() {
           }
           
           const nextWatering = new Date(plant.nextWateringDate);
+          nextWatering.setHours(0, 0, 0, 0);
           
-          // Check if overdue
-          if (nextWatering < today) {
+          // Check if overdue (due yesterday or earlier)
+          if (nextWatering <= yesterday) {
             overduePlants.push(plant);
             return;
           }
           
+          // Check if due today
+          if (nextWatering.getTime() === today.getTime()) {
+            todayPlants.push(plant);
+            return;
+          }
+          
           // Check if tomorrow
-          if (nextWatering.getDate() === tomorrow.getDate() && 
-              nextWatering.getMonth() === tomorrow.getMonth() && 
-              nextWatering.getFullYear() === tomorrow.getFullYear()) {
+          if (nextWatering.getTime() === tomorrow.getTime()) {
             tomorrowPlants.push(plant);
             return;
           }
@@ -340,6 +352,14 @@ export default function Dashboard() {
               // Sort overdue plants by most overdue first
               return a.nextWateringDate!.getTime() - b.nextWateringDate!.getTime();
             })
+          });
+        }
+
+        // Add today's plants if any
+        if (todayPlants.length > 0) {
+          wateringGroupsArray.push({
+            title: 'Water Today',
+            plants: todayPlants.sort((a, b) => a.name.localeCompare(b.name))
           });
         }
         
@@ -439,7 +459,14 @@ export default function Dashboard() {
     if (!plant.nextWateringDate) return 0;
     
     const today = new Date();
+    today.setHours(0, 0, 0, 0);
     const nextWatering = new Date(plant.nextWateringDate);
+    nextWatering.setHours(0, 0, 0, 0);
+    
+    // If due today, not overdue
+    if (nextWatering.getTime() === today.getTime()) {
+      return 0;
+    }
     
     // Calculate difference in days
     const diffTime = today.getTime() - nextWatering.getTime();
@@ -566,46 +593,57 @@ export default function Dashboard() {
         <div className="bg-amber-50 p-4 rounded-2xl border border-amber-200 mb-6">
           <h2 className="text-lg font-semibold text-amber-800 mb-3">Your Plants are Thirsty...</h2>
           <div className="space-y-3">
-            {plantsNeedingWater.map((plant) => (
-              <div key={plant.id} className="flex items-center gap-3 bg-white bg-opacity-50 p-3 rounded-xl">
-                <div className="w-12 h-12 bg-amber-100 rounded-full overflow-hidden relative">
-                  {plant.image && (
-                    <Image 
-                      src={plant.image} 
-                      alt={plant.name} 
-                      fill 
-                      sizes="(max-width: 768px) 33vw, 96px"
-                      style={{ objectFit: 'cover' }}
-                    />
-                  )}
-                </div>
-                <div className="flex-1">
-                  <p className="font-medium text-gray-800">{plant.name}</p>
-                  <p className="text-xs text-red-600">
-                    {getDaysOverdue(plant) === 1 
-                      ? '1 day overdue' 
-                      : `${getDaysOverdue(plant)} days overdue`}
-                  </p>
-                  {thirstyMessages[plant.id] && (
-                    <p className="text-xs text-gray-600 italic mt-1">
-                      {thirstyMessages[plant.id]}
+            {plantsNeedingWater.map((plant) => {
+              const today = new Date();
+              today.setHours(0, 0, 0, 0);
+              const nextWatering = new Date(plant.nextWateringDate!);
+              nextWatering.setHours(0, 0, 0, 0);
+              const isToday = nextWatering.getTime() === today.getTime();
+              
+              return (
+                <div key={plant.id} className="flex items-center gap-3 bg-white bg-opacity-50 p-3 rounded-xl">
+                  <div className="w-12 h-12 bg-amber-100 rounded-full overflow-hidden relative">
+                    {plant.image && (
+                      <Image 
+                        src={plant.image} 
+                        alt={plant.name} 
+                        fill 
+                        sizes="(max-width: 768px) 33vw, 96px"
+                        style={{ objectFit: 'cover' }}
+                      />
+                    )}
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-medium text-gray-800">{plant.name}</p>
+                    <p className={`text-xs ${isToday ? 'text-green-600' : 'text-red-600'}`}>
+                      {isToday 
+                        ? 'Water Today'
+                        : getDaysOverdue(plant) === 1 
+                          ? '1 day overdue' 
+                          : `${getDaysOverdue(plant)} days overdue`
+                      }
                     </p>
-                  )}
+                    {thirstyMessages[plant.id] && (
+                      <p className="text-xs text-gray-600 italic mt-1">
+                        {thirstyMessages[plant.id]}
+                      </p>
+                    )}
+                  </div>
+                  <button 
+                    className="bg-blue-500 hover:bg-blue-600 text-white h-8 w-8 rounded-full flex items-center justify-center"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      handleWaterPlant(plant.id);
+                    }}
+                    aria-label="Water plant"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M12 2.5c-1.7 2.3-6 7.6-6 11.5 0 3.3 2.7 6 6 6s6-2.7 6-6c0-3.9-4.3-9.2-6-11.5z" />
+                    </svg>
+                  </button>
                 </div>
-                <button 
-                  className="bg-blue-500 hover:bg-blue-600 text-white h-8 w-8 rounded-full flex items-center justify-center"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    handleWaterPlant(plant.id);
-                  }}
-                  aria-label="Water plant"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M12 2.5c-1.7 2.3-6 7.6-6 11.5 0 3.3 2.7 6 6 6s6-2.7 6-6c0-3.9-4.3-9.2-6-11.5z" />
-                  </svg>
-                </button>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       }

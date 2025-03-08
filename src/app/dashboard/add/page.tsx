@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Fragment } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { createPlant } from '@/services/plants';
@@ -12,6 +12,7 @@ import ButtonSelector from '@/components/ButtonSelector';
 import AutocompleteInput from '@/components/AutocompleteInput';
 import DateSelector from '@/components/DateSelector';
 import PhotoUploader from '@/components/PhotoUploader';
+import { Combobox, Transition } from '@headlessui/react';
 
 // Predefined room/space options
 const INDOOR_LOCATIONS = [
@@ -46,6 +47,13 @@ const PERSONALITIES = [
   { value: 'adventurous', label: 'Adventurous' },
   { value: 'wise', label: 'Wise' }
 ];
+
+// Add type for Combobox event handlers
+type ComboboxInputEvent = React.ChangeEvent<HTMLInputElement>;
+type ComboboxOptionRenderProp = {
+  selected: boolean;
+  active: boolean;
+};
 
 export default function AddPlant() {
   const { user } = useAuth();
@@ -309,16 +317,18 @@ export default function AddPlant() {
           containerClassName="w-full"
         />
         
-        {/* Room/Space Autocomplete - Now Optional */}
-        <AutocompleteInput
-          label="Room/Space"
-          value={locationSpace}
-          onChange={setLocationSpace}
-          options={getLocationOptions()}
-          placeholder="Enter or select a room/space (optional)"
-          containerClassName="w-full"
-          required={false}
-        />
+        {/* Room/Space AutocompleteInput */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Room/Space
+          </label>
+          <AutocompleteInput
+            value={locationSpace}
+            onChange={setLocationSpace}
+            options={getLocationOptions()}
+            placeholder="Enter or select a room/space"
+          />
+        </div>
         
         {/* Sunlight Buttons */}
         <ButtonSelector
