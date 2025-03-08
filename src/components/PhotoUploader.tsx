@@ -18,10 +18,8 @@ export default function PhotoUploader({
   aspectRatio = 'square'
 }: PhotoUploaderProps) {
   const [photoUrl, setPhotoUrl] = useState<string | null>(currentPhotoUrl || null);
-  const [showOptions, setShowOptions] = useState<boolean>(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const cameraInputRef = useRef<HTMLInputElement>(null);
-  const optionsRef = useRef<HTMLDivElement>(null);
+  const [isMobile, setIsMobile] = useState<boolean>(false);
 
   // Set aspect ratio styles
   const getAspectRatio = (): CSSProperties => {
@@ -36,17 +34,20 @@ export default function PhotoUploader({
     }
   };
 
-  // Handle clicks outside the options menu to close it
+  // Detect if the device is mobile
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (optionsRef.current && !optionsRef.current.contains(event.target as Node)) {
-        setShowOptions(false);
-      }
+    const checkMobile = () => {
+      const userAgent = navigator.userAgent || navigator.vendor || (window as any).opera;
+      const isMobileDevice = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent.toLowerCase());
+      setIsMobile(isMobileDevice);
     };
-
-    document.addEventListener('mousedown', handleClickOutside);
+    
+    checkMobile();
+    
+    // Also check on resize in case of responsive mode changes
+    window.addEventListener('resize', checkMobile);
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
+      window.removeEventListener('resize', checkMobile);
     };
   }, []);
 
@@ -78,7 +79,6 @@ export default function PhotoUploader({
     // Create a URL for the selected image
     const objectUrl = URL.createObjectURL(file);
     setPhotoUrl(objectUrl);
-    setShowOptions(false);
     
     // Call the parent component's handler
     onPhotoSelected(file);
@@ -93,19 +93,9 @@ export default function PhotoUploader({
     onPhotoRemoved();
   };
 
-  // Trigger file input click
-  const handleUploadClick = () => {
+  // Handle Add Photo button click
+  const handleAddPhotoClick = () => {
     fileInputRef.current?.click();
-  };
-
-  // Trigger camera input click
-  const handleCameraClick = () => {
-    cameraInputRef.current?.click();
-  };
-
-  // Toggle options menu
-  const toggleOptions = () => {
-    setShowOptions(!showOptions);
   };
 
   return (
@@ -155,92 +145,38 @@ export default function PhotoUploader({
               Add a photo of your plant
             </p>
             
-            <div className="relative" ref={optionsRef}>
-              <button
-                type="button"
-                onClick={toggleOptions}
-                className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
-                style={{
-                  WebkitAppearance: 'none',
-                  WebkitTapHighlightColor: 'transparent'
-                }}
-              >
+            <button
+              type="button"
+              onClick={handleAddPhotoClick}
+              className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+              style={{
+                WebkitAppearance: 'none',
+                WebkitTapHighlightColor: 'transparent'
+              }}
+            >
+              {isMobile ? (
+                // Camera icon for mobile
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
                   <path fillRule="evenodd" d="M4 5a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V7a2 2 0 00-2-2h-1.586a1 1 0 01-.707-.293l-1.121-1.121A2 2 0 0011.172 3H8.828a2 2 0 00-1.414.586L6.293 4.707A1 1 0 015.586 5H4zm6 9a3 3 0 100-6 3 3 0 000 6z" clipRule="evenodd" />
                 </svg>
-                Add Photo
-              </button>
-              
-              {showOptions && (
-                <div 
-                  className="absolute mt-2 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-10"
-                  style={{
-                    width: '200px',
-                    left: '50%',
-                    transform: 'translateX(-50%)',
-                    WebkitTransform: 'translateX(-50%)'
-                  }}
-                >
-                  <div className="py-1" role="menu" aria-orientation="vertical">
-                    {/* Take Photo option */}
-                    <button
-                      type="button"
-                      onClick={handleCameraClick}
-                      className="w-full text-left block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                      role="menuitem"
-                      style={{
-                        WebkitAppearance: 'none',
-                        WebkitTapHighlightColor: 'transparent',
-                        display: 'flex',
-                        alignItems: 'center'
-                      }}
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-3 text-gray-500" viewBox="0 0 20 20" fill="currentColor">
-                        <path fillRule="evenodd" d="M4 5a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V7a2 2 0 00-2-2h-1.586a1 1 0 01-.707-.293l-1.121-1.121A2 2 0 0011.172 3H8.828a2 2 0 00-1.414.586L6.293 4.707A1 1 0 015.586 5H4zm6 9a3 3 0 100-6 3 3 0 000 6z" clipRule="evenodd" />
-                      </svg>
-                      <span>Take Photo</span>
-                    </button>
-                    
-                    {/* Choose from Library option */}
-                    <button
-                      type="button"
-                      onClick={handleUploadClick}
-                      className="w-full text-left block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                      role="menuitem"
-                      style={{
-                        WebkitAppearance: 'none',
-                        WebkitTapHighlightColor: 'transparent',
-                        display: 'flex',
-                        alignItems: 'center'
-                      }}
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-3 text-gray-500" viewBox="0 0 20 20" fill="currentColor">
-                        <path d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" />
-                      </svg>
-                      <span>Choose from Library</span>
-                    </button>
-                  </div>
-                </div>
+              ) : (
+                // File icon for desktop
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M8 4a3 3 0 00-3 3v4a5 5 0 0010 0V7a1 1 0 112 0v4a7 7 0 11-14 0V7a5 5 0 0110 0v4a3 3 0 11-6 0V7a1 1 0 012 0v4a1 1 0 102 0V7a3 3 0 00-3-3z" clipRule="evenodd" />
+                </svg>
               )}
-            </div>
+              Add Photo
+            </button>
             
-            {/* Hidden file inputs */}
+            {/* Hidden file input - accepts all image types on mobile, just files on desktop */}
             <input
               ref={fileInputRef}
               type="file"
               accept="image/*"
+              capture={isMobile ? "environment" : undefined}
               onChange={handleFileChange}
               className="hidden"
-              aria-label="Add photo from device"
-            />
-            <input
-              ref={cameraInputRef}
-              type="file"
-              accept="image/*"
-              capture="environment"
-              onChange={handleFileChange}
-              className="hidden"
-              aria-label="Take photo with camera"
+              aria-label="Add photo"
             />
           </div>
         )}
