@@ -113,18 +113,18 @@ export default function DashboardNavigation({ userId }: DashboardNavigationProps
               style={{
                 backgroundColor: '#65a30d', // bg-green-600 to match other buttons
                 borderRadius: '50%',
-                width: '48px',
-                height: '48px',
+                width: '44px',
+                height: '44px',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
                 position: 'absolute',
                 zIndex: 20,
-                top: '-24px'
+                top: '-18px'
               }}
             >
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="white">
+              <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="white">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
               </svg>
             </Link>
