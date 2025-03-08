@@ -126,6 +126,8 @@ export default function Plants() {
                         src={plant.image} 
                         alt={plant.name} 
                         fill 
+                        sizes="(max-width: 768px) 33vw, 64px"
+                        priority
                         style={{ objectFit: 'cover' }}
                       />
                     )}

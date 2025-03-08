@@ -98,6 +98,8 @@ export default function Dashboard() {
                           src={plant.image} 
                           alt={plant.name} 
                           fill 
+                          sizes="(max-width: 768px) 33vw, 96px"
+                          priority
                           style={{ objectFit: 'cover' }}
                         />
                       )}
@@ -133,6 +135,7 @@ export default function Dashboard() {
                         src={plant.image} 
                         alt={plant.name} 
                         fill 
+                        sizes="(max-width: 768px) 33vw, 96px"
                         style={{ objectFit: 'cover' }}
                       />
                     )}
@@ -172,6 +175,7 @@ export default function Dashboard() {
                           src={plant.image} 
                           alt={plant.name} 
                           fill 
+                          sizes="(max-width: 768px) 33vw, 96px"
                           style={{ objectFit: 'cover' }}
                         />
                       )}

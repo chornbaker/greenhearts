@@ -199,6 +199,8 @@ export default function Reminders() {
                           src={plant.image} 
                           alt={plant.name} 
                           fill 
+                          sizes="(max-width: 768px) 33vw, 56px"
+                          priority
                           style={{ objectFit: 'cover' }}
                         />
                       )}
