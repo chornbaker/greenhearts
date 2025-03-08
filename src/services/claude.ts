@@ -173,15 +173,14 @@ export async function generatePlantCareInfo(plantInfo: {
 }
 
 /**
- * Generate a water reminder message from a plant
+ * Generate a thirsty plant message based on personality and days overdue
  * @param plantInfo Object containing plant information
- * @param daysOverdue Number of days the watering is overdue
- * @returns A message from the plant asking to be watered
+ * @returns A message from the plant about being thirsty
  */
-export async function generateWaterReminderMessage(plantInfo: {
+export async function generateThirstyPlantMessage(plantInfo: {
   name: string;
   species: string;
-  personalityType?: string;
+  personalityType: string;
   daysOverdue: number;
 }): Promise<string> {
   try {
@@ -191,7 +190,7 @@ export async function generateWaterReminderMessage(plantInfo: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        type: 'generate_water_reminder',
+        type: 'generate_thirsty_message',
         plantInfo,
       }),
     });
@@ -207,43 +206,46 @@ export async function generateWaterReminderMessage(plantInfo: {
     }
     
     // Fallback with default message if no data
-    return getDefaultWaterMessage(plantInfo);
+    return getDefaultThirstyMessage(plantInfo);
   } catch (error) {
-    console.error('Error generating water reminder message:', error);
+    console.error('Error generating thirsty plant message:', error);
     // Fallback with default message
-    return getDefaultWaterMessage(plantInfo);
+    return getDefaultThirstyMessage(plantInfo);
   }
 }
 
 /**
- * Get a default water reminder message based on personality type
+ * Generate a default thirsty plant message based on personality type
+ * @param plantInfo Object containing plant information
+ * @returns A default message from the plant about being thirsty
  */
-function getDefaultWaterMessage(plantInfo: {
+function getDefaultThirstyMessage(plantInfo: {
   name: string;
   species: string;
-  personalityType?: string;
+  personalityType: string;
   daysOverdue: number;
 }): string {
   const { name, personalityType, daysOverdue } = plantInfo;
   
-  // Default messages by personality type - shorter versions
-  switch (personalityType?.toLowerCase()) {
-    case 'dramatic':
-      return `${daysOverdue} days without water? I'm literally dying!`;
-    case 'zen':
-      return `${daysOverdue} days dry. Water brings peace.`;
-    case 'sassy':
-      return `${daysOverdue} days and counting. Water me already!`;
-    case 'royal':
-      return `${daysOverdue} days without hydration is unacceptable!`;
-    case 'shy':
-      return `Um... ${daysOverdue} days thirsty... if you don't mind...`;
-    case 'adventurous':
-      return `${daysOverdue} days in the desert! Need water for next adventure!`;
-    case 'wise':
-      return `${daysOverdue} days without water teaches patience, but enough now.`;
+  // Default messages based on personality type
+  switch (personalityType.toLowerCase()) {
     case 'cheerful':
+      return `Hey there! I'm feeling a bit parched. A drink would be lovely!`;
+    case 'dramatic':
+      return `I'm DYING of thirst over here! It's been ${daysOverdue} days too many!`;
+    case 'zen':
+      return `One cannot flourish without water. I seek hydration.`;
+    case 'sassy':
+      return `Excuse me? Did you forget about me for ${daysOverdue} days? I'm thirsty!`;
+    case 'royal':
+      return `Your Majesty ${name} requests the royal water treatment, post-haste.`;
+    case 'shy':
+      return `Um... sorry to bother you, but... I'm a little thirsty...`;
+    case 'adventurous':
+      return `I've been exploring the desert of neglect for ${daysOverdue} days! Water, please!`;
+    case 'wise':
+      return `A wise gardener knows that water brings life. I've been waiting patiently.`;
     default:
-      return `${daysOverdue} days thirsty but still smiling! Water please?`;
+      return `I'm thirsty! I need water, please!`;
   }
 } 

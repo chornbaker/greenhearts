@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -9,7 +9,7 @@ import { getUserPlants, waterPlant, updatePlant } from '@/services/plants';
 import { getUserProfile } from '@/services/user';
 import { Plant } from '@/types';
 import ExpandableCard from '@/components/dashboard/ExpandableCard';
-import { useWaterReminders } from '@/context/WaterReminderContext';
+import { generateThirstyPlantMessage } from '@/services/claude';
 
 // Organization view types
 type OrganizationView = 'location' | 'alphabetical' | 'wateringPriority';
@@ -23,8 +23,8 @@ export default function Dashboard() {
   const [plantHavenName, setPlantHavenName] = useState('My Plant Haven');
   const [displayName, setDisplayName] = useState('');
   const [organizationView, setOrganizationView] = useState<OrganizationView>('location');
-  const [waterMessages, setWaterMessages] = useState<{[plantId: string]: string}>({});
-  const { getOrGenerateMessage } = useWaterReminders();
+  const [thirstyMessages, setThirstyMessages] = useState<Record<string, string>>({});
+  const [lastMessageDate, setLastMessageDate] = useState<string>('');
 
   useEffect(() => {
     const fetchData = async () => {
@@ -170,41 +170,74 @@ export default function Dashboard() {
     }
   };
   
-  // Calculate days overdue for a plant
-  const calculateDaysOverdue = (plant: Plant): number => {
+  // Calculate days overdue for watering
+  const getDaysOverdue = (plant: Plant): number => {
     if (!plant.nextWateringDate) return 0;
     
     const today = new Date();
     const nextWatering = new Date(plant.nextWateringDate);
     
-    // If not overdue, return 0
-    if (nextWatering > today) return 0;
-    
-    const diffTime = Math.abs(today.getTime() - nextWatering.getTime());
+    // Calculate difference in days
+    const diffTime = today.getTime() - nextWatering.getTime();
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     
-    return diffDays;
+    return diffDays > 0 ? diffDays : 0;
   };
 
-  // Load water reminder messages for plants needing water
-  useEffect(() => {
-    const loadWaterMessages = async () => {
-      if (plantsNeedingWater.length === 0) return;
-      
-      const messages: {[plantId: string]: string} = {};
-      
-      for (const plant of plantsNeedingWater) {
-        const message = await getOrGenerateMessage(plant);
-        messages[plant.id] = message;
-      }
-      
-      setWaterMessages(messages);
-    };
+  // Generate thirsty messages for plants
+  const generateThirstyMessages = useCallback(async () => {
+    // Check if we already generated messages today
+    const today = new Date().toDateString();
+    if (lastMessageDate === today) return;
     
-    if (!loading && plantsNeedingWater.length > 0) {
-      loadWaterMessages();
+    const messages: Record<string, string> = {};
+    const messagePromises = plantsNeedingWater.map(async (plant) => {
+      if (!plant.personalityType) return;
+      
+      try {
+        const daysOverdue = getDaysOverdue(plant);
+        const message = await generateThirstyPlantMessage({
+          name: plant.name,
+          species: plant.species || '',
+          personalityType: plant.personalityType,
+          daysOverdue
+        });
+        
+        messages[plant.id] = message;
+      } catch (error) {
+        console.error(`Error generating message for ${plant.name}:`, error);
+      }
+    });
+    
+    await Promise.all(messagePromises);
+    setThirstyMessages(messages);
+    setLastMessageDate(today);
+    
+    // Save messages to localStorage to persist between refreshes
+    localStorage.setItem('thirstyMessages', JSON.stringify(messages));
+    localStorage.setItem('lastMessageDate', today);
+  }, [plantsNeedingWater, lastMessageDate]);
+
+  // Load saved messages from localStorage
+  useEffect(() => {
+    const savedMessages = localStorage.getItem('thirstyMessages');
+    const savedDate = localStorage.getItem('lastMessageDate');
+    
+    if (savedMessages) {
+      setThirstyMessages(JSON.parse(savedMessages));
     }
-  }, [plantsNeedingWater, loading, getOrGenerateMessage]);
+    
+    if (savedDate) {
+      setLastMessageDate(savedDate);
+    }
+  }, []);
+
+  // Generate new messages when plants needing water changes
+  useEffect(() => {
+    if (plantsNeedingWater.length > 0 && !loading) {
+      generateThirstyMessages();
+    }
+  }, [plantsNeedingWater, loading, generateThirstyMessages]);
 
   // If loading or no plants, show loading state or redirect
   if (loading) {
@@ -253,7 +286,7 @@ export default function Dashboard() {
           <h2 className="text-lg font-semibold text-amber-800 mb-3">Your Plants are Thirsty...</h2>
           <div className="space-y-3">
             {plantsNeedingWater.map((plant) => (
-              <div key={plant.id} className="flex items-center gap-3">
+              <div key={plant.id} className="flex items-center gap-3 bg-white bg-opacity-50 p-3 rounded-xl">
                 <div className="w-12 h-12 bg-amber-100 rounded-full overflow-hidden relative">
                   {plant.image && (
                     <Image 
@@ -267,16 +300,16 @@ export default function Dashboard() {
                 </div>
                 <div className="flex-1">
                   <p className="font-medium text-gray-800">{plant.name}</p>
-                  <div className="flex flex-col">
-                    <p className="text-xs text-red-600">
-                      {calculateDaysOverdue(plant)} days overdue
+                  <p className="text-xs text-red-600">
+                    {getDaysOverdue(plant) === 1 
+                      ? '1 day overdue' 
+                      : `${getDaysOverdue(plant)} days overdue`}
+                  </p>
+                  {thirstyMessages[plant.id] && (
+                    <p className="text-xs text-gray-600 italic mt-1">
+                      "{thirstyMessages[plant.id]}"
                     </p>
-                    {waterMessages[plant.id] && (
-                      <p className="text-xs text-gray-600 italic mt-1">
-                        "{waterMessages[plant.id]}"
-                      </p>
-                    )}
-                  </div>
+                  )}
                 </div>
                 <button 
                   className="bg-blue-500 hover:bg-blue-600 text-white h-8 w-8 rounded-full flex items-center justify-center"

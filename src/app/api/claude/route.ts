@@ -15,20 +15,22 @@ export async function POST(request: NextRequest) {
     // }
 
     const body = await request.json();
-    const { type, plantInfo } = body;
-
-    switch (type) {
-      case 'generate_personality':
-        return handlePersonalityGeneration(plantInfo);
-      case 'generate_care_info':
-        return handleCareInfoGeneration(plantInfo);
-      case 'generate_water_reminder':
-        return handleWaterReminderGeneration(plantInfo);
-      default:
-        return NextResponse.json(
-          { error: 'Invalid request type' },
-          { status: 400 }
-        );
+    
+    // Handle different types of requests
+    if (body.type === 'generate_personality') {
+      return handlePersonalityGeneration(body.plantInfo);
+    } else if (body.type === 'generate_care_info') {
+      return handleCareInfoGeneration(body.plantInfo);
+    } else if (body.type === 'generate_thirsty_message') {
+      return handleThirstyMessageGeneration(body.plantInfo);
+    } else if (body.prompt) {
+      // Original functionality for general prompts
+      return handleGeneralPrompt(body.prompt);
+    } else {
+      return NextResponse.json(
+        { error: 'Invalid request format' },
+        { status: 400 }
+      );
     }
   } catch (error) {
     console.error('Error in Claude API route:', error);
@@ -318,41 +320,34 @@ Adjust all recommendations based on the specific plant species and its current e
 }
 
 /**
- * Handle water reminder message generation
+ * Handle thirsty plant message generation
  */
-async function handleWaterReminderGeneration(plantInfo: {
+async function handleThirstyMessageGeneration(plantInfo: {
   name: string;
   species: string;
-  personalityType?: string;
+  personalityType: string;
   daysOverdue: number;
 }) {
   try {
     const prompt = `
-You are a creative writer who specializes in giving plants unique personalities and voices. Your task is to write a very short, playful message from a plant that needs to be watered.
+You are a creative writer who specializes in giving plants unique personalities and voices. Your task is to create a short, friendly message from a plant that needs water.
 
 Plant Information:
 - Name: ${plantInfo.name}
 - Species: ${plantInfo.species}
-- Personality Type: ${plantInfo.personalityType || 'Not specified'}
+- Personality Type: ${plantInfo.personalityType}
 - Days Overdue for Watering: ${plantInfo.daysOverdue}
 
-Write a very short message (maximum 1 sentence, no more than 10-12 words) from the plant's perspective, asking to be watered. The message should:
-1. Be cute, playful, or passive-aggressive depending on the personality type
-2. Mention how many days it's been without water or how overdue the watering is
-3. Have a distinct voice that matches the personality type
-4. Be concise and to the point
+Based on the plant's personality type (${plantInfo.personalityType}) and the fact that it's ${plantInfo.daysOverdue} days overdue for watering, write a short 1-2 sentence message from the plant asking for water.
 
-Personality types and their characteristics:
-- Cheerful: Optimistic, upbeat, always sees the bright side
-- Dramatic: Exaggerates everything, prone to hyperbole
-- Zen: Calm, philosophical, speaks in koans or wisdom
-- Sassy: Witty, sarcastic, slightly judgmental
-- Royal: Entitled, speaks formally, expects to be treated like royalty
-- Shy: Hesitant, apologetic, doesn't want to be a bother
-- Adventurous: Bold, daring, sees everything as an exciting challenge
-- Wise: Thoughtful, profound, offers life lessons
+The message should:
+- Be written in first person, from the plant's perspective
+- Match the personality type (cheerful, dramatic, zen, sassy, royal, shy, adventurous, or wise)
+- Reference how many days it's been without water if relevant
+- Be friendly, humorous, or slightly passive-aggressive depending on personality
+- Be concise (1-2 short sentences only)
 
-Return ONLY the message text with no additional formatting, quotes, or explanation.
+Return ONLY the message text with no additional formatting, explanations, or JSON.
 `;
 
     const response = await anthropic.messages.create({
@@ -374,46 +369,47 @@ Return ONLY the message text with no additional formatting, quotes, or explanati
     
     // Fallback if no text response
     return NextResponse.json({
-      message: getDefaultWaterMessage(plantInfo)
+      message: getDefaultThirstyMessage(plantInfo)
     });
   } catch (error) {
-    console.error('Error generating water reminder message:', error);
+    console.error('Error generating thirsty plant message:', error);
     return NextResponse.json(
-      { error: 'Failed to generate water reminder message' },
+      { error: 'Failed to generate thirsty plant message' },
       { status: 500 }
     );
   }
 }
 
 /**
- * Get a default water reminder message based on personality type
+ * Generate a default thirsty plant message based on personality type
  */
-function getDefaultWaterMessage(plantInfo: {
+function getDefaultThirstyMessage(plantInfo: {
   name: string;
   species: string;
-  personalityType?: string;
+  personalityType: string;
   daysOverdue: number;
 }): string {
   const { name, personalityType, daysOverdue } = plantInfo;
   
-  // Default messages by personality type - shorter versions
-  switch (personalityType?.toLowerCase()) {
-    case 'dramatic':
-      return `${daysOverdue} days without water? I'm literally dying!`;
-    case 'zen':
-      return `${daysOverdue} days dry. Water brings peace.`;
-    case 'sassy':
-      return `${daysOverdue} days and counting. Water me already!`;
-    case 'royal':
-      return `${daysOverdue} days without hydration is unacceptable!`;
-    case 'shy':
-      return `Um... ${daysOverdue} days thirsty... if you don't mind...`;
-    case 'adventurous':
-      return `${daysOverdue} days in the desert! Need water for next adventure!`;
-    case 'wise':
-      return `${daysOverdue} days without water teaches patience, but enough now.`;
+  // Default messages based on personality type
+  switch (personalityType.toLowerCase()) {
     case 'cheerful':
+      return `Hey there! I'm feeling a bit parched. A drink would be lovely!`;
+    case 'dramatic':
+      return `I'm DYING of thirst over here! It's been ${daysOverdue} days too many!`;
+    case 'zen':
+      return `One cannot flourish without water. I seek hydration.`;
+    case 'sassy':
+      return `Excuse me? Did you forget about me for ${daysOverdue} days? I'm thirsty!`;
+    case 'royal':
+      return `Your Majesty ${name} requests the royal water treatment, post-haste.`;
+    case 'shy':
+      return `Um... sorry to bother you, but... I'm a little thirsty...`;
+    case 'adventurous':
+      return `I've been exploring the desert of neglect for ${daysOverdue} days! Water, please!`;
+    case 'wise':
+      return `A wise gardener knows that water brings life. I've been waiting patiently.`;
     default:
-      return `${daysOverdue} days thirsty but still smiling! Water please?`;
+      return `I'm thirsty! I need water, please!`;
   }
 } 
