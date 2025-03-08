@@ -278,7 +278,7 @@ export default function Dashboard() {
         const laterPlants: { [key: string]: Plant[] } = {};
         const noDatePlants: Plant[] = [];
         
-        // Days of the week for formatting
+        // Days of the week for display
         const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
         
         // Calculate the date one week from today
@@ -317,7 +317,7 @@ export default function Dashboard() {
             return;
           }
           
-          // Beyond a week, format with full month and day
+          // Beyond a week, format with full month
           const dateKey = nextWatering.toLocaleDateString(undefined, { 
             month: 'long', 
             day: 'numeric' 
@@ -346,16 +346,13 @@ export default function Dashboard() {
         // Add tomorrow plants if any
         if (tomorrowPlants.length > 0) {
           wateringGroupsArray.push({
-            title: 'Water tomorrow',
+            title: 'Water Tomorrow',
             plants: tomorrowPlants.sort((a, b) => a.name.localeCompare(b.name))
           });
         }
         
         // Add this week plants by day of week
-        // Get days from tomorrow until the end of the week, then days from beginning of week
-        const todayIndex = today.getDay();
-        const dayOrder = daysOfWeek.slice(todayIndex + 1).concat(daysOfWeek.slice(0, todayIndex));
-        
+        const dayOrder = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
         dayOrder.forEach(day => {
           if (thisWeekPlants[day] && thisWeekPlants[day].length > 0) {
             wateringGroupsArray.push({
