@@ -17,6 +17,10 @@ export default function DashboardLayout({
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [imageError, setImageError] = useState(false);
+  const [showFooter, setShowFooter] = useState(true);
+  const lastScrollY = useRef(0);
+  const footerRef = useRef<HTMLElement>(null);
+  const mainContentRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -38,10 +42,39 @@ export default function DashboardLayout({
     };
   }, []);
 
+  // Handle scroll behavior for footer visibility
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      const scrollingUp = currentScrollY < lastScrollY.current;
+      const atBottom = window.innerHeight + window.scrollY >= document.body.offsetHeight - 100;
+      
+      // Show footer when scrolling up or at the bottom
+      if (scrollingUp || atBottom) {
+        setShowFooter(true);
+      } else {
+        setShowFooter(false);
+      }
+      
+      lastScrollY.current = currentScrollY;
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
   // Reset image error state when user changes
   useEffect(() => {
     setImageError(false);
   }, [user]);
+
+  // Apply padding to main content based on footer height
+  useEffect(() => {
+    if (footerRef.current && mainContentRef.current) {
+      const footerHeight = footerRef.current.offsetHeight;
+      mainContentRef.current.style.paddingBottom = `${footerHeight}px`;
+    }
+  }, []);
 
   const handleSignOut = async () => {
     try {
@@ -173,14 +206,30 @@ export default function DashboardLayout({
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 overflow-auto pb-16">
+      <main ref={mainContentRef} className="flex-1 overflow-auto">
         <div className="max-w-md mx-auto px-4 py-6">
           {children}
         </div>
       </main>
 
-      {/* Bottom Navigation - Sticky Footer */}
-      <nav className="bg-white shadow-lg border-t border-gray-200 fixed bottom-0 left-0 right-0 z-10">
+      {/* Bottom Navigation - Sticky Footer with scroll behavior */}
+      <nav 
+        ref={footerRef}
+        className={`bg-white shadow-lg border-t border-gray-200 fixed bottom-0 left-0 right-0 z-10 transition-transform duration-300 ${
+          showFooter ? 'translate-y-0' : 'translate-y-full'
+        }`}
+        style={{
+          position: 'fixed',
+          bottom: 0,
+          left: 0,
+          right: 0,
+          zIndex: 10,
+          WebkitTransform: showFooter ? 'translateY(0)' : 'translateY(100%)',
+          transform: showFooter ? 'translateY(0)' : 'translateY(100%)',
+          WebkitTransition: '-webkit-transform 0.3s ease',
+          transition: 'transform 0.3s ease'
+        }}
+      >
         <div className="max-w-md mx-auto px-4">
           <div className="flex justify-around">
             <Link
