@@ -69,7 +69,7 @@ export default function DashboardLayout({
   return (
     <div className="min-h-screen bg-[#f8f8f5] flex flex-col">
       {/* Header */}
-      <header className="bg-white shadow-sm">
+      <header className="bg-white shadow-sm sticky top-0 z-10">
         <div className="max-w-md mx-auto px-4 py-4 flex justify-between items-center">
           <Logo size="small" showText={true} href="/dashboard" />
           
@@ -130,7 +130,7 @@ export default function DashboardLayout({
                   borderRadius: '0.5rem',
                   boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
                   padding: '4px 0',
-                  zIndex: 10,
+                  zIndex: 20,
                   border: '1px solid #f3f4f6'
                 }}
               >
@@ -173,14 +173,14 @@ export default function DashboardLayout({
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 overflow-auto">
+      <main className="flex-1 overflow-auto pb-16">
         <div className="max-w-md mx-auto px-4 py-6">
           {children}
         </div>
       </main>
 
-      {/* Bottom Navigation */}
-      <nav className="bg-white shadow-lg border-t border-gray-200">
+      {/* Bottom Navigation - Sticky Footer */}
+      <nav className="bg-white shadow-lg border-t border-gray-200 fixed bottom-0 left-0 right-0 z-10">
         <div className="max-w-md mx-auto px-4">
           <div className="flex justify-around">
             <Link
