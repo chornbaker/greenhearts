@@ -74,7 +74,7 @@ export default function DashboardLayout({
               className="flex items-center focus:outline-none"
             >
               <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center overflow-hidden border border-green-200">
-                {user.photoURL ? (
+                {user && user.photoURL ? (
                   <Image 
                     src={user.photoURL} 
                     alt="Profile" 
@@ -98,13 +98,6 @@ export default function DashboardLayout({
                   onClick={() => setShowDropdown(false)}
                 >
                   Profile
-                </Link>
-                <Link 
-                  href="/dashboard/profile/settings" 
-                  className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                  onClick={() => setShowDropdown(false)}
-                >
-                  Settings
                 </Link>
                 <button
                   onClick={() => {
