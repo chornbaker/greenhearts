@@ -80,48 +80,81 @@ export default function Dashboard() {
 
   // Handle watering a plant
   const handleWaterPlant = async (plantId: string) => {
-    if (!user) return;
-    
     try {
-      // Call the actual waterPlant service
+      // Find the plant in our state
+      const plantIndex = plants.findIndex(p => p.id === plantId);
+      if (plantIndex === -1) return;
+      
+      // Update the plant in the database
       await waterPlant(plantId);
       
-      // Update the local state to reflect the watering
-      const updatedPlants = plants.map(plant => {
-        if (plant.id === plantId) {
-          const today = new Date();
-          const nextWateringDate = new Date(today);
-          nextWateringDate.setDate(today.getDate() + (plant.wateringSchedule?.frequency || 7));
-          
-          return {
-            ...plant,
-            lastWatered: today,
-            nextWateringDate
-          };
-        }
-        return plant;
-      });
-      
+      // Get the updated plant data
+      const updatedPlants = await getUserPlants(user!.uid);
       setPlants(updatedPlants);
+      
+      // Remove the thirsty message for this plant
+      if (thirstyMessages[plantId]) {
+        const updatedMessages = { ...thirstyMessages };
+        delete updatedMessages[plantId];
+        setThirstyMessages(updatedMessages);
+        
+        // Update localStorage
+        localStorage.setItem('thirstyMessages', JSON.stringify(updatedMessages));
+      }
     } catch (error) {
       console.error('Error watering plant:', error);
     }
   };
 
   // Handle updating a plant
-  const handleUpdatePlant = (plantId: string, updates: Partial<Plant>) => {
-    // Update the local state to reflect the changes
-    const updatedPlants = plants.map(plant => {
-      if (plant.id === plantId) {
-        return {
-          ...plant,
-          ...updates
-        };
+  const handleUpdatePlant = async (plantId: string, updates: Partial<Plant>) => {
+    try {
+      // Find the plant in our state
+      const plantIndex = plants.findIndex(p => p.id === plantId);
+      if (plantIndex === -1) return;
+      
+      // Update the plant in our state
+      const updatedPlants = [...plants];
+      const updatedPlant = { ...updatedPlants[plantIndex], ...updates };
+      updatedPlants[plantIndex] = updatedPlant;
+      setPlants(updatedPlants);
+      
+      // Update the plant in the database
+      await updatePlant(plantId, updates);
+      
+      // Check if the plant is now overdue for watering after the update
+      // This could happen if the user updates the last watered date
+      const wasOverdue = plantsNeedingWater.some(p => p.id === plantId);
+      const isNowOverdue = updatedPlant.nextWateringDate && new Date() > new Date(updatedPlant.nextWateringDate);
+      
+      // If the plant wasn't overdue before but is now, generate a thirsty message
+      if (!wasOverdue && isNowOverdue && updatedPlant.personalityType) {
+        try {
+          const daysOverdue = getDaysOverdue(updatedPlant);
+          const message = await generateThirstyPlantMessage({
+            name: updatedPlant.name,
+            species: updatedPlant.species || '',
+            personalityType: updatedPlant.personalityType,
+            daysOverdue
+          });
+          
+          // Update the thirsty messages state
+          setThirstyMessages(prev => ({
+            ...prev,
+            [plantId]: message
+          }));
+          
+          // Update localStorage
+          const savedMessages = JSON.parse(localStorage.getItem('thirstyMessages') || '{}');
+          savedMessages[plantId] = message;
+          localStorage.setItem('thirstyMessages', JSON.stringify(savedMessages));
+        } catch (error) {
+          console.error(`Error generating message for ${updatedPlant.name}:`, error);
+        }
       }
-      return plant;
-    });
-    
-    setPlants(updatedPlants);
+    } catch (error) {
+      console.error('Error updating plant:', error);
+    }
   };
 
   // Get plants organized by the selected view
