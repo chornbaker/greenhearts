@@ -100,39 +100,15 @@ export default function DashboardNavigation({ userId }: DashboardNavigationProps
             <span style={textStyle}>Home</span>
           </Link>
           
-          <div style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            width: '60px',
-            position: 'relative',
-            paddingTop: '0.75rem'
-          }}>
-            <Link
-              href="/dashboard/add"
-              style={{
-                backgroundColor: '#65a30d', // bg-green-600 to match other buttons
-                borderRadius: '50%',
-                width: '44px',
-                height: '44px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
-                position: 'absolute',
-                zIndex: 20,
-                top: '-9px'
-              }}
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="white">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-              </svg>
-            </Link>
-            <div style={{ height: '24px' }}></div>
-            <span style={textStyle}>
-              Add Plant
-            </span>
-          </div>
+          <Link
+            href="/dashboard/add"
+            style={grayNavLinkStyle}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+            <span style={textStyle}>Add Plant</span>
+          </Link>
           
           <Link
             href="/dashboard/reminders"
