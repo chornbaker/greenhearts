@@ -81,8 +81,8 @@ export default function AddPlant() {
             value={name}
             onChange={(e) => setName(e.target.value)}
             required
-            placeholder="E.g., Spike, Ferny, Leafy"
-            className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500"
+            placeholder="Enter plant name"
+            className="w-full px-3 py-2 border border-gray-300 rounded-xl text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500"
           />
         </div>
         
@@ -95,8 +95,8 @@ export default function AddPlant() {
             type="text"
             value={species}
             onChange={(e) => setSpecies(e.target.value)}
-            placeholder="E.g., Monstera, Snake Plant, Fern"
-            className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500"
+            placeholder="Enter species (optional)"
+            className="w-full px-3 py-2 border border-gray-300 rounded-xl text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500"
           />
         </div>
         

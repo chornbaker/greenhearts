@@ -37,11 +37,10 @@ export default function Login() {
     
     try {
       await signInWithGoogle();
-      router.push('/dashboard');
+      // Redirect will happen automatically
     } catch (error) {
       setError('Failed to sign in with Google.');
       console.error(error);
-    } finally {
       setLoading(false);
     }
   };
@@ -50,7 +49,7 @@ export default function Login() {
     <main className="flex min-h-screen flex-col items-center justify-center p-6 bg-gradient-to-b from-green-50 to-green-100">
       <div className="w-full max-w-md bg-white rounded-2xl shadow-lg p-8">
         <div className="text-center mb-8">
-          <Logo size="medium" showText={true} className="mx-auto" />
+          <Logo size="medium" showText={true} className="mx-auto" href="/" />
           <p className="text-gray-700 mt-2">Keep your plants happy and healthy</p>
         </div>
         
@@ -94,7 +93,8 @@ export default function Login() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500"
+              placeholder="Enter your email"
+              className="w-full px-3 py-2 border border-gray-300 rounded-xl text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500"
             />
           </div>
           
@@ -108,7 +108,8 @@ export default function Login() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500"
+              placeholder="Enter your password"
+              className="w-full px-3 py-2 border border-gray-300 rounded-xl text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500"
             />
           </div>
           

@@ -9,10 +9,13 @@ import {
   signOut as firebaseSignOut,
   sendPasswordResetEmail,
   GoogleAuthProvider,
-  signInWithPopup
+  signInWithRedirect,
+  getRedirectResult,
+  type Auth
 } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase';
 import { doc, setDoc } from 'firebase/firestore';
+import { Firestore } from 'firebase/firestore';
 
 interface AuthContextType {
   user: FirebaseUser | null;
@@ -73,18 +76,30 @@ export function AuthProvider({ children }: AuthProviderProps) {
     if (!db) throw new Error('Firebase Firestore is not initialized');
     
     const provider = new GoogleAuthProvider();
-    const result = await signInWithPopup(auth, provider);
-    
-    // Create user document in Firestore if it's a new user
-    if (result.user) {
-      const userRef = doc(db, 'users', result.user.uid);
-      await setDoc(userRef, {
-        uid: result.user.uid,
-        email: result.user.email,
-        gardenName: "My Garden",
-      }, { merge: true });
-    }
+    await signInWithRedirect(auth, provider);
   };
+
+  useEffect(() => {
+    if (!auth || !db) return;
+
+    const handleRedirectResult = async () => {
+      try {
+        const result = await getRedirectResult(auth as Auth);
+        if (result?.user) {
+          const userRef = doc(db as Firestore, 'users', result.user.uid);
+          await setDoc(userRef, {
+            uid: result.user.uid,
+            email: result.user.email,
+            gardenName: "My Garden",
+          }, { merge: true });
+        }
+      } catch (error) {
+        console.error("Error handling redirect result:", error);
+      }
+    };
+
+    handleRedirectResult();
+  }, [auth, db]);
 
   const signOut = async () => {
     if (!auth) throw new Error('Firebase auth is not initialized');

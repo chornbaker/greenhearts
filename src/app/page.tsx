@@ -73,6 +73,7 @@ export default function Home() {
                   src="/images/landing/feature-1.jpg" 
                   alt="Add your plants" 
                   fill 
+                  sizes="(max-width: 768px) 100vw, 33vw"
                   style={{ objectFit: 'cover' }}
                 />
               </div>
@@ -91,6 +92,7 @@ export default function Home() {
                   src="/images/landing/feature-2.jpg" 
                   alt="Track plant care" 
                   fill 
+                  sizes="(max-width: 768px) 100vw, 33vw"
                   style={{ objectFit: 'cover' }}
                 />
               </div>
@@ -109,6 +111,7 @@ export default function Home() {
                   src="/images/landing/feature-3.jpg" 
                   alt="Get reminders" 
                   fill 
+                  sizes="(max-width: 768px) 100vw, 33vw"
                   style={{ objectFit: 'cover' }}
                 />
               </div>

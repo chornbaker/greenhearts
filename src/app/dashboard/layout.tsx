@@ -49,7 +49,7 @@ export default function DashboardLayout({
       <header className="bg-white shadow-sm">
         <div className="max-w-md mx-auto px-4 py-4 flex justify-between items-center">
           <Link href="/dashboard" className="flex items-center">
-            <Logo size="small" showText={true} />
+            <Logo size="small" showText={true} href="/dashboard" />
           </Link>
           <button
             onClick={handleSignOut}

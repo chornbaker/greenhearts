@@ -68,7 +68,8 @@ export default function Profile() {
                   type="text"
                   value={gardenName}
                   onChange={(e) => setGardenName(e.target.value)}
-                  className="flex-1 px-3 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500"
+                  placeholder="Enter your garden name"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-xl text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500"
                 />
                 <button
                   onClick={handleSaveGardenName}

@@ -1,13 +1,15 @@
 import Image from 'next/image';
+import Link from 'next/link';
 
 interface LogoProps {
   showText?: boolean;
   size?: 'small' | 'medium' | 'large';
   className?: string;
   vertical?: boolean;
+  href?: string;
 }
 
-export default function Logo({ showText = false, size = 'medium', className = '', vertical = false }: LogoProps) {
+export default function Logo({ showText = false, size = 'medium', className = '', vertical = false, href }: LogoProps) {
   // Define sizes for different variants
   const sizes = {
     small: { width: 36, height: 36, textClass: 'text-xl' },
@@ -17,8 +19,8 @@ export default function Logo({ showText = false, size = 'medium', className = ''
 
   const { width, height, textClass } = sizes[size];
 
-  return (
-    <div className={`flex ${vertical ? 'flex-col items-center' : 'items-center'} ${className}`}>
+  const content = (
+    <div className={`flex ${vertical ? 'flex-col items-center' : 'items-center'} ${className} ${href ? 'hover:opacity-80 transition-opacity' : ''}`}>
       <div className={`relative drop-shadow-md ${vertical ? '-mb-[5px]' : ''}`}>
         <Image
           src="/images/greenhearts-logo.png"
@@ -38,4 +40,10 @@ export default function Logo({ showText = false, size = 'medium', className = ''
       )}
     </div>
   );
+
+  return href ? (
+    <Link href={href}>
+      {content}
+    </Link>
+  ) : content;
 } 
