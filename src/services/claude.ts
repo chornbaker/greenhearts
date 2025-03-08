@@ -41,4 +41,87 @@ export async function sendMessageToClaude(prompt: string): Promise<string> {
   }
 }
 
+/**
+ * Generate plant personality using Claude
+ * @param plantInfo Object containing plant information
+ * @returns Object with name, personalityType, and bio
+ */
+export async function generatePlantPersonality(plantInfo: {
+  species: string;
+  locationType: string;
+  locationSpace?: string;
+  sunlight: string;
+  soil: string;
+  potSize: string;
+  imageUrl?: string;
+}): Promise<{
+  name: string;
+  personalityType: string;
+  bio: string;
+}> {
+  try {
+    const prompt = `
+You are a creative plant personalization assistant. Based on the following plant information, create a fun and engaging personality profile for this plant. Use the plant's characteristics to inform your choices.
+
+Plant Information:
+- Type/Species: ${plantInfo.species}
+- Location Type: ${plantInfo.locationType}
+- Room/Space: ${plantInfo.locationSpace || 'Not specified'}
+- Sunlight: ${plantInfo.sunlight}
+- Soil Type: ${plantInfo.soil}
+- Container Size: ${plantInfo.potSize}
+${plantInfo.imageUrl ? '- The plant has a photo uploaded' : ''}
+
+Please provide the following in JSON format:
+1. A creative and cute nickname for the plant (keep it short and sweet)
+2. A personality type that fits the plant's characteristics (choose from: Cheerful, Dramatic, Zen, Sassy, Royal, Shy, Adventurous, Wise)
+3. A short, first-person bio/quote from the plant's perspective (1-2 sentences, should be cute and reflect the personality)
+
+Example output format:
+{
+  "name": "Sunny",
+  "personalityType": "Cheerful",
+  "bio": "Hi! I'm Sunny and I love soaking up rays by the window. Always looking on the bright side of life!"
+}
+`;
+
+    const response = await sendMessageToClaude(prompt);
+    
+    try {
+      // Parse the JSON from Claude's response
+      // Look for JSON object pattern in the response
+      const jsonMatch = response.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        const jsonString = jsonMatch[0];
+        const result = JSON.parse(jsonString);
+        
+        // Validate the result has the expected fields
+        if (!result.name || !result.personalityType || !result.bio) {
+          throw new Error('Missing required fields in Claude response');
+        }
+        
+        return result;
+      } else {
+        throw new Error('No valid JSON found in Claude response');
+      }
+    } catch (parseError) {
+      console.error('Error parsing Claude response:', parseError);
+      // Fallback with default values
+      return {
+        name: plantInfo.species,
+        personalityType: 'Cheerful',
+        bio: `Hi! I'm a ${plantInfo.species} and I'm happy to be part of your plant family!`
+      };
+    }
+  } catch (error) {
+    console.error('Error generating plant personality:', error);
+    // Fallback with default values
+    return {
+      name: plantInfo.species,
+      personalityType: 'Cheerful',
+      bio: `Hi! I'm a ${plantInfo.species} and I'm happy to be part of your plant family!`
+    };
+  }
+}
+
 export { anthropic }; 

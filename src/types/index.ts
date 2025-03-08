@@ -22,6 +22,8 @@ export interface Plant {
   createdAt: Date;
   lastWatered?: Date;
   nextWateringDate?: Date;
+  personalityType?: string; // Plant personality type
+  bio?: string; // Plant bio/description
 }
 
 export interface WateringSchedule {
