@@ -327,6 +327,7 @@ async function handleThirstyMessageGeneration(plantInfo: {
   species: string;
   personalityType: string;
   daysOverdue: number;
+  userName?: string;
 }) {
   try {
     const prompt = `
@@ -337,6 +338,7 @@ Plant Information:
 - Species: ${plantInfo.species}
 - Personality Type: ${plantInfo.personalityType}
 - Days Overdue for Watering: ${plantInfo.daysOverdue}
+${plantInfo.userName ? `- Owner's Name: ${plantInfo.userName}` : ''}
 
 Based on the plant's personality type (${plantInfo.personalityType}) and the fact that it's ${plantInfo.daysOverdue} days overdue for watering, write a short 1-2 sentence message from the plant asking for water.
 
@@ -346,6 +348,7 @@ The message should:
 - Reference how many days it's been without water if relevant
 - Be friendly, humorous, or slightly passive-aggressive depending on personality
 - Be concise (1-2 short sentences only)
+${plantInfo.userName ? `- Occasionally (about 40% of the time) address the owner by name (${plantInfo.userName}) to make it more personal` : ''}
 
 Return ONLY the message text with no additional formatting, explanations, or JSON.
 `;
@@ -388,28 +391,48 @@ function getDefaultThirstyMessage(plantInfo: {
   species: string;
   personalityType: string;
   daysOverdue: number;
+  userName?: string;
 }): string {
-  const { name, personalityType, daysOverdue } = plantInfo;
+  const { name, personalityType, daysOverdue, userName } = plantInfo;
+  const includeUserName = userName && Math.random() < 0.4; // 40% chance to include user name
   
   // Default messages based on personality type
   switch (personalityType.toLowerCase()) {
     case 'cheerful':
-      return `Hey there! I'm feeling a bit parched. A drink would be lovely!`;
+      return includeUserName 
+        ? `Hey ${userName}! I'm feeling a bit parched. A drink would be lovely!` 
+        : `Hey there! I'm feeling a bit parched. A drink would be lovely!`;
     case 'dramatic':
-      return `I'm DYING of thirst over here! It's been ${daysOverdue} days too many!`;
+      return includeUserName 
+        ? `${userName}, I'm DYING of thirst over here! It's been ${daysOverdue} days too many!` 
+        : `I'm DYING of thirst over here! It's been ${daysOverdue} days too many!`;
     case 'zen':
-      return `One cannot flourish without water. I seek hydration.`;
+      return includeUserName 
+        ? `${userName}, one cannot flourish without water. I seek hydration.` 
+        : `One cannot flourish without water. I seek hydration.`;
     case 'sassy':
-      return `Excuse me? Did you forget about me for ${daysOverdue} days? I'm thirsty!`;
+      return includeUserName 
+        ? `Excuse me, ${userName}? Did you forget about me for ${daysOverdue} days? I'm thirsty!` 
+        : `Excuse me? Did you forget about me for ${daysOverdue} days? I'm thirsty!`;
     case 'royal':
-      return `Your Majesty ${name} requests the royal water treatment, post-haste.`;
+      return includeUserName 
+        ? `Your Majesty ${name} requests the royal water treatment from ${userName}, post-haste.` 
+        : `Your Majesty ${name} requests the royal water treatment, post-haste.`;
     case 'shy':
-      return `Um... sorry to bother you, but... I'm a little thirsty...`;
+      return includeUserName 
+        ? `Um... ${userName}... sorry to bother you, but... I'm a little thirsty...` 
+        : `Um... sorry to bother you, but... I'm a little thirsty...`;
     case 'adventurous':
-      return `I've been exploring the desert of neglect for ${daysOverdue} days! Water, please!`;
+      return includeUserName 
+        ? `${userName}! I've been exploring the desert of neglect for ${daysOverdue} days! Water, please!` 
+        : `I've been exploring the desert of neglect for ${daysOverdue} days! Water, please!`;
     case 'wise':
-      return `A wise gardener knows that water brings life. I've been waiting patiently.`;
+      return includeUserName 
+        ? `${userName}, a wise gardener knows that water brings life. I've been waiting patiently.` 
+        : `A wise gardener knows that water brings life. I've been waiting patiently.`;
     default:
-      return `I'm thirsty! I need water, please!`;
+      return includeUserName 
+        ? `${userName}, I'm thirsty! I need water, please!` 
+        : `I'm thirsty! I need water, please!`;
   }
 } 

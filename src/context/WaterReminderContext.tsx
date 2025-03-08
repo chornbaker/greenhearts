@@ -21,6 +21,7 @@ const WaterReminderContext = createContext<WaterReminderContextType | undefined>
 
 export function WaterReminderProvider({ children }: { children: React.ReactNode }) {
   const [messages, setMessages] = useState<WaterReminderMessages>({});
+  const [userName, setUserName] = useState<string>('');
   
   // Load messages from localStorage on mount
   useEffect(() => {
@@ -39,6 +40,12 @@ export function WaterReminderProvider({ children }: { children: React.ReactNode 
         });
         
         setMessages(messagesWithDates);
+      }
+      
+      // Try to get user name from localStorage
+      const savedUserName = localStorage.getItem('userName');
+      if (savedUserName) {
+        setUserName(savedUserName);
       }
     } catch (error) {
       console.error('Error loading water reminder messages:', error);
@@ -97,7 +104,8 @@ export function WaterReminderProvider({ children }: { children: React.ReactNode 
         name: plant.name,
         species: plant.species || 'plant',
         personalityType: plant.personalityType || 'cheerful',
-        daysOverdue
+        daysOverdue,
+        userName: userName || undefined
       });
       
       // Save the new message

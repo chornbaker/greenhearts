@@ -157,7 +157,8 @@ export default function Dashboard() {
             name: updatedPlant.name,
             species: updatedPlant.species || '',
             personalityType: updatedPlant.personalityType,
-            daysOverdue
+            daysOverdue,
+            userName: displayName || undefined
           });
           
           // Update the thirsty messages state
@@ -265,7 +266,8 @@ export default function Dashboard() {
           name: plant.name,
           species: plant.species || '',
           personalityType: plant.personalityType,
-          daysOverdue
+          daysOverdue,
+          userName: displayName || undefined
         });
         
         messages[plant.id] = message;
@@ -292,7 +294,7 @@ export default function Dashboard() {
       localStorage.setItem('thirstyMessages', JSON.stringify(messages));
       localStorage.setItem('lastMessageDate', today);
     }
-  }, [plantsNeedingWater, lastMessageDate, user]);
+  }, [plantsNeedingWater, lastMessageDate, user, displayName]);
 
   // Load saved messages from localStorage as a fallback
   useEffect(() => {
