@@ -289,7 +289,7 @@ export default function Dashboard() {
             return;
           }
           
-          const nextWatering = new Date(plant.nextWateringDate);
+    const nextWatering = new Date(plant.nextWateringDate);
           nextWatering.setHours(0, 0, 0, 0);
           
           // Check if overdue (due yesterday or earlier)
@@ -448,7 +448,7 @@ export default function Dashboard() {
   // Generate thirsty messages when plants needing water changes
   useEffect(() => {
     const generateMessages = async () => {
-      if (plantsNeedingWater.length > 0 && !loading && user) {
+    if (plantsNeedingWater.length > 0 && !loading && user) {
         try {
           await generateDailyMessages(plantsNeedingWater);
         } catch (error) {
