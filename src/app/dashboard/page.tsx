@@ -683,52 +683,6 @@ export default function Dashboard() {
           </div>
         ))}
       </div>
-      
-      {/* Add a plant button */}
-      <div className="mt-8 mb-4">
-        <Link 
-          href="/dashboard/add" 
-          className="block w-full bg-green-600 hover:bg-green-700 text-white py-3 px-4 rounded-xl text-center font-medium shadow-sm transition-colors"
-        >
-          Add a Plant
-        </Link>
-      </div>
-
-      {/* Upcoming watering schedule */}
-      <div className="bg-white rounded-2xl p-4 border border-gray-200 mt-8">
-        <h3 className="text-md font-medium text-gray-700 mb-3">Upcoming Watering</h3>
-        <div className="space-y-1">
-          {plants
-            .filter(plant => plant.nextWateringDate && plant.nextWateringDate > new Date())
-            .sort((a, b) => a.nextWateringDate!.getTime() - b.nextWateringDate!.getTime())
-            .slice(0, 3)
-            .map((plant) => (
-              <div key={plant.id} className="flex items-center gap-3 py-2 border-b border-gray-100 last:border-0">
-                <div className="w-10 h-10 bg-green-100 rounded-full overflow-hidden relative">
-                  {plant.image && (
-                    <Image 
-                      src={plant.image} 
-                      alt={plant.name} 
-                      fill 
-                      sizes="(max-width: 768px) 33vw, 96px"
-                      style={{ objectFit: 'cover' }}
-                    />
-                  )}
-                </div>
-                <div className="flex-1">
-                  <p className="font-medium text-gray-800 text-sm">{plant.name}</p>
-                  <p className="text-xs text-gray-500">
-                    {plant.nextWateringDate?.toLocaleDateString(undefined, { 
-                      month: 'short', 
-                      day: 'numeric' 
-                    })}
-                  </p>
-                </div>
-              </div>
-            ))
-          }
-        </div>
-      </div>
     </div>
   );
 } 
