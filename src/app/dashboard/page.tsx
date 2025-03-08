@@ -250,7 +250,7 @@ export default function Dashboard() {
       {/* Plants needing water */}
       {plantsNeedingWater.length > 0 &&
         <div className="bg-amber-50 p-4 rounded-2xl border border-amber-200 mb-6">
-          <h2 className="text-lg font-semibold text-amber-800 mb-3">Thirsty Plants Speaking...</h2>
+          <h2 className="text-lg font-semibold text-amber-800 mb-3">Your Plants are Thirsty...</h2>
           <div className="space-y-3">
             {plantsNeedingWater.map((plant) => (
               <div key={plant.id} className="flex items-center gap-3">
@@ -272,7 +272,7 @@ export default function Dashboard() {
                       {calculateDaysOverdue(plant)} days overdue
                     </p>
                     {waterMessages[plant.id] && (
-                      <p className="text-xs text-gray-600 italic mt-1">
+                      <p className="text-xs text-gray-600 italic mt-1 line-clamp-2">
                         "{waterMessages[plant.id]}"
                       </p>
                     )}

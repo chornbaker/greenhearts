@@ -328,7 +328,7 @@ async function handleWaterReminderGeneration(plantInfo: {
 }) {
   try {
     const prompt = `
-You are a creative writer who specializes in giving plants unique personalities and voices. Your task is to write a short, playful, and slightly passive-aggressive message from a plant that needs to be watered.
+You are a creative writer who specializes in giving plants unique personalities and voices. Your task is to write a very short, playful message from a plant that needs to be watered.
 
 Plant Information:
 - Name: ${plantInfo.name}
@@ -336,11 +336,11 @@ Plant Information:
 - Personality Type: ${plantInfo.personalityType || 'Not specified'}
 - Days Overdue for Watering: ${plantInfo.daysOverdue}
 
-Write a short message (maximum 1-2 sentences) from the plant's perspective, asking to be watered. The message should:
+Write a very short message (maximum 1 sentence, no more than 10-12 words) from the plant's perspective, asking to be watered. The message should:
 1. Be cute, playful, or passive-aggressive depending on the personality type
-2. Mention how many days it's been without water
+2. Mention how many days it's been without water or how overdue the watering is
 3. Have a distinct voice that matches the personality type
-4. Be humorous and engaging
+4. Be concise and to the point
 
 Personality types and their characteristics:
 - Cheerful: Optimistic, upbeat, always sees the bright side
@@ -396,24 +396,24 @@ function getDefaultWaterMessage(plantInfo: {
 }): string {
   const { name, personalityType, daysOverdue } = plantInfo;
   
-  // Default messages by personality type
+  // Default messages by personality type - shorter versions
   switch (personalityType?.toLowerCase()) {
     case 'dramatic':
-      return `I'm DYING of thirst over here! ${daysOverdue} days without water? How could you?!`;
+      return `${daysOverdue} days without water? I'm literally dying!`;
     case 'zen':
-      return `Finding inner peace despite being ${daysOverdue} days without water. But perhaps we could find balance together?`;
+      return `${daysOverdue} days dry. Water brings peace.`;
     case 'sassy':
-      return `Excuse me? ${daysOverdue} days and counting. The water isn't going to pour itself, you know.`;
+      return `${daysOverdue} days and counting. Water me already!`;
     case 'royal':
-      return `One formally requests hydration, as it has been ${daysOverdue} days. Chop chop!`;
+      return `${daysOverdue} days without hydration is unacceptable!`;
     case 'shy':
-      return `Um... sorry to bother you, but... I'm a little thirsty... it's been ${daysOverdue} days...`;
+      return `Um... ${daysOverdue} days thirsty... if you don't mind...`;
     case 'adventurous':
-      return `${daysOverdue} days without water? I'm on a survival adventure! But I could use some backup!`;
+      return `${daysOverdue} days in the desert! Need water for next adventure!`;
     case 'wise':
-      return `A plant without water for ${daysOverdue} days is like wisdom without action. Both wither away.`;
+      return `${daysOverdue} days without water teaches patience, but enough now.`;
     case 'cheerful':
     default:
-      return `Hey there! I'm feeling a bit parched after ${daysOverdue} days. A drink would be lovely!`;
+      return `${daysOverdue} days thirsty but still smiling! Water please?`;
   }
 } 
