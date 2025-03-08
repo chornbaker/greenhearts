@@ -121,7 +121,7 @@ export default function DashboardNavigation({ userId }: DashboardNavigationProps
                 boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
                 position: 'absolute',
                 zIndex: 20,
-                top: '-18px'
+                top: '-9px'
               }}
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="white">
