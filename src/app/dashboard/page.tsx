@@ -104,52 +104,19 @@ export default function Dashboard() {
         }];
         
       case 'wateringPriority':
-        // Group by watering status
-        const needsWater = plants.filter((plant) => {
-          if (!plant.nextWateringDate) return false;
-          const today = new Date();
-          return plant.nextWateringDate <= today;
-        }).sort((a, b) => {
-          if (!a.nextWateringDate || !b.nextWateringDate) return 0;
-          return a.nextWateringDate.getTime() - b.nextWateringDate.getTime();
-        });
+        // Sort by watering date
+        return [{
+          title: 'Watering Priority',
+          plants: [...plants].sort((a, b) => {
+            // Plants without watering dates go last
+            if (!a.nextWateringDate) return 1;
+            if (!b.nextWateringDate) return -1;
+            return a.nextWateringDate.getTime() - b.nextWateringDate.getTime();
+          })
+        }];
         
-        const upcomingWater = plants.filter((plant) => {
-          if (!plant.nextWateringDate) return false;
-          const today = new Date();
-          return plant.nextWateringDate > today;
-        }).sort((a, b) => {
-          if (!a.nextWateringDate || !b.nextWateringDate) return 0;
-          return a.nextWateringDate.getTime() - b.nextWateringDate.getTime();
-        });
-        
-        const noSchedule = plants.filter((plant) => !plant.nextWateringDate)
-          .sort((a, b) => a.name.localeCompare(b.name));
-        
-        const groups = [];
-        
-        if (needsWater.length > 0) {
-          groups.push({
-            title: 'Needs Water',
-            plants: needsWater
-          });
-        }
-        
-        if (upcomingWater.length > 0) {
-          groups.push({
-            title: 'Upcoming',
-            plants: upcomingWater
-          });
-        }
-        
-        if (noSchedule.length > 0) {
-          groups.push({
-            title: 'No Schedule',
-            plants: noSchedule
-          });
-        }
-        
-        return groups;
+      default:
+        return [];
     }
   };
   
@@ -223,7 +190,7 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-24">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold text-green-800">{plantHavenName}</h1>
         
@@ -236,36 +203,39 @@ export default function Dashboard() {
       
       {/* Plants needing water */}
       {plantsNeedingWater.length > 0 && (
-        <div className="bg-blue-50 rounded-xl p-4 border border-blue-200">
-          <h2 className="text-lg font-medium text-blue-800 mb-2">Plants Needing Water</h2>
-          <div className="flex overflow-x-auto pb-2 -mx-1 scrollbar-hide">
-            {plantsNeedingWater.map((plant, index) => (
-              <Link 
-                href={`/dashboard/plants/${plant.id}`}
-                key={plant.id || `water-${index}`}
-                className="flex-shrink-0 w-28 mx-1 bg-white rounded-lg overflow-hidden shadow-sm border border-gray-200"
-              >
-                <div className="w-full h-28 bg-gray-100 relative">
-                  {plant.image ? (
+        <div className="bg-amber-50 p-4 rounded-2xl border border-amber-200 mb-6">
+          <h2 className="text-lg font-semibold text-amber-800 mb-3">Plants Needing Water</h2>
+          <div className="space-y-3">
+            {plantsNeedingWater.map((plant) => (
+              <div key={plant.id} className="flex items-center gap-3">
+                <div className="w-12 h-12 bg-amber-100 rounded-full overflow-hidden relative">
+                  {plant.image && (
                     <Image 
                       src={plant.image} 
                       alt={plant.name} 
                       fill 
-                      sizes="112px"
-                      className="object-cover"
+                      sizes="(max-width: 768px) 33vw, 96px"
+                      style={{ objectFit: 'cover' }}
                     />
-                  ) : (
-                    <div className="absolute inset-0 flex items-center justify-center text-gray-400">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                      </svg>
-                    </div>
                   )}
                 </div>
-                <div className="p-2">
-                  <p className="font-medium text-xs text-gray-900 truncate">{plant.name}</p>
+                <div className="flex-1">
+                  <Link href={`/dashboard/plants/${plant.id}`} className="font-medium text-gray-900 hover:text-green-700">
+                    {plant.name}
+                  </Link>
+                  <p className="text-xs text-amber-700">Last watered: {plant.lastWatered?.toLocaleDateString()}</p>
                 </div>
-              </Link>
+                <button 
+                  className="bg-green-600 hover:bg-green-700 text-white text-sm py-1 px-3 rounded-lg"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    // This would call waterPlant service in a real implementation
+                    alert(`Watering ${plant.name}! This is a placeholder for the actual watering functionality.`);
+                  }}
+                >
+                  Water
+                </button>
+              </div>
             ))}
           </div>
         </div>
@@ -303,7 +273,7 @@ export default function Dashboard() {
                 : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
             }`}
           >
-            By Watering
+            Watering
           </button>
         </div>
       </div>
