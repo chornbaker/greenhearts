@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { createPlant } from '@/services/plants';
 import { uploadPlantImage } from '@/services/storage';
+import { generatePlantPersonality } from '@/services/claude';
 import { PlantHealth } from '@/types';
 import FormInput from '@/components/FormInput';
 import ButtonSelector from '@/components/ButtonSelector';
@@ -52,6 +53,7 @@ export default function AddPlant() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [photoUrl, setPhotoUrl] = useState<string | null>(null);
   const [name, setName] = useState('');
   const [species, setSpecies] = useState('');
   const [locationType, setLocationType] = useState('');
@@ -61,6 +63,13 @@ export default function AddPlant() {
   const [potSize, setPotSize] = useState('');
   const [lastWateredDate, setLastWateredDate] = useState(new Date().toISOString().split('T')[0]);
   const [personality, setPersonality] = useState('');
+  const [bio, setBio] = useState('');
+  const [aiGenerating, setAiGenerating] = useState(false);
+  const [aiGenerated, setAiGenerated] = useState(false);
+  const [manualMode, setManualMode] = useState(false);
+  
+  // Check if all required fields are filled
+  const requiredFieldsFilled = species && locationType && sunlight && soil && potSize;
   
   // Get location options based on type
   const getLocationOptions = () => {
@@ -70,21 +79,69 @@ export default function AddPlant() {
   
   // Auto-populate name from species if species is changed and name is empty
   useEffect(() => {
-    if (species && !name) {
+    if (species && !name && !aiGenerated) {
       setName(species);
     }
-  }, [species, name]);
+  }, [species, name, aiGenerated]);
+  
+  // Generate AI personality when all required fields are filled for the first time
+  useEffect(() => {
+    if (requiredFieldsFilled && !aiGenerated && !manualMode && !aiGenerating) {
+      generateAiPersonality();
+    }
+  }, [species, locationType, sunlight, soil, potSize, photoUrl, aiGenerated, manualMode]);
   
   const clearPersonality = () => {
     setPersonality('');
+    setBio('');
+    setAiGenerated(false);
   };
   
-  const handlePhotoSelected = (file: File) => {
+  const handlePhotoSelected = async (file: File) => {
     setPhotoFile(file);
+    
+    // Create a URL for the selected image
+    const tempUrl = URL.createObjectURL(file);
+    setPhotoUrl(tempUrl);
   };
   
   const handlePhotoRemoved = () => {
     setPhotoFile(null);
+    setPhotoUrl(null);
+  };
+  
+  const generateAiPersonality = async () => {
+    if (!requiredFieldsFilled || aiGenerating) return;
+    
+    setAiGenerating(true);
+    try {
+      const personality = await generatePlantPersonality({
+        species,
+        locationType,
+        locationSpace,
+        sunlight,
+        soil,
+        potSize,
+        imageUrl: photoUrl || undefined
+      });
+      
+      // Update all fields with AI-generated content
+      setName(personality.name);
+      setPersonality(personality.personalityType.toLowerCase());
+      setBio(personality.bio);
+      setAiGenerated(true);
+    } catch (error) {
+      console.error('Error generating plant personality:', error);
+      // Don't set error message to avoid confusing the user
+    } finally {
+      setAiGenerating(false);
+    }
+  };
+  
+  const toggleManualMode = () => {
+    setManualMode(!manualMode);
+    // We no longer clear the fields when switching to manual mode
+    // This allows users to edit AI-generated content
   };
   
   const handleSubmit = async (e: React.FormEvent) => {
@@ -148,6 +205,8 @@ export default function AddPlant() {
         nextWateringDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
         health: PlantHealth.Good,
         notes: `Location Type: ${locationType}, Sunlight: ${sunlight}, Soil: ${soil}, Pot Size: ${potSize}${personality ? ', Personality: ' + personality : ''}`,
+        personalityType: personality || undefined,
+        bio: bio || undefined,
       });
       
       router.push('/dashboard');
@@ -271,55 +330,153 @@ export default function AddPlant() {
         
         {/* Optional Section - Name and Personality */}
         <div className="mt-8 bg-green-50 p-4 rounded-xl border border-green-200">
-          <h3 className="text-lg font-medium text-green-800 mb-3">Personalize Your Plant (Optional)</h3>
-          
-          {/* Plant Name */}
-          <div className="mb-4">
-            <FormInput
-              id="name"
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder={species ? `Defaults to "${species}"` : "Enter plant name"}
-              label="Plant Nickname"
-            />
-            <p className="text-xs text-gray-500 mt-1">
-              If left empty, we'll use the plant type as the name
-            </p>
+          <div className="flex justify-between items-center mb-3">
+            <h3 className="text-lg font-medium text-green-800">Give Your Plant a Heart</h3>
+            {!manualMode && aiGenerated && (
+              <button
+                type="button"
+                onClick={generateAiPersonality}
+                disabled={aiGenerating || !requiredFieldsFilled}
+                className="text-xs bg-green-600 text-white p-1 rounded-full hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                aria-label="Refresh personality"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+              </button>
+            )}
           </div>
-          
-          {/* Plant Personality */}
-          <div className="space-y-2 w-full">
-            <div className="flex justify-between items-center">
-              <label className="block text-sm font-medium text-gray-800">
-                Plant Personality
-              </label>
-              {personality && (
-                <button
-                  type="button"
-                  onClick={clearPersonality}
-                  className="text-xs text-gray-500 hover:text-gray-700"
-                >
-                  Clear
-                </button>
+
+          {!manualMode && (
+            <div className="mb-4">
+              {!aiGenerated && !aiGenerating && requiredFieldsFilled && (
+                <div className="text-center mb-2">
+                  <button
+                    type="button"
+                    onClick={generateAiPersonality}
+                    disabled={aiGenerating || !requiredFieldsFilled}
+                    className="px-3 py-1 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Generate Personality
+                  </button>
+                </div>
+              )}
+              
+              {aiGenerating && (
+                <div className="w-full text-center py-4">
+                  <div className="inline-block animate-spin rounded-full h-6 w-6 border-t-2 border-green-500 border-r-2 border-green-500 border-b-2 border-green-500 border-l-2 border-gray-200"></div>
+                </div>
               )}
             </div>
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 w-full">
-              {PERSONALITIES.map((p) => (
-                <button
-                  key={p.value}
-                  type="button"
-                  className={`w-full px-3 py-2 text-sm rounded-lg transition-colors ${
-                    personality === p.value
-                      ? 'bg-green-600 text-white'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
-                  onClick={() => setPersonality(p.value)}
-                >
-                  {p.label}
-                </button>
-              ))}
+          )}
+          
+          {/* AI Mode Display */}
+          {!manualMode && aiGenerated && !aiGenerating && (
+            <div className="bg-white rounded-lg p-4 mb-4 border border-green-100 shadow-sm">
+              <div className="mb-4">
+                <h4 className="text-sm font-medium text-gray-500 mb-1">Name</h4>
+                <p className="text-lg font-medium text-green-800">{name}</p>
+              </div>
+              
+              <div className="mb-4">
+                <h4 className="text-sm font-medium text-gray-500 mb-1">Personality Type</h4>
+                <div className="inline-block px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium">
+                  {personality.charAt(0).toUpperCase() + personality.slice(1)}
+                </div>
+              </div>
+              
+              <div>
+                <h4 className="text-sm font-medium text-gray-500 mb-1">Bio</h4>
+                <p className="text-sm text-gray-700 italic">{bio}</p>
+              </div>
             </div>
+          )}
+          
+          {/* Manual Mode or AI Mode Not Generated Yet */}
+          {(manualMode || (!aiGenerated && !aiGenerating)) && (
+            <>
+              {/* Plant Name */}
+              <div className="mb-4">
+                <FormInput
+                  id="name"
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder={species ? `Defaults to "${species}"` : "Enter a creative name"}
+                  label="Name"
+                  disabled={aiGenerating}
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  If left empty, we'll use the plant type as the name
+                </p>
+              </div>
+              
+              {/* Plant Personality */}
+              <div className="space-y-2 w-full mb-4">
+                <div className="flex justify-between items-center">
+                  <label className="block text-sm font-medium text-gray-800">
+                    Personality Type
+                  </label>
+                  {personality && (
+                    <button
+                      type="button"
+                      onClick={clearPersonality}
+                      className="text-xs text-gray-500 hover:text-gray-700"
+                      disabled={aiGenerating}
+                    >
+                      Clear
+                    </button>
+                  )}
+                </div>
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 w-full">
+                  {PERSONALITIES.map((p) => (
+                    <button
+                      key={p.value}
+                      type="button"
+                      className={`w-full px-3 py-2 text-sm rounded-lg transition-colors ${
+                        personality === p.value
+                          ? 'bg-green-600 text-white'
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      }`}
+                      onClick={() => setPersonality(p.value)}
+                      disabled={aiGenerating && !manualMode}
+                    >
+                      {p.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              
+              {/* Plant Bio */}
+              <div className="w-full">
+                <label htmlFor="bio" className="block text-sm font-medium text-gray-800 mb-1">
+                  Bio
+                </label>
+                <textarea
+                  id="bio"
+                  value={bio}
+                  onChange={(e) => setBio(e.target.value)}
+                  placeholder="Enter a short bio for your plant"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  rows={3}
+                  disabled={aiGenerating && !manualMode}
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Add a short, fun bio for your plant
+                </p>
+              </div>
+            </>
+          )}
+          
+          {/* Mode Toggle Button - Moved to bottom */}
+          <div className="mt-4 text-center">
+            <button
+              type="button"
+              onClick={toggleManualMode}
+              className="text-xs text-gray-500 hover:text-gray-700 underline"
+            >
+              {manualMode ? 'Use AI' : 'Edit'}
+            </button>
           </div>
         </div>
         
@@ -327,7 +484,7 @@ export default function AddPlant() {
         <div className="w-full">
           <button
             type="submit"
-            disabled={loading}
+            disabled={loading || aiGenerating}
             className="w-full bg-green-600 text-white py-3 px-4 rounded-xl hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
           >
             {loading ? 'Adding Plant...' : 'Add Plant'}

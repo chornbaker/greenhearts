@@ -1,12 +1,3 @@
-import Anthropic from '@anthropic-ai/sdk';
-
-// Initialize Anthropic client only in browser environment
-const anthropic = typeof window !== 'undefined' 
-  ? new Anthropic({
-      apiKey: process.env.ANTHROPIC_API_KEY || '',
-    })
-  : null;
-
 /**
  * Send a message to Claude and get a response
  * @param prompt The user's message to Claude
@@ -14,31 +5,79 @@ const anthropic = typeof window !== 'undefined'
  */
 export async function sendMessageToClaude(prompt: string): Promise<string> {
   try {
-    if (!anthropic) {
-      throw new Error('Anthropic client is not initialized');
-    }
-
-    const response = await anthropic.messages.create({
-      model: 'claude-3-opus-20240229',
-      max_tokens: 1000,
-      messages: [
-        {
-          role: 'user',
-          content: prompt,
-        },
-      ],
+    const response = await fetch('/api/claude', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ prompt }),
     });
 
-    // Check if the content block is of type 'text'
-    if (response.content[0].type === 'text') {
-      return response.content[0].text;
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
     }
-    
-    return 'No text response received';
+
+    const data = await response.json();
+    return data.response || 'No response received';
   } catch (error) {
     console.error('Error communicating with Claude:', error);
     throw error;
   }
 }
 
-export { anthropic }; 
+/**
+ * Generate plant personality using Claude
+ * @param plantInfo Object containing plant information
+ * @returns Object with name, personalityType, and bio
+ */
+export async function generatePlantPersonality(plantInfo: {
+  species: string;
+  locationType: string;
+  locationSpace?: string;
+  sunlight: string;
+  soil: string;
+  potSize: string;
+  imageUrl?: string;
+}): Promise<{
+  name: string;
+  personalityType: string;
+  bio: string;
+}> {
+  try {
+    const response = await fetch('/api/claude', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        type: 'generate_personality',
+        plantInfo,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    
+    if (data.personality) {
+      return data.personality;
+    }
+    
+    // Fallback with default values if no personality data
+    return {
+      name: plantInfo.species,
+      personalityType: 'Cheerful',
+      bio: `Hi! I'm a ${plantInfo.species} and I'm happy to be part of your plant family!`
+    };
+  } catch (error) {
+    console.error('Error generating plant personality:', error);
+    // Fallback with default values
+    return {
+      name: plantInfo.species,
+      personalityType: 'Cheerful',
+      bio: `Hi! I'm a ${plantInfo.species} and I'm happy to be part of your plant family!`
+    };
+  }
+} 
