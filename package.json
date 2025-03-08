@@ -6,12 +6,15 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "upload-test-images": "tsx scripts/uploadTestImages.ts",
+    "manage-test-data": "tsx scripts/manageTestData.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.39.0",
     "firebase": "^11.4.0",
     "next": "15.2.1",
+    "node-fetch": "^3.3.2",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   },
@@ -25,6 +28,7 @@
     "eslint": "^9",
     "eslint-config-next": "15.2.1",
     "tailwindcss": "^4",
+    "tsx": "^4.7.0",
     "typescript": "^5"
   }
 }
