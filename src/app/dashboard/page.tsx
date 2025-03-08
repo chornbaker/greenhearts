@@ -146,12 +146,37 @@ export default function Dashboard() {
     <Link 
       href={`/dashboard/plants/${plant.id}`} 
       key={plant.id || index}
-      className="bg-white rounded-xl overflow-hidden shadow-sm border border-gray-200 hover:shadow-md transition-shadow"
+      className="bg-white rounded-xl overflow-hidden shadow-sm border border-gray-200 hover:shadow-md transition-shadow relative"
       style={{
         WebkitBorderRadius: '0.75rem',
         borderRadius: '0.75rem'
       }}
     >
+      {/* Water indicator - positioned absolutely relative to the card */}
+      {plant.nextWateringDate && plant.nextWateringDate <= new Date() && (
+        <div 
+          style={{
+            position: 'absolute',
+            top: '8px',
+            right: '8px',
+            zIndex: 10,
+            width: '32px',
+            height: '32px',
+            backgroundColor: '#3b82f6',
+            borderRadius: '9999px',
+            WebkitBorderRadius: '9999px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            WebkitBoxAlign: 'center',
+            WebkitBoxPack: 'center',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24)'
+          }}
+        >
+          <WaterDropIcon className="h-5 w-5 text-white" />
+        </div>
+      )}
+      
       <div className="aspect-square bg-gray-100 relative">
         {plant.image ? (
           <Image 
@@ -166,25 +191,6 @@ export default function Dashboard() {
             <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
             </svg>
-          </div>
-        )}
-        
-        {/* Water indicator */}
-        {plant.nextWateringDate && plant.nextWateringDate <= new Date() && (
-          <div 
-            className="absolute top-2 right-2 bg-blue-500 rounded-full w-8 h-8 flex items-center justify-center shadow-md"
-            style={{
-              WebkitBorderRadius: '9999px',
-              borderRadius: '9999px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              WebkitBoxAlign: 'center',
-              WebkitBoxPack: 'center',
-              backgroundColor: '#3b82f6'
-            }}
-          >
-            <WaterDropIcon className="h-5 w-5 text-white" />
           </div>
         )}
       </div>
