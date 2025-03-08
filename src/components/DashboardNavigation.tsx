@@ -52,15 +52,10 @@ export default function DashboardNavigation({ userId }: DashboardNavigationProps
     userSelect: 'none'
   };
 
-  const grayNavLinkStyle: CSSProperties = {
-    ...navLinkStyle,
-    color: '#374151', // text-gray-700 equivalent
-  };
-
   const textStyle: CSSProperties = {
     fontSize: '0.75rem',
     marginTop: '0.25rem',
-    color: '#1f2937' // text-gray-800 equivalent
+    color: '#047857' // Changed from gray to green to match icons
   };
 
   return (
@@ -102,7 +97,7 @@ export default function DashboardNavigation({ userId }: DashboardNavigationProps
           
           <Link
             href="/dashboard/add"
-            style={grayNavLinkStyle}
+            style={navLinkStyle}
           >
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <circle cx="12" cy="12" r="9" strokeWidth={2} />
@@ -113,7 +108,7 @@ export default function DashboardNavigation({ userId }: DashboardNavigationProps
           
           <Link
             href="/dashboard/reminders"
-            style={grayNavLinkStyle}
+            style={navLinkStyle}
           >
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
