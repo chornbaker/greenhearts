@@ -498,9 +498,9 @@ export default function ExpandableCard({ plant, onWater, onUpdate, organizationV
           {/* Content Section */}
           <div className="flex-1 p-4 flex flex-col">
             {/* Basic Info */}
-            <div className="flex justify-between items-start">
+            <div className="flex justify-between items-center">
               <div>
-                <h3 className="font-medium text-gray-700">{plant.name}</h3>
+                <h2 className="text-xl font-semibold text-gray-800">{plant.name}</h2>
                 <p className="text-sm text-gray-500">{plant.species || 'Unknown species'}</p>
               </div>
               
@@ -694,7 +694,7 @@ export default function ExpandableCard({ plant, onWater, onUpdate, organizationV
                   onMouseLeave={() => setShowWaterTooltip(false)}
                   aria-label="Mark as watered"
                 >
-                  <WaterDropIcon className="h-6 w-6 text-white" />
+                  <WaterDropIcon className="h-5 w-5 text-blue-500 flex-shrink-0" />
                   
                   {/* Tooltip */}
                   {showWaterTooltip && (
@@ -875,8 +875,8 @@ export default function ExpandableCard({ plant, onWater, onUpdate, organizationV
               <div className="mb-6">
                 <h3 className="text-md font-medium text-gray-700 mb-2">Watering Schedule</h3>
                 <div className="bg-blue-50 p-4 rounded-lg">
-                  <div className="flex items-start gap-3">
-                    <WaterDropIcon className="h-5 w-5 text-blue-500 mt-1 flex-shrink-0" />
+                  <div className="flex items-center gap-3">
+                    <WaterDropIcon className="h-5 w-5 text-blue-500 flex-shrink-0" />
                     <div>
                       <p className="text-blue-800 font-medium">Every {plant.wateringSchedule.frequency} days</p>
                       {plant.wateringSchedule.description && (
