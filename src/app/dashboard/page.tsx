@@ -147,15 +147,15 @@ export default function Dashboard() {
         {/* Water indicator */}
         {plant.nextWateringDate && plant.nextWateringDate <= new Date() && (
           <div className="absolute top-2 right-2 bg-blue-500 rounded-full w-8 h-8 flex items-center justify-center shadow-md">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-white" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M7.707 3.293a1 1 0 010 1.414L5.414 7H11a7 7 0 017 7v2a1 1 0 11-2 0v-2a5 5 0 00-5-5H5.414l2.293 2.293a1 1 0 11-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-white" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 2.69l5.66 5.66a8 8 0 11-11.31 0z" />
             </svg>
           </div>
         )}
       </div>
       <div className="p-3">
-        <h3 className="font-medium text-gray-900 truncate">{plant.name}</h3>
-        <p className="text-sm text-gray-500 truncate">{plant.species || 'Unknown species'}</p>
+        <h3 className="font-medium text-gray-500 truncate">{plant.name}</h3>
+        <p className="text-sm text-gray-900 truncate">{plant.species || 'Unknown species'}</p>
       </div>
     </Link>
   );
@@ -226,13 +226,16 @@ export default function Dashboard() {
                   <p className="text-xs text-amber-700">Last watered: {plant.lastWatered?.toLocaleDateString()}</p>
                 </div>
                 <button 
-                  className="bg-green-600 hover:bg-green-700 text-white text-sm py-1 px-3 rounded-lg"
+                  className="bg-green-600 hover:bg-green-700 text-white text-sm py-1 px-3 rounded-lg flex items-center gap-1"
                   onClick={(e) => {
                     e.preventDefault();
                     // This would call waterPlant service in a real implementation
                     alert(`Watering ${plant.name}! This is a placeholder for the actual watering functionality.`);
                   }}
                 >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 2.69l5.66 5.66a8 8 0 11-11.31 0z" />
+                  </svg>
                   Water
                 </button>
               </div>
