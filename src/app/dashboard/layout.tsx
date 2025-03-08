@@ -53,10 +53,23 @@ export default function DashboardLayout({
 
   // Apply padding to main content based on footer height
   useEffect(() => {
-    if (footerRef.current && mainContentRef.current) {
-      const footerHeight = footerRef.current.offsetHeight;
-      mainContentRef.current.style.paddingBottom = `${footerHeight}px`;
-    }
+    const updateFooterPadding = () => {
+      if (footerRef.current && mainContentRef.current) {
+        const footerHeight = footerRef.current.offsetHeight;
+        // Add extra padding for Safari
+        mainContentRef.current.style.paddingBottom = `${footerHeight + 20}px`;
+      }
+    };
+
+    // Initial update
+    updateFooterPadding();
+    
+    // Update on resize
+    window.addEventListener('resize', updateFooterPadding);
+    
+    return () => {
+      window.removeEventListener('resize', updateFooterPadding);
+    };
   }, []);
 
   const handleSignOut = async () => {
@@ -237,7 +250,7 @@ export default function DashboardLayout({
       )}
 
       {/* Bottom Navigation - Using custom component */}
-      <div ref={footerRef}>
+      <div ref={footerRef} style={{ position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 10 }}>
         <DashboardNavigation userId={user.uid} />
       </div>
     </div>

@@ -160,7 +160,7 @@ export default function AddPlant() {
   };
   
   return (
-    <div className="space-y-6 pb-36">
+    <div className="space-y-6" style={{ paddingBottom: '120px' }}>
       <h1 className="text-2xl font-bold text-green-800">Add a New Plant</h1>
       
       {error && (
