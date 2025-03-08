@@ -4,6 +4,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { Figtree } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/context/AuthContext";
+import { WaterReminderProvider } from '@/context/WaterReminderContext';
 import { metadata } from "./metadata";
 
 const geistSans = Geist({
@@ -38,7 +39,11 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${figtree.variable} antialiased`}
       >
-        <AuthProvider>{children}</AuthProvider>
+        <AuthProvider>
+          <WaterReminderProvider>
+            {children}
+          </WaterReminderProvider>
+        </AuthProvider>
       </body>
     </html>
   );

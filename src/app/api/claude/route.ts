@@ -15,20 +15,20 @@ export async function POST(request: NextRequest) {
     // }
 
     const body = await request.json();
-    
-    // Handle different types of requests
-    if (body.type === 'generate_personality') {
-      return handlePersonalityGeneration(body.plantInfo);
-    } else if (body.type === 'generate_care_info') {
-      return handleCareInfoGeneration(body.plantInfo);
-    } else if (body.prompt) {
-      // Original functionality for general prompts
-      return handleGeneralPrompt(body.prompt);
-    } else {
-      return NextResponse.json(
-        { error: 'Invalid request format' },
-        { status: 400 }
-      );
+    const { type, plantInfo } = body;
+
+    switch (type) {
+      case 'generate_personality':
+        return handlePersonalityGeneration(plantInfo);
+      case 'generate_care_info':
+        return handleCareInfoGeneration(plantInfo);
+      case 'generate_water_reminder':
+        return handleWaterReminderGeneration(plantInfo);
+      default:
+        return NextResponse.json(
+          { error: 'Invalid request type' },
+          { status: 400 }
+        );
     }
   } catch (error) {
     console.error('Error in Claude API route:', error);
@@ -314,5 +314,106 @@ Adjust all recommendations based on the specific plant species and its current e
       { error: 'Failed to generate plant care information' },
       { status: 500 }
     );
+  }
+}
+
+/**
+ * Handle water reminder message generation
+ */
+async function handleWaterReminderGeneration(plantInfo: {
+  name: string;
+  species: string;
+  personalityType?: string;
+  daysOverdue: number;
+}) {
+  try {
+    const prompt = `
+You are a creative writer who specializes in giving plants unique personalities and voices. Your task is to write a short, playful, and slightly passive-aggressive message from a plant that needs to be watered.
+
+Plant Information:
+- Name: ${plantInfo.name}
+- Species: ${plantInfo.species}
+- Personality Type: ${plantInfo.personalityType || 'Not specified'}
+- Days Overdue for Watering: ${plantInfo.daysOverdue}
+
+Write a short message (maximum 1-2 sentences) from the plant's perspective, asking to be watered. The message should:
+1. Be cute, playful, or passive-aggressive depending on the personality type
+2. Mention how many days it's been without water
+3. Have a distinct voice that matches the personality type
+4. Be humorous and engaging
+
+Personality types and their characteristics:
+- Cheerful: Optimistic, upbeat, always sees the bright side
+- Dramatic: Exaggerates everything, prone to hyperbole
+- Zen: Calm, philosophical, speaks in koans or wisdom
+- Sassy: Witty, sarcastic, slightly judgmental
+- Royal: Entitled, speaks formally, expects to be treated like royalty
+- Shy: Hesitant, apologetic, doesn't want to be a bother
+- Adventurous: Bold, daring, sees everything as an exciting challenge
+- Wise: Thoughtful, profound, offers life lessons
+
+Return ONLY the message text with no additional formatting, quotes, or explanation.
+`;
+
+    const response = await anthropic.messages.create({
+      model: 'claude-3-haiku-20240307',
+      max_tokens: 300,
+      messages: [
+        {
+          role: 'user',
+          content: prompt,
+        },
+      ],
+    });
+
+    // Check if the content block is of type 'text'
+    if (response.content[0].type === 'text') {
+      const message = response.content[0].text.trim();
+      return NextResponse.json({ message });
+    }
+    
+    // Fallback if no text response
+    return NextResponse.json({
+      message: getDefaultWaterMessage(plantInfo)
+    });
+  } catch (error) {
+    console.error('Error generating water reminder message:', error);
+    return NextResponse.json(
+      { error: 'Failed to generate water reminder message' },
+      { status: 500 }
+    );
+  }
+}
+
+/**
+ * Get a default water reminder message based on personality type
+ */
+function getDefaultWaterMessage(plantInfo: {
+  name: string;
+  species: string;
+  personalityType?: string;
+  daysOverdue: number;
+}): string {
+  const { name, personalityType, daysOverdue } = plantInfo;
+  
+  // Default messages by personality type
+  switch (personalityType?.toLowerCase()) {
+    case 'dramatic':
+      return `I'm DYING of thirst over here! ${daysOverdue} days without water? How could you?!`;
+    case 'zen':
+      return `Finding inner peace despite being ${daysOverdue} days without water. But perhaps we could find balance together?`;
+    case 'sassy':
+      return `Excuse me? ${daysOverdue} days and counting. The water isn't going to pour itself, you know.`;
+    case 'royal':
+      return `One formally requests hydration, as it has been ${daysOverdue} days. Chop chop!`;
+    case 'shy':
+      return `Um... sorry to bother you, but... I'm a little thirsty... it's been ${daysOverdue} days...`;
+    case 'adventurous':
+      return `${daysOverdue} days without water? I'm on a survival adventure! But I could use some backup!`;
+    case 'wise':
+      return `A plant without water for ${daysOverdue} days is like wisdom without action. Both wither away.`;
+    case 'cheerful':
+    default:
+      return `Hey there! I'm feeling a bit parched after ${daysOverdue} days. A drink would be lovely!`;
   }
 } 

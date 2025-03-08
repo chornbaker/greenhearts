@@ -9,6 +9,7 @@ import { getUserPlants, waterPlant, updatePlant } from '@/services/plants';
 import { getUserProfile } from '@/services/user';
 import { Plant } from '@/types';
 import ExpandableCard from '@/components/dashboard/ExpandableCard';
+import { useWaterReminders } from '@/context/WaterReminderContext';
 
 // Organization view types
 type OrganizationView = 'location' | 'alphabetical' | 'wateringPriority';
@@ -22,6 +23,8 @@ export default function Dashboard() {
   const [plantHavenName, setPlantHavenName] = useState('My Plant Haven');
   const [displayName, setDisplayName] = useState('');
   const [organizationView, setOrganizationView] = useState<OrganizationView>('location');
+  const [waterMessages, setWaterMessages] = useState<{[plantId: string]: string}>({});
+  const { getOrGenerateMessage } = useWaterReminders();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -167,6 +170,42 @@ export default function Dashboard() {
     }
   };
   
+  // Calculate days overdue for a plant
+  const calculateDaysOverdue = (plant: Plant): number => {
+    if (!plant.nextWateringDate) return 0;
+    
+    const today = new Date();
+    const nextWatering = new Date(plant.nextWateringDate);
+    
+    // If not overdue, return 0
+    if (nextWatering > today) return 0;
+    
+    const diffTime = Math.abs(today.getTime() - nextWatering.getTime());
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    return diffDays;
+  };
+
+  // Load water reminder messages for plants needing water
+  useEffect(() => {
+    const loadWaterMessages = async () => {
+      if (plantsNeedingWater.length === 0) return;
+      
+      const messages: {[plantId: string]: string} = {};
+      
+      for (const plant of plantsNeedingWater) {
+        const message = await getOrGenerateMessage(plant);
+        messages[plant.id] = message;
+      }
+      
+      setWaterMessages(messages);
+    };
+    
+    if (!loading && plantsNeedingWater.length > 0) {
+      loadWaterMessages();
+    }
+  }, [plantsNeedingWater, loading, getOrGenerateMessage]);
+
   // If loading or no plants, show loading state or redirect
   if (loading) {
     return (
@@ -209,9 +248,9 @@ export default function Dashboard() {
       </div>
       
       {/* Plants needing water */}
-      {plantsNeedingWater.length > 0 && (
+      {plantsNeedingWater.length > 0 &&
         <div className="bg-amber-50 p-4 rounded-2xl border border-amber-200 mb-6">
-          <h2 className="text-lg font-semibold text-amber-800 mb-3">Plants Needing Water</h2>
+          <h2 className="text-lg font-semibold text-amber-800 mb-3">Thirsty Plants Speaking...</h2>
           <div className="space-y-3">
             {plantsNeedingWater.map((plant) => (
               <div key={plant.id} className="flex items-center gap-3">
@@ -227,28 +266,35 @@ export default function Dashboard() {
                   )}
                 </div>
                 <div className="flex-1">
-                  <p className="font-medium text-gray-900">{plant.name}</p>
-                  <p className="text-xs text-red-600">
-                    Last watered: {plant.lastWatered?.toLocaleDateString()}
-                  </p>
+                  <p className="font-medium text-gray-800">{plant.name}</p>
+                  <div className="flex flex-col">
+                    <p className="text-xs text-red-600">
+                      {calculateDaysOverdue(plant)} days overdue
+                    </p>
+                    {waterMessages[plant.id] && (
+                      <p className="text-xs text-gray-600 italic mt-1">
+                        "{waterMessages[plant.id]}"
+                      </p>
+                    )}
+                  </div>
                 </div>
                 <button 
-                  className="bg-blue-500 hover:bg-blue-600 text-white text-sm py-1 px-3 rounded-lg flex items-center gap-1"
+                  className="bg-blue-500 hover:bg-blue-600 text-white h-8 w-8 rounded-full flex items-center justify-center"
                   onClick={(e) => {
                     e.preventDefault();
                     handleWaterPlant(plant.id);
                   }}
+                  aria-label="Water plant"
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M12 2.5c-1.7 2.3-6 7.6-6 11.5 0 3.3 2.7 6 6 6s6-2.7 6-6c0-3.9-4.3-9.2-6-11.5z" />
                   </svg>
-                  <span>Water</span>
                 </button>
               </div>
             ))}
           </div>
         </div>
-      )}
+      }
       
       {/* Organization view selector */}
       <div className="flex justify-between items-center mb-4">

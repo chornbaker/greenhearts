@@ -170,4 +170,80 @@ export async function generatePlantCareInfo(plantInfo: {
       }
     };
   }
+}
+
+/**
+ * Generate a water reminder message from a plant
+ * @param plantInfo Object containing plant information
+ * @param daysOverdue Number of days the watering is overdue
+ * @returns A message from the plant asking to be watered
+ */
+export async function generateWaterReminderMessage(plantInfo: {
+  name: string;
+  species: string;
+  personalityType?: string;
+  daysOverdue: number;
+}): Promise<string> {
+  try {
+    const response = await fetch('/api/claude', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        type: 'generate_water_reminder',
+        plantInfo,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    
+    if (data.message) {
+      return data.message;
+    }
+    
+    // Fallback with default message if no data
+    return getDefaultWaterMessage(plantInfo);
+  } catch (error) {
+    console.error('Error generating water reminder message:', error);
+    // Fallback with default message
+    return getDefaultWaterMessage(plantInfo);
+  }
+}
+
+/**
+ * Get a default water reminder message based on personality type
+ */
+function getDefaultWaterMessage(plantInfo: {
+  name: string;
+  species: string;
+  personalityType?: string;
+  daysOverdue: number;
+}): string {
+  const { name, personalityType, daysOverdue } = plantInfo;
+  
+  // Default messages by personality type
+  switch (personalityType?.toLowerCase()) {
+    case 'dramatic':
+      return `I'm DYING of thirst over here! ${daysOverdue} days without water? How could you?!`;
+    case 'zen':
+      return `Finding inner peace despite being ${daysOverdue} days without water. But perhaps we could find balance together?`;
+    case 'sassy':
+      return `Excuse me? ${daysOverdue} days and counting. The water isn't going to pour itself, you know.`;
+    case 'royal':
+      return `One formally requests hydration, as it has been ${daysOverdue} days. Chop chop!`;
+    case 'shy':
+      return `Um... sorry to bother you, but... I'm a little thirsty... it's been ${daysOverdue} days...`;
+    case 'adventurous':
+      return `${daysOverdue} days without water? I'm on a survival adventure! But I could use some backup!`;
+    case 'wise':
+      return `A plant without water for ${daysOverdue} days is like wisdom without action. Both wither away.`;
+    case 'cheerful':
+    default:
+      return `Hey there! I'm feeling a bit parched after ${daysOverdue} days. A drink would be lovely!`;
+  }
 } 
