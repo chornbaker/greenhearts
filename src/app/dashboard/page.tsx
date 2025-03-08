@@ -252,7 +252,9 @@ export default function Dashboard() {
       
       {/* Organization view selector */}
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-lg font-semibold text-gray-800">Your Plants</h2>
+        <h2 className="text-lg font-semibold text-gray-800">
+          {plants.length} {plants.length === 1 ? 'Plant' : 'Plants'}
+        </h2>
         <div className="flex gap-2">
           <button 
             onClick={() => setOrganizationView('location')}
@@ -291,7 +293,12 @@ export default function Dashboard() {
       <div className="space-y-8">
         {getOrganizedPlants().map((group) => (
           <div key={group.title}>
-            <h3 className="text-md font-medium text-gray-700 mb-3">{group.title}</h3>
+            <div className="flex items-center gap-2 mb-3">
+              <h3 className="text-md font-medium text-gray-700">{group.title}</h3>
+              <div className="bg-gray-200 text-gray-700 text-xs font-medium px-2 py-0.5 rounded-full">
+                {group.plants.length}
+              </div>
+            </div>
             <div className="space-y-3">
               {group.plants.map((plant, index) => (
                 <ExpandableCard 
@@ -305,7 +312,7 @@ export default function Dashboard() {
           </div>
         ))}
       </div>
-
+      
       {/* Add a plant button */}
       <div className="mt-8 mb-4">
         <Link 
