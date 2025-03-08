@@ -37,10 +37,11 @@ export default function Login() {
     
     try {
       await signInWithGoogle();
-      // Redirect will happen automatically
-    } catch (error) {
-      setError('Failed to sign in with Google.');
-      console.error(error);
+      router.push('/dashboard');
+    } catch (error: any) {
+      console.error('Google sign-in error:', error);
+      setError(error.message || 'Failed to sign in with Google. Please try again.');
+    } finally {
       setLoading(false);
     }
   };

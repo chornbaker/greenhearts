@@ -9,8 +9,7 @@ import {
   signOut as firebaseSignOut,
   sendPasswordResetEmail,
   GoogleAuthProvider,
-  signInWithRedirect,
-  getRedirectResult,
+  signInWithPopup,
   type Auth
 } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase';
@@ -75,31 +74,28 @@ export function AuthProvider({ children }: AuthProviderProps) {
     if (!auth) throw new Error('Firebase auth is not initialized');
     if (!db) throw new Error('Firebase Firestore is not initialized');
     
-    const provider = new GoogleAuthProvider();
-    await signInWithRedirect(auth, provider);
-  };
-
-  useEffect(() => {
-    if (!auth || !db) return;
-
-    const handleRedirectResult = async () => {
-      try {
-        const result = await getRedirectResult(auth as Auth);
-        if (result?.user) {
-          const userRef = doc(db as Firestore, 'users', result.user.uid);
-          await setDoc(userRef, {
-            uid: result.user.uid,
-            email: result.user.email,
-            gardenName: "My Garden",
-          }, { merge: true });
-        }
-      } catch (error) {
-        console.error("Error handling redirect result:", error);
+    try {
+      const provider = new GoogleAuthProvider();
+      provider.setCustomParameters({
+        prompt: 'select_account'
+      });
+      
+      const result = await signInWithPopup(auth as Auth, provider);
+      
+      if (result.user) {
+        // Create/update user document in Firestore
+        const userRef = doc(db as Firestore, 'users', result.user.uid);
+        await setDoc(userRef, {
+          uid: result.user.uid,
+          email: result.user.email,
+          gardenName: "My Garden",
+        }, { merge: true });
       }
-    };
-
-    handleRedirectResult();
-  }, [auth, db]);
+    } catch (error) {
+      console.error('Error during Google sign-in:', error);
+      throw error; // Re-throw to be handled by the component
+    }
+  };
 
   const signOut = async () => {
     if (!auth) throw new Error('Firebase auth is not initialized');
