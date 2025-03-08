@@ -28,19 +28,19 @@ const FormSelect: React.FC<FormSelectProps> = ({
       <div className="relative">
         <select
           id={selectId}
-          className={`w-full px-3 py-2 border border-gray-300 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-green-500 ${className}`}
+          className={`w-full px-3 py-2 border border-gray-300 rounded-xl text-gray-600 focus:outline-none focus:ring-2 focus:ring-green-500 ${className}`}
           style={{
             WebkitAppearance: 'none',
             MozAppearance: 'none',
             appearance: 'none',
-            color: '#171717',
-            WebkitTextFillColor: '#171717',
+            color: '#4b5563',
+            WebkitTextFillColor: '#4b5563',
             backgroundColor: '#ffffff',
             fontSize: '1rem',
             lineHeight: '1.5',
             paddingRight: '2.5rem',
             boxShadow: '0 1px 2px rgba(0, 0, 0, 0.05)',
-            fontWeight: 500,
+            fontWeight: 400,
             opacity: 1,
           }}
           {...props}

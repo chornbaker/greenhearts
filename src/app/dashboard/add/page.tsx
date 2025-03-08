@@ -6,6 +6,8 @@ import Image from 'next/image';
 import { useAuth } from '@/context/AuthContext';
 import { createPlant } from '@/services/plants';
 import { PlantHealth } from '@/types';
+import FormInput from '@/components/FormInput';
+import FormSelect from '@/components/FormSelect';
 
 // Predefined room/space options
 const INDOOR_LOCATIONS = [
@@ -101,117 +103,88 @@ export default function AddPlant() {
       )}
       
       <form onSubmit={handleSubmit} className="space-y-5">
-        <div>
-          <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
-            Plant Name*
-          </label>
-          <input
-            id="name"
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            required
-            placeholder="Enter plant name"
-            className="w-full px-3 py-2 border border-gray-300 rounded-xl text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500"
-          />
-        </div>
+        <FormInput
+          id="name"
+          type="text"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          required
+          placeholder="Enter plant name"
+          label="Plant Name*"
+        />
         
-        <div>
-          <label htmlFor="species" className="block text-sm font-medium text-gray-700 mb-1">
-            Plant Type/Species
-          </label>
-          <input
-            id="species"
-            type="text"
-            value={species}
-            onChange={(e) => setSpecies(e.target.value)}
-            placeholder="Enter species (optional)"
-            className="w-full px-3 py-2 border border-gray-300 rounded-xl text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500"
+        <FormInput
+          id="species"
+          type="text"
+          value={species}
+          onChange={(e) => setSpecies(e.target.value)}
+          placeholder="Enter species (optional)"
+          label="Plant Type/Species"
+        />
+        
+        <div className="grid grid-cols-2 gap-4">
+          <FormSelect
+            id="locationType"
+            value={locationType}
+            onChange={(e) => handleLocationTypeChange(e.target.value)}
+            label="Location Type"
+            options={[
+              { value: 'Indoor', label: 'Indoor' },
+              { value: 'Outdoor', label: 'Outdoor' }
+            ]}
+          />
+          
+          <FormSelect
+            id="locationSpace"
+            value={locationSpace}
+            onChange={(e) => setLocationSpace(e.target.value)}
+            label="Room/Space"
+            options={
+              (locationType === 'Indoor' ? INDOOR_LOCATIONS : OUTDOOR_LOCATIONS).map(loc => ({
+                value: loc,
+                label: loc
+              }))
+            }
           />
         </div>
         
         <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label htmlFor="locationType" className="block text-sm font-medium text-gray-700 mb-1">
-              Location Type
-            </label>
-            <select
-              id="locationType"
-              value={locationType}
-              onChange={(e) => handleLocationTypeChange(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500"
-            >
-              <option value="Indoor">Indoor</option>
-              <option value="Outdoor">Outdoor</option>
-            </select>
-          </div>
+          <FormSelect
+            id="sunlight"
+            value={sunlight}
+            onChange={(e) => setSunlight(e.target.value)}
+            label="Sunlight"
+            options={[
+              { value: 'Low', label: 'Low' },
+              { value: 'Medium', label: 'Medium' },
+              { value: 'High', label: 'High' }
+            ]}
+          />
           
-          <div>
-            <label htmlFor="locationSpace" className="block text-sm font-medium text-gray-700 mb-1">
-              Room/Space
-            </label>
-            <select
-              id="locationSpace"
-              value={locationSpace}
-              onChange={(e) => setLocationSpace(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500"
-            >
-              {(locationType === 'Indoor' ? INDOOR_LOCATIONS : OUTDOOR_LOCATIONS).map((loc) => (
-                <option key={loc} value={loc}>{loc}</option>
-              ))}
-            </select>
-          </div>
+          <FormSelect
+            id="soil"
+            value={soil}
+            onChange={(e) => setSoil(e.target.value)}
+            label="Soil Type"
+            options={[
+              { value: 'Sandy', label: 'Sandy' },
+              { value: 'Loamy', label: 'Loamy' },
+              { value: 'Clay', label: 'Clay' }
+            ]}
+          />
         </div>
         
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label htmlFor="sunlight" className="block text-sm font-medium text-gray-700 mb-1">
-              Sunlight
-            </label>
-            <select
-              id="sunlight"
-              value={sunlight}
-              onChange={(e) => setSunlight(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500"
-            >
-              <option value="Low">Low</option>
-              <option value="Medium">Medium</option>
-              <option value="High">High</option>
-            </select>
-          </div>
-          
-          <div>
-            <label htmlFor="soil" className="block text-sm font-medium text-gray-700 mb-1">
-              Soil Type
-            </label>
-            <select
-              id="soil"
-              value={soil}
-              onChange={(e) => setSoil(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500"
-            >
-              <option value="Sandy">Sandy</option>
-              <option value="Loamy">Loamy</option>
-              <option value="Clay">Clay</option>
-            </select>
-          </div>
-        </div>
-        
-        <div>
-          <label htmlFor="potSize" className="block text-sm font-medium text-gray-700 mb-1">
-            Pot Size
-          </label>
-          <select
-            id="potSize"
-            value={potSize}
-            onChange={(e) => setPotSize(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500"
-          >
-            <option value="Small">Small</option>
-            <option value="Medium">Medium</option>
-            <option value="Large">Large</option>
-          </select>
-        </div>
+        <FormSelect
+          id="potSize"
+          value={potSize}
+          onChange={(e) => setPotSize(e.target.value)}
+          label="Pot Size"
+          options={[
+            { value: 'Small', label: 'Small' },
+            { value: 'Medium', label: 'Medium' },
+            { value: 'Large', label: 'Large' }
+          ]}
+        />
         
         <div className="bg-gray-50 p-4 rounded-xl border border-gray-200">
           <p className="text-sm text-gray-600 mb-3">

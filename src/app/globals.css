@@ -8,8 +8,8 @@
   --text-muted: #666666;
   --green-primary: #4d7c0f;
   --green-secondary: #65a30d;
-  --input-text: #171717;
-  --placeholder-text: #6b7280;
+  --input-text: #4b5563;
+  --placeholder-text: #9ca3af;
   --input-border: #d1d5db;
 }
 
@@ -30,8 +30,8 @@
     --text-muted: #8d8d8d;
     --green-primary: #84cc16;
     --green-secondary: #a3e635;
-    --input-text: #e5e5e5;
-    --placeholder-text: #a3a3a3;
+    --input-text: #d1d5db;
+    --placeholder-text: #9ca3af;
     --input-border: #3f3f46;
   }
 }
@@ -98,6 +98,11 @@ select {
   opacity: 1 !important;
 }
 
+/* Override Tailwind text-gray-900 class that's commonly used on inputs */
+.text-gray-900 {
+  color: var(--input-text) !important;
+}
+
 /* Placeholder styling */
 input::placeholder,
 textarea::placeholder,
@@ -118,7 +123,7 @@ select::placeholder {
     input[type="url"],
     textarea,
     select {
-      font-weight: 500 !important;
+      font-weight: 400 !important;
       -webkit-text-fill-color: var(--input-text) !important;
       opacity: 1 !important;
       color: var(--input-text) !important;
@@ -126,7 +131,7 @@ select::placeholder {
     
     /* Force Safari to respect text color */
     input, select, textarea {
-      font-weight: 500 !important;
+      font-weight: 400 !important;
       -webkit-text-fill-color: var(--input-text) !important;
       color: var(--input-text) !important;
     }
@@ -135,7 +140,7 @@ select::placeholder {
     .w-full.px-3.py-2.border.border-gray-300.rounded-xl.text-gray-900 {
       -webkit-text-fill-color: var(--input-text) !important;
       color: var(--input-text) !important;
-      font-weight: 500 !important;
+      font-weight: 400 !important;
     }
     
     select {
