@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { clearUserData, populateTestData } from '@/services/testData';
 
@@ -13,8 +13,34 @@ export default function TestDataManager({ onClose }: TestDataManagerProps) {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
+  const modalRef = useRef<HTMLDivElement>(null);
 
-  const handleClearData = async () => {
+  // Handle clicks outside the modal to close it
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (modalRef.current && !modalRef.current.contains(event.target as Node)) {
+        onClose();
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [onClose]);
+
+  // Prevent scrolling when modal is open
+  useEffect(() => {
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = 'auto';
+    };
+  }, []);
+
+  const handleClearData = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
     if (!user) {
       setError('You must be logged in to clear data');
       return;
@@ -36,7 +62,10 @@ export default function TestDataManager({ onClose }: TestDataManagerProps) {
     }
   };
 
-  const handlePopulateData = async () => {
+  const handlePopulateData = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
     if (!user) {
       setError('You must be logged in to populate data');
       return;
@@ -58,43 +87,111 @@ export default function TestDataManager({ onClose }: TestDataManagerProps) {
     }
   };
 
+  const handleCloseClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onClose();
+  };
+
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl p-6 max-w-md w-full">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-semibold text-green-800">Test Data Manager</h2>
+    <div 
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 50,
+        padding: '1rem',
+        WebkitTapHighlightColor: 'transparent'
+      }}
+      onClick={handleCloseClick}
+    >
+      <div 
+        ref={modalRef}
+        style={{
+          backgroundColor: 'white',
+          borderRadius: '0.75rem',
+          padding: '1.5rem',
+          maxWidth: '28rem',
+          width: '100%',
+          boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)'
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+          <h2 style={{ fontSize: '1.25rem', fontWeight: 600, color: '#166534' }}>Test Data Manager</h2>
           <button
-            onClick={onClose}
-            className="text-gray-500 hover:text-gray-700"
+            onClick={handleCloseClick}
+            style={{ 
+              color: '#6b7280', 
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              padding: '0.25rem',
+              borderRadius: '0.25rem',
+              WebkitAppearance: 'none'
+            }}
             aria-label="Close"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
         </div>
         
-        <p className="text-gray-600 mb-6">
+        <p style={{ color: '#4b5563', marginBottom: '1.5rem' }}>
           Use these tools to manage test data in your account. This is useful for testing the application with different data states.
         </p>
         
         {message && (
-          <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg mb-4">
+          <div style={{ 
+            backgroundColor: '#dcfce7', 
+            borderWidth: '1px', 
+            borderColor: '#86efac', 
+            color: '#166534', 
+            padding: '0.75rem 1rem', 
+            borderRadius: '0.5rem', 
+            marginBottom: '1rem' 
+          }}>
             {message}
           </div>
         )}
         
         {error && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg mb-4">
+          <div style={{ 
+            backgroundColor: '#fee2e2', 
+            borderWidth: '1px', 
+            borderColor: '#fca5a5', 
+            color: '#b91c1c', 
+            padding: '0.75rem 1rem', 
+            borderRadius: '0.5rem', 
+            marginBottom: '1rem' 
+          }}>
             {error}
           </div>
         )}
         
-        <div className="space-y-4">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           <button
             onClick={handleClearData}
             disabled={loading}
-            className="w-full py-2 px-4 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg transition duration-200 disabled:opacity-50"
+            style={{ 
+              width: '100%', 
+              padding: '0.5rem 1rem', 
+              backgroundColor: loading ? '#ef4444aa' : '#ef4444', 
+              color: 'white', 
+              fontWeight: 500, 
+              borderRadius: '0.5rem', 
+              border: 'none',
+              cursor: loading ? 'default' : 'pointer',
+              WebkitAppearance: 'none',
+              transition: 'background-color 0.2s ease'
+            }}
           >
             {loading ? 'Processing...' : 'Clear All Data'}
           </button>
@@ -102,13 +199,24 @@ export default function TestDataManager({ onClose }: TestDataManagerProps) {
           <button
             onClick={handlePopulateData}
             disabled={loading}
-            className="w-full py-2 px-4 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg transition duration-200 disabled:opacity-50"
+            style={{ 
+              width: '100%', 
+              padding: '0.5rem 1rem', 
+              backgroundColor: loading ? '#16a34aaa' : '#16a34a', 
+              color: 'white', 
+              fontWeight: 500, 
+              borderRadius: '0.5rem', 
+              border: 'none',
+              cursor: loading ? 'default' : 'pointer',
+              WebkitAppearance: 'none',
+              transition: 'background-color 0.2s ease'
+            }}
           >
             {loading ? 'Processing...' : 'Populate Test Data'}
           </button>
         </div>
         
-        <div className="mt-6 text-xs text-gray-500">
+        <div style={{ marginTop: '1.5rem', fontSize: '0.75rem', color: '#6b7280' }}>
           <p>Note: Clearing data will remove all plants from your account.</p>
           <p>Populating test data will first clear existing data, then add sample plants.</p>
         </div>

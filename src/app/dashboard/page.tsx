@@ -1,26 +1,26 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useAuth } from '@/context/AuthContext';
 import { getUserPlants } from '@/services/plants';
 import { getUserProfile } from '@/services/user';
 import { Plant } from '@/types';
-import TestDataManager from '@/components/TestDataManager';
 
 // Organization view types
 type OrganizationView = 'location' | 'alphabetical' | 'wateringPriority';
 
 export default function Dashboard() {
   const { user } = useAuth();
+  const router = useRouter();
   const [plants, setPlants] = useState<Plant[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [plantHavenName, setPlantHavenName] = useState('My Plant Haven');
   const [displayName, setDisplayName] = useState('');
   const [organizationView, setOrganizationView] = useState<OrganizationView>('location');
-  const [showTestDataManager, setShowTestDataManager] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -44,6 +44,11 @@ export default function Dashboard() {
         // Fetch plants from Firebase
         const userPlants = await getUserPlants(user.uid);
         setPlants(userPlants);
+        
+        // Redirect to Add Plant page if no plants
+        if (userPlants.length === 0 && !loading) {
+          router.push('/dashboard/add');
+        }
       } catch (err) {
         console.error('Error fetching data:', err);
         setError('Failed to load your plants. Please try again later.');
@@ -53,7 +58,14 @@ export default function Dashboard() {
     };
 
     fetchData();
-  }, [user]);
+  }, [user, loading, router]);
+
+  // Redirect to Add Plant page if no plants and not loading
+  useEffect(() => {
+    if (!loading && plants.length === 0 && user) {
+      router.push('/dashboard/add');
+    }
+  }, [plants, loading, router, user]);
 
   // Plants that need watering (past due)
   const plantsNeedingWater = plants.filter((plant) => {
@@ -151,21 +163,41 @@ export default function Dashboard() {
     </Link>
   );
 
+  // If loading or no plants, show loading state or redirect
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex justify-between items-center">
+          <h1 className="text-2xl font-bold text-green-800">{plantHavenName}</h1>
+        </div>
+
+        <div className="text-center py-8">
+          <p className="text-gray-600">Loading your plants...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // If no plants, we'll redirect in the useEffect, but still render something in case
+  if (plants.length === 0) {
+    return (
+      <div className="space-y-6">
+        <div className="flex justify-between items-center">
+          <h1 className="text-2xl font-bold text-green-800">{plantHavenName}</h1>
+        </div>
+
+        <div className="text-center py-8">
+          <p className="text-gray-600">Redirecting to add your first plant...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold text-green-800">{plantHavenName}</h1>
-        <button
-          onClick={() => setShowTestDataManager(true)}
-          className="text-sm bg-gray-100 hover:bg-gray-200 text-gray-700 py-1 px-3 rounded-lg transition duration-200"
-        >
-          Manage Test Data
-        </button>
       </div>
-
-      {showTestDataManager && (
-        <TestDataManager onClose={() => setShowTestDataManager(false)} />
-      )}
 
       {error && (
         <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg">
@@ -185,165 +217,142 @@ export default function Dashboard() {
         </p>
       </div>
 
-      {loading ? (
-        <div className="text-center py-8">
-          <p className="text-gray-600">Loading your plants...</p>
-        </div>
-      ) : (
-        <>
-          {/* Plants needing water */}
-          {plantsNeedingWater.length > 0 && (
-            <div className="bg-amber-50 p-4 rounded-2xl border border-amber-200 mb-6">
-              <h2 className="text-lg font-semibold text-amber-800 mb-3">Plants Needing Water</h2>
-              <div className="space-y-3">
-                {plantsNeedingWater.map((plant) => (
-                  <div key={plant.id} className="flex items-center gap-3">
-                    <div className="w-12 h-12 bg-amber-100 rounded-full overflow-hidden relative">
-                      {plant.image && (
-                        <Image 
-                          src={plant.image} 
-                          alt={plant.name} 
-                          fill 
-                          sizes="(max-width: 768px) 33vw, 96px"
-                          style={{ objectFit: 'cover' }}
-                        />
-                      )}
-                    </div>
-                    <div className="flex-1">
-                      <Link href={`/dashboard/plant/${plant.id}`} className="font-medium text-gray-900 hover:text-green-700">
-                        {plant.name}
-                      </Link>
-                      <p className="text-xs text-amber-700">Last watered: {plant.lastWatered?.toLocaleDateString()}</p>
-                    </div>
-                    <button 
-                      className="bg-green-600 hover:bg-green-700 text-white text-sm py-1 px-3 rounded-lg"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        // This would call waterPlant service in a real implementation
-                        alert(`Watering ${plant.name}! This is a placeholder for the actual watering functionality.`);
-                      }}
-                    >
-                      Water
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Organization view selector */}
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-lg font-semibold text-gray-800">Your Plants</h2>
-            <div className="flex gap-2">
-              <button 
-                onClick={() => setOrganizationView('location')}
-                className={`text-xs px-2 py-1 rounded ${
-                  organizationView === 'location' 
-                    ? 'bg-green-600 text-white' 
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
-              >
-                By Location
-              </button>
-              <button 
-                onClick={() => setOrganizationView('alphabetical')}
-                className={`text-xs px-2 py-1 rounded ${
-                  organizationView === 'alphabetical' 
-                    ? 'bg-green-600 text-white' 
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
-              >
-                A-Z
-              </button>
-              <button 
-                onClick={() => setOrganizationView('wateringPriority')}
-                className={`text-xs px-2 py-1 rounded ${
-                  organizationView === 'wateringPriority' 
-                    ? 'bg-green-600 text-white' 
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
-              >
-                Watering
-              </button>
-            </div>
-          </div>
-
-          {/* Plant grid */}
-          {plants.length === 0 ? (
-            <div className="bg-white rounded-2xl p-6 text-center">
-              <p className="text-gray-600 mb-4">You don't have any plants yet.</p>
-              <Link 
-                href="/dashboard/add" 
-                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
-              >
-                Add Your First Plant
-              </Link>
-            </div>
-          ) : (
-            <div className="space-y-8">
-              {getOrganizedPlants().map((group) => (
-                <div key={group.title}>
-                  <h3 className="text-md font-medium text-gray-700 mb-3">{group.title}</h3>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                    {group.plants.map((plant, index) => renderPlantCard(plant, index))}
-                  </div>
+      {/* Plants needing water */}
+      {plantsNeedingWater.length > 0 && (
+        <div className="bg-amber-50 p-4 rounded-2xl border border-amber-200 mb-6">
+          <h2 className="text-lg font-semibold text-amber-800 mb-3">Plants Needing Water</h2>
+          <div className="space-y-3">
+            {plantsNeedingWater.map((plant) => (
+              <div key={plant.id} className="flex items-center gap-3">
+                <div className="w-12 h-12 bg-amber-100 rounded-full overflow-hidden relative">
+                  {plant.image && (
+                    <Image 
+                      src={plant.image} 
+                      alt={plant.name} 
+                      fill 
+                      sizes="(max-width: 768px) 33vw, 96px"
+                      style={{ objectFit: 'cover' }}
+                    />
+                  )}
                 </div>
-              ))}
-            </div>
-          )}
-
-          {/* Add plant button */}
-          <div className="fixed bottom-20 right-4 z-10">
-            <Link 
-              href="/dashboard/add" 
-              className="bg-green-600 hover:bg-green-700 text-white rounded-full w-14 h-14 flex items-center justify-center shadow-lg"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-              </svg>
-            </Link>
+                <div className="flex-1">
+                  <Link href={`/dashboard/plant/${plant.id}`} className="font-medium text-gray-900 hover:text-green-700">
+                    {plant.name}
+                  </Link>
+                  <p className="text-xs text-amber-700">Last watered: {plant.lastWatered?.toLocaleDateString()}</p>
+                </div>
+                <button 
+                  className="bg-green-600 hover:bg-green-700 text-white text-sm py-1 px-3 rounded-lg"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    // This would call waterPlant service in a real implementation
+                    alert(`Watering ${plant.name}! This is a placeholder for the actual watering functionality.`);
+                  }}
+                >
+                  Water
+                </button>
+              </div>
+            ))}
           </div>
-
-          {/* Upcoming watering schedule */}
-          <div className="bg-white rounded-2xl p-4 border border-gray-200 mt-8">
-            <h3 className="text-md font-medium text-gray-700 mb-3">Upcoming Watering</h3>
-            <div className="space-y-1">
-              {plants.length === 0 ? (
-                <p className="text-gray-500 text-sm">No plants to water.</p>
-              ) : (
-                plants
-                  .filter(plant => plant.nextWateringDate && plant.nextWateringDate > new Date())
-                  .sort((a, b) => a.nextWateringDate!.getTime() - b.nextWateringDate!.getTime())
-                  .slice(0, 3)
-                  .map((plant) => (
-                    <div key={plant.id} className="flex items-center gap-3 py-2 border-b border-gray-100 last:border-0">
-                      <div className="w-10 h-10 bg-green-100 rounded-full overflow-hidden relative">
-                        {plant.image && (
-                          <Image 
-                            src={plant.image} 
-                            alt={plant.name} 
-                            fill 
-                            sizes="(max-width: 768px) 33vw, 96px"
-                            style={{ objectFit: 'cover' }}
-                          />
-                        )}
-                      </div>
-                      <div className="flex-1">
-                        <p className="font-medium text-gray-800 text-sm">{plant.name}</p>
-                        <p className="text-xs text-gray-500">
-                          {plant.nextWateringDate?.toLocaleDateString(undefined, { 
-                            month: 'short', 
-                            day: 'numeric' 
-                          })}
-                        </p>
-                      </div>
-                    </div>
-                  ))
-              )}
-            </div>
-          </div>
-        </>
+        </div>
       )}
+
+      {/* Organization view selector */}
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-lg font-semibold text-gray-800">Your Plants</h2>
+        <div className="flex gap-2">
+          <button 
+            onClick={() => setOrganizationView('location')}
+            className={`text-xs px-2 py-1 rounded ${
+              organizationView === 'location' 
+                ? 'bg-green-600 text-white' 
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+            }`}
+          >
+            By Location
+          </button>
+          <button 
+            onClick={() => setOrganizationView('alphabetical')}
+            className={`text-xs px-2 py-1 rounded ${
+              organizationView === 'alphabetical' 
+                ? 'bg-green-600 text-white' 
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+            }`}
+          >
+            A-Z
+          </button>
+          <button 
+            onClick={() => setOrganizationView('wateringPriority')}
+            className={`text-xs px-2 py-1 rounded ${
+              organizationView === 'wateringPriority' 
+                ? 'bg-green-600 text-white' 
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+            }`}
+          >
+            Watering
+          </button>
+        </div>
+      </div>
+
+      {/* Plant grid */}
+      <div className="space-y-8">
+        {getOrganizedPlants().map((group) => (
+          <div key={group.title}>
+            <h3 className="text-md font-medium text-gray-700 mb-3">{group.title}</h3>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+              {group.plants.map((plant, index) => renderPlantCard(plant, index))}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Add plant button */}
+      <div className="fixed bottom-20 right-4 z-10">
+        <Link 
+          href="/dashboard/add" 
+          className="bg-green-600 hover:bg-green-700 text-white rounded-full w-14 h-14 flex items-center justify-center shadow-lg"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+          </svg>
+        </Link>
+      </div>
+
+      {/* Upcoming watering schedule */}
+      <div className="bg-white rounded-2xl p-4 border border-gray-200 mt-8">
+        <h3 className="text-md font-medium text-gray-700 mb-3">Upcoming Watering</h3>
+        <div className="space-y-1">
+          {plants
+            .filter(plant => plant.nextWateringDate && plant.nextWateringDate > new Date())
+            .sort((a, b) => a.nextWateringDate!.getTime() - b.nextWateringDate!.getTime())
+            .slice(0, 3)
+            .map((plant) => (
+              <div key={plant.id} className="flex items-center gap-3 py-2 border-b border-gray-100 last:border-0">
+                <div className="w-10 h-10 bg-green-100 rounded-full overflow-hidden relative">
+                  {plant.image && (
+                    <Image 
+                      src={plant.image} 
+                      alt={plant.name} 
+                      fill 
+                      sizes="(max-width: 768px) 33vw, 96px"
+                      style={{ objectFit: 'cover' }}
+                    />
+                  )}
+                </div>
+                <div className="flex-1">
+                  <p className="font-medium text-gray-800 text-sm">{plant.name}</p>
+                  <p className="text-xs text-gray-500">
+                    {plant.nextWateringDate?.toLocaleDateString(undefined, { 
+                      month: 'short', 
+                      day: 'numeric' 
+                    })}
+                  </p>
+                </div>
+              </div>
+            ))
+          }
+        </div>
+      </div>
     </div>
   );
 } 

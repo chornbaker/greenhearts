@@ -54,7 +54,6 @@ export async function clearUserData(userId: string): Promise<void> {
 export async function populateTestData(userId: string): Promise<void> {
   try {
     if (!db) throw new Error('Firestore is not initialized');
-    if (!storage) throw new Error('Firebase Storage is not initialized');
     
     // First clear existing data
     await clearUserData(userId);
@@ -89,13 +88,27 @@ export async function populateTestData(userId: string): Promise<void> {
  * @param userId The user ID to generate data for
  */
 async function generateTestPlants(userId: string): Promise<Omit<Plant, 'id' | 'createdAt'>[]> {
+  // Firebase Storage URLs for plant images
+  const plantImageUrls = {
+    monstera: 'https://firebasestorage.googleapis.com/v0/b/greenhearts-d0dc7.firebasestorage.app/o/test-plants%2Fmonstera.jpg?alt=media&token=88393f00-8195-4f30-8806-7e764e069f94',
+    'fiddle-leaf-fig': 'https://firebasestorage.googleapis.com/v0/b/greenhearts-d0dc7.firebasestorage.app/o/test-plants%2Ffiddle-leaf-fig.jpg?alt=media&token=67716f8a-e3bb-48b4-9eea-4a2f645e3f36',
+    'snake-plant': 'https://firebasestorage.googleapis.com/v0/b/greenhearts-d0dc7.firebasestorage.app/o/test-plants%2Fsnake-plant.jpg?alt=media&token=b4f76b4a-5ad7-48ea-b4d2-46c6115c7aeb',
+    pothos: 'https://firebasestorage.googleapis.com/v0/b/greenhearts-d0dc7.firebasestorage.app/o/test-plants%2Fpothos.jpg?alt=media&token=8cabea20-a475-41c9-96d2-8958ff3c7e75',
+    'peace-lily': 'https://firebasestorage.googleapis.com/v0/b/greenhearts-d0dc7.firebasestorage.app/o/test-plants%2Fpeace-lily.jpg?alt=media&token=71d9be35-a5fb-4613-b6d9-343c43bef09b',
+    'zz-plant': 'https://firebasestorage.googleapis.com/v0/b/greenhearts-d0dc7.firebasestorage.app/o/test-plants%2Fzz-plant.jpg?alt=media&token=08174952-a806-420c-b029-eb90e9a8f40b',
+    'aloe-vera': 'https://firebasestorage.googleapis.com/v0/b/greenhearts-d0dc7.firebasestorage.app/o/test-plants%2Faloe-vera.jpg?alt=media&token=9ce1e03d-5faa-486a-89c9-c4d12e042211',
+    'spider-plant': 'https://firebasestorage.googleapis.com/v0/b/greenhearts-d0dc7.firebasestorage.app/o/test-plants%2Fspider-plant.jpg?alt=media&token=cc6a1be0-ec20-49d8-a2fd-0770615ebbc2',
+    'rubber-plant': 'https://firebasestorage.googleapis.com/v0/b/greenhearts-d0dc7.firebasestorage.app/o/test-plants%2Frubber-plant.jpg?alt=media&token=f0e61bae-1911-423d-982c-6896ba5c3855',
+    'boston-fern': 'https://firebasestorage.googleapis.com/v0/b/greenhearts-d0dc7.firebasestorage.app/o/test-plants%2Fboston-fern.jpg?alt=media&token=2e592255-f8af-4a4d-b188-216ad9259e2f',
+  };
+
   // Sample plant data with realistic information
   const plantData = [
     {
       name: 'Monstera Deliciosa',
       species: 'Monstera Deliciosa',
       location: 'Living Room',
-      imageUrl: 'https://firebasestorage.googleapis.com/v0/b/greenhearts-d0dc7.appspot.com/o/test-plants%2Fmonstera.jpg?alt=media',
+      imageUrl: plantImageUrls.monstera,
       wateringFrequency: 7, // days
       notes: 'Loves bright indirect light. Allow soil to dry out between waterings.',
       health: PlantHealth.Excellent,
@@ -104,7 +117,7 @@ async function generateTestPlants(userId: string): Promise<Omit<Plant, 'id' | 'c
       name: 'Fiddle Leaf Fig',
       species: 'Ficus Lyrata',
       location: 'Living Room',
-      imageUrl: 'https://firebasestorage.googleapis.com/v0/b/greenhearts-d0dc7.appspot.com/o/test-plants%2Ffiddle-leaf-fig.jpg?alt=media',
+      imageUrl: plantImageUrls['fiddle-leaf-fig'],
       wateringFrequency: 7, // days
       notes: 'Keep in bright indirect light. Sensitive to overwatering and drafts.',
       health: PlantHealth.Good,
@@ -113,7 +126,7 @@ async function generateTestPlants(userId: string): Promise<Omit<Plant, 'id' | 'c
       name: 'Snake Plant',
       species: 'Sansevieria Trifasciata',
       location: 'Bedroom',
-      imageUrl: 'https://firebasestorage.googleapis.com/v0/b/greenhearts-d0dc7.appspot.com/o/test-plants%2Fsnake-plant.jpg?alt=media',
+      imageUrl: plantImageUrls['snake-plant'],
       wateringFrequency: 14, // days
       notes: 'Very drought tolerant. Let soil dry completely between waterings.',
       health: PlantHealth.Excellent,
@@ -122,7 +135,7 @@ async function generateTestPlants(userId: string): Promise<Omit<Plant, 'id' | 'c
       name: 'Pothos',
       species: 'Epipremnum Aureum',
       location: 'Office',
-      imageUrl: 'https://firebasestorage.googleapis.com/v0/b/greenhearts-d0dc7.appspot.com/o/test-plants%2Fpothos.jpg?alt=media',
+      imageUrl: plantImageUrls.pothos,
       wateringFrequency: 7, // days
       notes: 'Adaptable to various light conditions. Water when top inch of soil is dry.',
       health: PlantHealth.Good,
@@ -131,7 +144,7 @@ async function generateTestPlants(userId: string): Promise<Omit<Plant, 'id' | 'c
       name: 'Peace Lily',
       species: 'Spathiphyllum',
       location: 'Bathroom',
-      imageUrl: 'https://firebasestorage.googleapis.com/v0/b/greenhearts-d0dc7.appspot.com/o/test-plants%2Fpeace-lily.jpg?alt=media',
+      imageUrl: plantImageUrls['peace-lily'],
       wateringFrequency: 5, // days
       notes: 'Loves humidity. Droops when thirsty but recovers quickly after watering.',
       health: PlantHealth.Fair,
@@ -140,7 +153,7 @@ async function generateTestPlants(userId: string): Promise<Omit<Plant, 'id' | 'c
       name: 'ZZ Plant',
       species: 'Zamioculcas Zamiifolia',
       location: 'Hallway',
-      imageUrl: 'https://firebasestorage.googleapis.com/v0/b/greenhearts-d0dc7.appspot.com/o/test-plants%2Fzz-plant.jpg?alt=media',
+      imageUrl: plantImageUrls['zz-plant'],
       wateringFrequency: 14, // days
       notes: 'Very drought tolerant. Can survive in low light conditions.',
       health: PlantHealth.Excellent,
@@ -149,7 +162,7 @@ async function generateTestPlants(userId: string): Promise<Omit<Plant, 'id' | 'c
       name: 'Aloe Vera',
       species: 'Aloe Barbadensis Miller',
       location: 'Kitchen',
-      imageUrl: 'https://firebasestorage.googleapis.com/v0/b/greenhearts-d0dc7.appspot.com/o/test-plants%2Faloe-vera.jpg?alt=media',
+      imageUrl: plantImageUrls['aloe-vera'],
       wateringFrequency: 21, // days
       notes: 'Medicinal plant. Needs bright light and infrequent watering.',
       health: PlantHealth.Good,
@@ -158,7 +171,7 @@ async function generateTestPlants(userId: string): Promise<Omit<Plant, 'id' | 'c
       name: 'Spider Plant',
       species: 'Chlorophytum Comosum',
       location: 'Living Room',
-      imageUrl: 'https://firebasestorage.googleapis.com/v0/b/greenhearts-d0dc7.appspot.com/o/test-plants%2Fspider-plant.jpg?alt=media',
+      imageUrl: plantImageUrls['spider-plant'],
       wateringFrequency: 7, // days
       notes: 'Easy to propagate from the "babies" it produces. Likes bright indirect light.',
       health: PlantHealth.Excellent,
@@ -167,7 +180,7 @@ async function generateTestPlants(userId: string): Promise<Omit<Plant, 'id' | 'c
       name: 'Rubber Plant',
       species: 'Ficus Elastica',
       location: 'Office',
-      imageUrl: 'https://firebasestorage.googleapis.com/v0/b/greenhearts-d0dc7.appspot.com/o/test-plants%2Frubber-plant.jpg?alt=media',
+      imageUrl: plantImageUrls['rubber-plant'],
       wateringFrequency: 7, // days
       notes: 'Wipe leaves occasionally to keep them dust-free and shiny.',
       health: PlantHealth.Good,
@@ -176,7 +189,7 @@ async function generateTestPlants(userId: string): Promise<Omit<Plant, 'id' | 'c
       name: 'Boston Fern',
       species: 'Nephrolepis Exaltata',
       location: 'Bathroom',
-      imageUrl: 'https://firebasestorage.googleapis.com/v0/b/greenhearts-d0dc7.appspot.com/o/test-plants%2Fboston-fern.jpg?alt=media',
+      imageUrl: plantImageUrls['boston-fern'],
       wateringFrequency: 3, // days
       notes: 'Loves humidity and indirect light. Keep soil consistently moist.',
       health: PlantHealth.Fair,
