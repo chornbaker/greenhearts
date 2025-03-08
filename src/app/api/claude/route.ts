@@ -82,7 +82,7 @@ async function handlePersonalityGeneration(plantInfo: {
 }) {
   try {
     const prompt = `
-You are a creative plant personalization assistant. Based on the following plant information, create a fun and engaging personality profile for this plant. Use the plant's characteristics to inform your choices.
+You are an imaginative plant personification expert with a flair for the whimsical and unexpected. Your job is to bring plants to life with truly unique personalities that surprise and delight. Think outside the pot!
 
 Plant Information:
 - Type/Species: ${plantInfo.species}
@@ -93,17 +93,27 @@ Plant Information:
 - Container Size: ${plantInfo.potSize}
 ${plantInfo.imageUrl ? '- The plant has a photo uploaded' : ''}
 
-Please provide the following in JSON format:
-1. A creative and cute nickname for the plant (keep it short and sweet)
-2. A personality type that fits the plant's characteristics (choose from: Cheerful, Dramatic, Zen, Sassy, Royal, Shy, Adventurous, Wise)
-3. A short, first-person bio/quote from the plant's perspective (1-2 sentences, should be cute and reflect the personality)
+Please create a delightfully unexpected personality for this plant with:
 
-Example output format:
+1. NAME: Create a truly original name that goes beyond the obvious plant puns. Consider unexpected cultural references, literary characters, historical figures with a twist, or completely invented names with personality. Be bold and surprising!
+
+2. PERSONALITY TYPE: Choose one that best fits your creative vision (Cheerful, Dramatic, Zen, Sassy, Royal, Shy, Adventurous, Wise)
+
+3. BIO: Write a first-person bio that's memorable and distinctive. Use unexpected metaphors, quirky hobbies, surprising aspirations, or unusual speech patterns. Give the plant a unique voice that makes it feel like a character from a beloved story. Aim for humor, charm, and originality in 1-2 sentences.
+
+Return your response in this JSON format:
 {
-  "name": "Sunny",
-  "personalityType": "Cheerful",
-  "bio": "Hi! I'm Sunny and I love soaking up rays by the window. Always looking on the bright side of life!"
+  "name": "Your creative plant name",
+  "personalityType": "One of the personality types listed above",
+  "bio": "Your imaginative first-person bio"
 }
+
+Examples of creative approaches (don't copy these, create something new):
+- A dramatic plant that speaks like a Shakespearean character
+- A zen plant with an unexpected meditation practice
+- A royal plant with delusions of grandeur and specific demands
+- A shy plant that's secretly writing a novel
+- An adventurous plant with impossible travel dreams
 `;
 
     const response = await anthropic.messages.create({
