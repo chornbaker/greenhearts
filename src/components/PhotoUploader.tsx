@@ -168,12 +168,11 @@ export default function PhotoUploader({
               Add Photo
             </button>
             
-            {/* Hidden file input - accepts all image types on mobile, just files on desktop */}
+            {/* Hidden file input - accepts all image types */}
             <input
               ref={fileInputRef}
               type="file"
               accept="image/*"
-              capture={isMobile ? "environment" : undefined}
               onChange={handleFileChange}
               className="hidden"
               aria-label="Add photo"
