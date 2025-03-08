@@ -16,7 +16,7 @@ const WaterDropIcon = ({ className = "h-5 w-5" }: { className?: string }) => (
       justifyContent: 'center',
     }}
   >
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style={{ width: '100%', height: '100%', transform: 'translateY(-1px)' }}>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style={{ width: '100%', height: '100%'}}>
       <path d="M12 2.5c-1.7 2.3-6 7.6-6 11.5 0 3.3 2.7 6 6 6s6-2.7 6-6c0-3.9-4.3-9.2-6-11.5z" />
     </svg>
   </div>
@@ -507,7 +507,7 @@ export default function ExpandableCard({ plant, onWater, onUpdate, organizationV
               {/* Water button for plants that need water - moved here */}
               {needsWater && (
                 <motion.button
-                  className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center shadow-sm hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                  className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center shadow-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400"
                   onClick={handleWaterClick}
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.9 }}
@@ -515,12 +515,13 @@ export default function ExpandableCard({ plant, onWater, onUpdate, organizationV
                   onMouseEnter={() => setShowWaterTooltip(true)}
                   onMouseLeave={() => setShowWaterTooltip(false)}
                   aria-label="Mark as watered"
+                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                 >
-                  <WaterDropIcon className="h-5 w-5 text-white" />
+                  <WaterDropIcon className="h-6 w-6 text-white" />
                   
                   {/* Tooltip */}
                   {showWaterTooltip && (
-                    <div className="absolute top-full mt-1 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-xs rounded py-1 px-2 whitespace-nowrap z-10">
+                    <div className="absolute top-full mt-2 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-xs rounded py-1 px-2 whitespace-nowrap z-10">
                       Mark as watered
                     </div>
                   )}
@@ -693,8 +694,9 @@ export default function ExpandableCard({ plant, onWater, onUpdate, organizationV
                   onMouseEnter={() => setShowWaterTooltip(true)}
                   onMouseLeave={() => setShowWaterTooltip(false)}
                   aria-label="Mark as watered"
+                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                 >
-                  <WaterDropIcon className="h-5 w-5 text-blue-500 flex-shrink-0" />
+                  <WaterDropIcon className="h-6 w-6 text-white" />
                   
                   {/* Tooltip */}
                   {showWaterTooltip && (
