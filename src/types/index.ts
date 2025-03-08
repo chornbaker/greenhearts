@@ -14,7 +14,7 @@ export interface Plant {
   userId: string;
   name: string;
   species?: string;
-  image?: string;
+  image?: string; // URL to the plant image in Firebase Storage
   location?: string; // Room or space where the plant is located
   wateringSchedule: WateringSchedule;
   notes?: string;

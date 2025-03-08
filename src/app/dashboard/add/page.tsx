@@ -2,14 +2,15 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import Image from 'next/image';
 import { useAuth } from '@/context/AuthContext';
 import { createPlant } from '@/services/plants';
+import { uploadPlantImage } from '@/services/storage';
 import { PlantHealth } from '@/types';
 import FormInput from '@/components/FormInput';
 import ButtonSelector from '@/components/ButtonSelector';
 import AutocompleteInput from '@/components/AutocompleteInput';
 import DateSelector from '@/components/DateSelector';
+import PhotoUploader from '@/components/PhotoUploader';
 
 // Predefined room/space options
 const INDOOR_LOCATIONS = [
@@ -50,8 +51,7 @@ export default function AddPlant() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [photoUploaded, setPhotoUploaded] = useState(false);
-  const [photoUrl, setPhotoUrl] = useState('/images/plants-header.jpg'); // Default image
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [name, setName] = useState('');
   const [species, setSpecies] = useState('');
   const [locationType, setLocationType] = useState('');
@@ -79,15 +79,12 @@ export default function AddPlant() {
     setPersonality('');
   };
   
-  const handlePhotoUpload = () => {
-    // In a real implementation, this would open a file picker
-    // For now, we'll just simulate an upload
-    setPhotoUploaded(true);
+  const handlePhotoSelected = (file: File) => {
+    setPhotoFile(file);
   };
   
-  const handleRemovePhoto = () => {
-    setPhotoUploaded(false);
-    setPhotoUrl('/images/plants-header.jpg'); // Reset to default
+  const handlePhotoRemoved = () => {
+    setPhotoFile(null);
   };
   
   const handleSubmit = async (e: React.FormEvent) => {
@@ -130,12 +127,19 @@ export default function AddPlant() {
     setError('');
     
     try {
-      // For now, we'll create a placeholder plant
-      // In a real implementation, we would upload the image and use AI to generate a schedule
+      let imageUrl;
+      
+      // Upload the photo if one was selected
+      if (photoFile) {
+        imageUrl = await uploadPlantImage(user.uid, photoFile);
+      }
+      
+      // Create the plant with the image URL if available
       await createPlant({
         userId: user.uid,
         name: plantName,
         species: species || undefined,
+        image: imageUrl, // Add the image URL to the plant data
         location: locationSpace || 'Unassigned', // Use 'Unassigned' if locationSpace is empty
         wateringSchedule: {
           frequency: 7, // Default to weekly watering
@@ -168,49 +172,11 @@ export default function AddPlant() {
       <form onSubmit={handleSubmit} className="space-y-5">
         {/* Photo Upload Section */}
         <div className="bg-white p-4 rounded-xl border border-gray-200">
-          <div className="aspect-square bg-gray-100 rounded-lg border-2 border-dashed border-gray-300 flex items-center justify-center overflow-hidden relative">
-            {photoUploaded ? (
-              <>
-                <Image 
-                  src={photoUrl}
-                  alt="Plant photo" 
-                  fill 
-                  className="object-cover"
-                />
-                <div style={{ position: 'absolute', top: '8px', right: '8px', zIndex: 30 }}>
-                  <button
-                    type="button"
-                    onClick={handleRemovePhoto}
-                    className="text-gray-600 hover:text-gray-800 transition-colors"
-                    aria-label="Remove photo"
-                  >
-                    <svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M9 5V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1h4a1 1 0 0 1 0 2H5a1 1 0 1 1 0-2h4z" fill="currentColor"/>
-                      <path d="M5 8h14v11a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V8zm4 3a1 1 0 0 0-1 1v6a1 1 0 0 0 2 0v-6a1 1 0 0 0-1-1zm6 0a1 1 0 0 0-1 1v6a1 1 0 0 0 2 0v-6a1 1 0 0 0-1-1z" fill="currentColor"/>
-                    </svg>
-                  </button>
-                </div>
-              </>
-            ) : (
-              <div className="text-center">
-                <div className="mx-auto h-24 w-24 text-gray-400">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-full w-full" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                  </svg>
-                </div>
-                <p className="mt-1 text-sm text-gray-500">
-                  Upload a photo of your plant
-                </p>
-                <button
-                  type="button"
-                  onClick={handlePhotoUpload}
-                  className="mt-2 inline-flex items-center px-3 py-1.5 border border-gray-300 shadow-sm text-xs font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
-                >
-                  Upload Photo
-                </button>
-              </div>
-            )}
-          </div>
+          <PhotoUploader 
+            onPhotoSelected={handlePhotoSelected}
+            onPhotoRemoved={handlePhotoRemoved}
+            aspectRatio="square"
+          />
         </div>
         
         {/* Plant Type/Species - Required */}
@@ -294,7 +260,7 @@ export default function AddPlant() {
           containerClassName="w-full"
         />
         
-        {/* Last Watered Date - Fix double asterisk */}
+        {/* Last Watered Date */}
         <DateSelector
           label={<span>Last Watered Date <span className="text-red-500">*</span></span>}
           value={lastWateredDate}
