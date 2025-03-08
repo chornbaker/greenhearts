@@ -5,6 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useAuth } from '@/context/AuthContext';
 import { getUserPlants } from '@/services/plants';
+import { getUserProfile } from '@/services/user';
 import { Plant } from '@/types';
 
 // Organization view types
@@ -15,25 +16,34 @@ export default function Dashboard() {
   const [plants, setPlants] = useState<Plant[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [gardenName, setGardenName] = useState('My GreenHearts');
+  const [plantHavenName, setPlantHavenName] = useState('My Plant Haven');
+  const [displayName, setDisplayName] = useState('');
   const [organizationView, setOrganizationView] = useState<OrganizationView>('location');
 
   useEffect(() => {
-    const fetchPlants = async () => {
+    const fetchData = async () => {
       if (!user) return;
       
       try {
+        // Fetch plants
         const userPlants = await getUserPlants(user.uid);
         setPlants(userPlants);
+        
+        // Fetch user profile
+        const profile = await getUserProfile(user.uid);
+        if (profile) {
+          if (profile.plantHavenName) setPlantHavenName(profile.plantHavenName);
+          if (profile.displayName) setDisplayName(profile.displayName);
+        }
       } catch (error) {
-        console.error('Error fetching plants:', error);
-        setError('Failed to load your plants. Please try again later.');
+        console.error('Error fetching data:', error);
+        setError('Failed to load your data. Please try again later.');
       } finally {
         setLoading(false);
       }
     };
 
-    fetchPlants();
+    fetchData();
   }, [user]);
 
   // Simplified demo plants with 3-4 rooms and 2-5 plants each
@@ -247,7 +257,7 @@ export default function Dashboard() {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-green-800">{gardenName}</h1>
+        <h1 className="text-2xl font-bold text-green-800">{plantHavenName}</h1>
       </div>
 
       {error && (
@@ -255,6 +265,18 @@ export default function Dashboard() {
           {error}
         </div>
       )}
+
+      {/* Welcome message with display name */}
+      <div className="bg-green-50 p-4 rounded-2xl border border-green-200">
+        <h2 className="text-lg font-semibold text-green-800">
+          {displayName ? `Welcome back, ${displayName}!` : 'Welcome to your Plant Haven!'}
+        </h2>
+        <p className="text-sm text-green-700 mt-1">
+          {plantsNeedingWater.length > 0 
+            ? `You have ${plantsNeedingWater.length} plant${plantsNeedingWater.length > 1 ? 's' : ''} that need${plantsNeedingWater.length === 1 ? 's' : ''} watering today.`
+            : 'All your plants are happy and hydrated!'}
+        </p>
+      </div>
 
       {loading ? (
         <div className="text-center py-8">

@@ -67,7 +67,18 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const signUp = async (email: string, password: string) => {
     if (!auth) throw new Error('Firebase auth is not initialized');
-    await createUserWithEmailAndPassword(auth, email, password);
+    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+    
+    // Create user document in Firestore
+    if (db && userCredential.user) {
+      const userRef = doc(db as Firestore, 'users', userCredential.user.uid);
+      await setDoc(userRef, {
+        uid: userCredential.user.uid,
+        email: userCredential.user.email,
+        plantHavenName: "My Plant Haven",
+        displayName: "",
+      }, { merge: true });
+    }
   };
 
   const signInWithGoogle = async () => {
@@ -88,7 +99,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
         await setDoc(userRef, {
           uid: result.user.uid,
           email: result.user.email,
-          gardenName: "My Garden",
+          plantHavenName: "My Plant Haven",
+          displayName: result.user.displayName || "",
         }, { merge: true });
       }
     } catch (error) {

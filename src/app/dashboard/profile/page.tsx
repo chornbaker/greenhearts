@@ -1,16 +1,39 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
+import { getUserProfile, updateUserProfile } from '@/services/user';
 
 export default function Profile() {
   const { user, signOut } = useAuth();
   const router = useRouter();
-  const [gardenName, setGardenName] = useState('My Garden');
-  const [isEditing, setIsEditing] = useState(false);
+  const [plantHavenName, setPlantHavenName] = useState('My Plant Haven');
+  const [displayName, setDisplayName] = useState('');
+  const [isEditingHavenName, setIsEditingHavenName] = useState(false);
+  const [isEditingDisplayName, setIsEditingDisplayName] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
+
+  // Fetch user profile data
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      if (user) {
+        try {
+          const profile = await getUserProfile(user.uid);
+          if (profile) {
+            if (profile.plantHavenName) setPlantHavenName(profile.plantHavenName);
+            if (profile.displayName) setDisplayName(profile.displayName);
+          }
+        } catch (error) {
+          console.error('Error fetching user profile:', error);
+        }
+      }
+    };
+
+    fetchUserProfile();
+  }, [user]);
 
   const handleSignOut = async () => {
     try {
@@ -22,11 +45,52 @@ export default function Profile() {
     }
   };
 
-  const handleSaveGardenName = () => {
-    // In a real implementation, this would update the garden name in Firestore
-    setIsEditing(false);
-    // Show success message or toast
-    alert('Garden name updated! This is a placeholder for the actual update functionality.');
+  const handleSavePlantHavenName = async () => {
+    if (!user) return;
+    
+    setLoading(true);
+    setError('');
+    setSuccessMessage('');
+    
+    try {
+      await updateUserProfile(user.uid, { plantHavenName });
+      setIsEditingHavenName(false);
+      setSuccessMessage('Plant Haven name updated successfully!');
+      
+      // Clear success message after 3 seconds
+      setTimeout(() => {
+        setSuccessMessage('');
+      }, 3000);
+    } catch (error) {
+      console.error('Error updating Plant Haven name:', error);
+      setError('Failed to update Plant Haven name. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSaveDisplayName = async () => {
+    if (!user) return;
+    
+    setLoading(true);
+    setError('');
+    setSuccessMessage('');
+    
+    try {
+      await updateUserProfile(user.uid, { displayName });
+      setIsEditingDisplayName(false);
+      setSuccessMessage('Display name updated successfully!');
+      
+      // Clear success message after 3 seconds
+      setTimeout(() => {
+        setSuccessMessage('');
+      }, 3000);
+    } catch (error) {
+      console.error('Error updating display name:', error);
+      setError('Failed to update display name. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -36,6 +100,12 @@ export default function Profile() {
       {error && (
         <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg">
           {error}
+        </div>
+      )}
+      
+      {successMessage && (
+        <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg">
+          {successMessage}
         </div>
       )}
       
@@ -53,33 +123,67 @@ export default function Profile() {
           
           <div className="pt-2">
             <div className="flex justify-between items-center mb-1">
-              <p className="text-sm text-gray-600">Garden Name</p>
+              <p className="text-sm text-gray-600">Plant Haven Name</p>
               <button 
-                onClick={() => setIsEditing(!isEditing)}
+                onClick={() => setIsEditingHavenName(!isEditingHavenName)}
                 className="text-xs text-green-600"
               >
-                {isEditing ? 'Cancel' : 'Edit'}
+                {isEditingHavenName ? 'Cancel' : 'Edit'}
               </button>
             </div>
             
-            {isEditing ? (
+            {isEditingHavenName ? (
               <div className="flex items-center gap-2">
                 <input
                   type="text"
-                  value={gardenName}
-                  onChange={(e) => setGardenName(e.target.value)}
-                  placeholder="Enter your garden name"
+                  value={plantHavenName}
+                  onChange={(e) => setPlantHavenName(e.target.value)}
+                  placeholder="Enter your Plant Haven name"
                   className="w-full px-3 py-2 border border-gray-300 rounded-xl text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500"
                 />
                 <button
-                  onClick={handleSaveGardenName}
-                  className="bg-green-600 text-white text-sm py-2 px-3 rounded-xl"
+                  onClick={handleSavePlantHavenName}
+                  disabled={loading}
+                  className="bg-green-600 text-white text-sm py-2 px-3 rounded-xl disabled:opacity-50"
                 >
                   Save
                 </button>
               </div>
             ) : (
-              <p className="font-medium">{gardenName}</p>
+              <p className="font-medium">{plantHavenName}</p>
+            )}
+          </div>
+          
+          <div className="pt-2">
+            <div className="flex justify-between items-center mb-1">
+              <p className="text-sm text-gray-600">What should your GreenHearts call you?</p>
+              <button 
+                onClick={() => setIsEditingDisplayName(!isEditingDisplayName)}
+                className="text-xs text-green-600"
+              >
+                {isEditingDisplayName ? 'Cancel' : 'Edit'}
+              </button>
+            </div>
+            
+            {isEditingDisplayName ? (
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  value={displayName}
+                  onChange={(e) => setDisplayName(e.target.value)}
+                  placeholder="Enter your preferred name"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-xl text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500"
+                />
+                <button
+                  onClick={handleSaveDisplayName}
+                  disabled={loading}
+                  className="bg-green-600 text-white text-sm py-2 px-3 rounded-xl disabled:opacity-50"
+                >
+                  Save
+                </button>
+              </div>
+            ) : (
+              <p className="font-medium">{displayName || 'Not set'}</p>
             )}
           </div>
         </div>
