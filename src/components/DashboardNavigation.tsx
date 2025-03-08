@@ -105,7 +105,8 @@ export default function DashboardNavigation({ userId }: DashboardNavigationProps
             style={grayNavLinkStyle}
           >
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              <circle cx="12" cy="12" r="9" strokeWidth={2} />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v8M8 12h8" />
             </svg>
             <span style={textStyle}>Add Plant</span>
           </Link>
