@@ -120,6 +120,19 @@ export default function Dashboard() {
     }
   };
   
+  // Water droplet SVG icon
+  const WaterDropletIcon = ({ className = "h-5 w-5" }: { className?: string }) => (
+    <svg 
+      xmlns="http://www.w3.org/2000/svg" 
+      className={className} 
+      viewBox="0 0 24 24" 
+      fill="currentColor"
+      style={{ WebkitUserSelect: 'none' }}
+    >
+      <path d="M12 2.5c-1.7 2.3-6 7.6-6 11.5 0 3.3 2.7 6 6 6s6-2.7 6-6c0-3.9-4.3-9.2-6-11.5z" />
+    </svg>
+  );
+  
   // Render a plant card
   const renderPlantCard = (plant: Plant, index: number) => (
     <Link 
@@ -147,9 +160,7 @@ export default function Dashboard() {
         {/* Water indicator */}
         {plant.nextWateringDate && plant.nextWateringDate <= new Date() && (
           <div className="absolute top-2 right-2 bg-blue-500 rounded-full w-8 h-8 flex items-center justify-center shadow-md">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-white" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12 2.69l5.66 5.66a8 8 0 11-11.31 0z" />
-            </svg>
+            <WaterDropletIcon className="h-5 w-5 text-white" />
           </div>
         )}
       </div>
@@ -226,16 +237,19 @@ export default function Dashboard() {
                   <p className="text-xs text-amber-700">Last watered: {plant.lastWatered?.toLocaleDateString()}</p>
                 </div>
                 <button 
-                  className="bg-green-600 hover:bg-green-700 text-white text-sm py-1 px-3 rounded-lg flex items-center gap-1"
+                  className="bg-blue-500 hover:bg-blue-600 text-white text-sm py-1 px-3 rounded-lg flex items-center gap-1"
+                  style={{ 
+                    WebkitAppearance: 'none',
+                    WebkitBorderRadius: '0.5rem',
+                    WebkitTapHighlightColor: 'transparent'
+                  }}
                   onClick={(e) => {
                     e.preventDefault();
                     // This would call waterPlant service in a real implementation
                     alert(`Watering ${plant.name}! This is a placeholder for the actual watering functionality.`);
                   }}
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M12 2.69l5.66 5.66a8 8 0 11-11.31 0z" />
-                  </svg>
+                  <WaterDropletIcon className="h-4 w-4" />
                   Water
                 </button>
               </div>
@@ -255,6 +269,11 @@ export default function Dashboard() {
                 ? 'bg-green-600 text-white' 
                 : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
             }`}
+            style={{ 
+              WebkitAppearance: 'none',
+              WebkitBorderRadius: '0.25rem',
+              borderRadius: '0.25rem'
+            }}
           >
             By Location
           </button>
@@ -265,6 +284,11 @@ export default function Dashboard() {
                 ? 'bg-green-600 text-white' 
                 : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
             }`}
+            style={{ 
+              WebkitAppearance: 'none',
+              WebkitBorderRadius: '0.25rem',
+              borderRadius: '0.25rem'
+            }}
           >
             A-Z
           </button>
@@ -275,6 +299,11 @@ export default function Dashboard() {
                 ? 'bg-green-600 text-white' 
                 : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
             }`}
+            style={{ 
+              WebkitAppearance: 'none',
+              WebkitBorderRadius: '0.25rem',
+              borderRadius: '0.25rem'
+            }}
           >
             Watering
           </button>
@@ -300,6 +329,7 @@ export default function Dashboard() {
           className="block w-full bg-green-600 hover:bg-green-700 text-white py-3 px-4 rounded-xl text-center font-medium shadow-sm transition-colors"
           style={{
             WebkitAppearance: 'none',
+            WebkitBorderRadius: '0.75rem',
             WebkitTapHighlightColor: 'transparent'
           }}
         >
