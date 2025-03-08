@@ -328,6 +328,7 @@ async function handleThirstyMessageGeneration(plantInfo: {
   personalityType: string;
   daysOverdue: number;
   userName?: string;
+  location?: string;
 }) {
   try {
     const prompt = `
@@ -339,6 +340,7 @@ Plant Information:
 - Personality Type: ${plantInfo.personalityType}
 - Days Overdue for Watering: ${plantInfo.daysOverdue}
 ${plantInfo.userName ? `- Owner's Name: ${plantInfo.userName}` : ''}
+${plantInfo.location ? `- Location/Room: ${plantInfo.location}` : ''}
 
 Based on the plant's personality type (${plantInfo.personalityType}) and the fact that it's ${plantInfo.daysOverdue} days overdue for watering, write a short 1-2 sentence message from the plant asking for water.
 
@@ -348,7 +350,8 @@ The message should:
 - Reference how many days it's been without water if relevant
 - Be friendly, humorous, or slightly passive-aggressive depending on personality
 - Be concise (1-2 short sentences only)
-${plantInfo.userName ? `- Occasionally (about 40% of the time) address the owner by name (${plantInfo.userName}) to make it more personal` : ''}
+${plantInfo.userName ? `- Occasionally (about 30% of the time) address the owner by name (${plantInfo.userName}) to make it more personal` : ''}
+${plantInfo.location ? `- Occasionally (about 30% of the time) reference the plant's location (${plantInfo.location}) in a natural way` : ''}
 
 Return ONLY the message text with no additional formatting, explanations, or JSON.
 `;
@@ -392,47 +395,99 @@ function getDefaultThirstyMessage(plantInfo: {
   personalityType: string;
   daysOverdue: number;
   userName?: string;
+  location?: string;
 }): string {
-  const { name, personalityType, daysOverdue, userName } = plantInfo;
-  const includeUserName = userName && Math.random() < 0.4; // 40% chance to include user name
+  const { name, personalityType, daysOverdue, userName, location } = plantInfo;
+  
+  // Determine what to include in the message
+  const includeUserName = userName && Math.random() < 0.3; // 30% chance to include user name
+  const includeLocation = location && Math.random() < 0.3; // 30% chance to include location
+  
+  // If both userName and location should be included, randomly choose one to avoid overcrowding
+  const finalIncludeUserName = includeUserName && includeLocation ? Math.random() < 0.5 : includeUserName;
+  const finalIncludeLocation = includeUserName && includeLocation ? !finalIncludeUserName : includeLocation;
   
   // Default messages based on personality type
   switch (personalityType.toLowerCase()) {
     case 'cheerful':
-      return includeUserName 
-        ? `Hey ${userName}! I'm feeling a bit parched. A drink would be lovely!` 
-        : `Hey there! I'm feeling a bit parched. A drink would be lovely!`;
+      if (finalIncludeUserName) {
+        return `Hey ${userName}! I'm feeling a bit parched. A drink would be lovely!`;
+      } else if (finalIncludeLocation) {
+        return `Being in the ${location} is great, but I could really use some water right now!`;
+      } else {
+        return `Hey there! I'm feeling a bit parched. A drink would be lovely!`;
+      }
+      
     case 'dramatic':
-      return includeUserName 
-        ? `${userName}, I'm DYING of thirst over here! It's been ${daysOverdue} days too many!` 
-        : `I'm DYING of thirst over here! It's been ${daysOverdue} days too many!`;
+      if (finalIncludeUserName) {
+        return `${userName}, I'm DYING of thirst over here! It's been ${daysOverdue} days too many!`;
+      } else if (finalIncludeLocation) {
+        return `The ${location} has become my desert of despair! I'm DYING after ${daysOverdue} days without water!`;
+      } else {
+        return `I'm DYING of thirst over here! It's been ${daysOverdue} days too many!`;
+      }
+      
     case 'zen':
-      return includeUserName 
-        ? `${userName}, one cannot flourish without water. I seek hydration.` 
-        : `One cannot flourish without water. I seek hydration.`;
+      if (finalIncludeUserName) {
+        return `${userName}, one cannot flourish without water. I seek hydration.`;
+      } else if (finalIncludeLocation) {
+        return `Even in the tranquility of the ${location}, a plant needs water to find balance.`;
+      } else {
+        return `One cannot flourish without water. I seek hydration.`;
+      }
+      
     case 'sassy':
-      return includeUserName 
-        ? `Excuse me, ${userName}? Did you forget about me for ${daysOverdue} days? I'm thirsty!` 
-        : `Excuse me? Did you forget about me for ${daysOverdue} days? I'm thirsty!`;
+      if (finalIncludeUserName) {
+        return `Excuse me, ${userName}? Did you forget about me for ${daysOverdue} days? I'm thirsty!`;
+      } else if (finalIncludeLocation) {
+        return `I didn't ask to be put in the ${location} just to be ignored for ${daysOverdue} days without water!`;
+      } else {
+        return `Excuse me? Did you forget about me for ${daysOverdue} days? I'm thirsty!`;
+      }
+      
     case 'royal':
-      return includeUserName 
-        ? `Your Majesty ${name} requests the royal water treatment from ${userName}, post-haste.` 
-        : `Your Majesty ${name} requests the royal water treatment, post-haste.`;
+      if (finalIncludeUserName) {
+        return `Your Majesty ${name} requests the royal water treatment from ${userName}, post-haste.`;
+      } else if (finalIncludeLocation) {
+        return `Your Majesty ${name}, ruler of the ${location}, demands water for the royal roots immediately!`;
+      } else {
+        return `Your Majesty ${name} requests the royal water treatment, post-haste.`;
+      }
+      
     case 'shy':
-      return includeUserName 
-        ? `Um... ${userName}... sorry to bother you, but... I'm a little thirsty...` 
-        : `Um... sorry to bother you, but... I'm a little thirsty...`;
+      if (finalIncludeUserName) {
+        return `Um... ${userName}... sorry to bother you, but... I'm a little thirsty...`;
+      } else if (finalIncludeLocation) {
+        return `I don't want to be a bother here in the ${location}, but... I could use some water...`;
+      } else {
+        return `Um... sorry to bother you, but... I'm a little thirsty...`;
+      }
+      
     case 'adventurous':
-      return includeUserName 
-        ? `${userName}! I've been exploring the desert of neglect for ${daysOverdue} days! Water, please!` 
-        : `I've been exploring the desert of neglect for ${daysOverdue} days! Water, please!`;
+      if (finalIncludeUserName) {
+        return `${userName}! I've been exploring the desert of neglect for ${daysOverdue} days! Water, please!`;
+      } else if (finalIncludeLocation) {
+        return `I've been on a ${daysOverdue}-day expedition through the dry ${location}! Time to refuel with water!`;
+      } else {
+        return `I've been exploring the desert of neglect for ${daysOverdue} days! Water, please!`;
+      }
+      
     case 'wise':
-      return includeUserName 
-        ? `${userName}, a wise gardener knows that water brings life. I've been waiting patiently.` 
-        : `A wise gardener knows that water brings life. I've been waiting patiently.`;
+      if (finalIncludeUserName) {
+        return `${userName}, a wise gardener knows that water brings life. I've been waiting patiently.`;
+      } else if (finalIncludeLocation) {
+        return `The wisdom of the ${location} teaches patience, but after ${daysOverdue} days, even the wisest plant needs water.`;
+      } else {
+        return `A wise gardener knows that water brings life. I've been waiting patiently.`;
+      }
+      
     default:
-      return includeUserName 
-        ? `${userName}, I'm thirsty! I need water, please!` 
-        : `I'm thirsty! I need water, please!`;
+      if (finalIncludeUserName) {
+        return `${userName}, I'm thirsty! I need water, please!`;
+      } else if (finalIncludeLocation) {
+        return `I'm getting too dry here in the ${location}! Water needed!`;
+      } else {
+        return `I'm thirsty! I need water, please!`;
+      }
   }
 } 

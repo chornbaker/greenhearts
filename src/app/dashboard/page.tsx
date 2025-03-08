@@ -158,7 +158,8 @@ export default function Dashboard() {
             species: updatedPlant.species || '',
             personalityType: updatedPlant.personalityType,
             daysOverdue,
-            userName: displayName || undefined
+            userName: displayName || undefined,
+            location: updatedPlant.location
           });
           
           // Update the thirsty messages state
@@ -267,7 +268,8 @@ export default function Dashboard() {
           species: plant.species || '',
           personalityType: plant.personalityType,
           daysOverdue,
-          userName: displayName || undefined
+          userName: displayName || undefined,
+          location: plant.location
         });
         
         messages[plant.id] = message;

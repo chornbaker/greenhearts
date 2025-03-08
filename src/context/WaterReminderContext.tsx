@@ -105,7 +105,8 @@ export function WaterReminderProvider({ children }: { children: React.ReactNode 
         species: plant.species || 'plant',
         personalityType: plant.personalityType || 'cheerful',
         daysOverdue,
-        userName: userName || undefined
+        userName: userName || undefined,
+        location: plant.location
       });
       
       // Save the new message
