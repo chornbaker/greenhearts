@@ -24,12 +24,25 @@ export interface Plant {
   nextWateringDate?: Date;
   personalityType?: string; // Plant personality type
   bio?: string; // Plant bio/description
+  careInstructions?: CareInstructions; // New field for care instructions
 }
 
 export interface WateringSchedule {
   frequency: number; // in days
   lastWatered?: Date;
   nextWateringDate?: Date;
+  description?: string; // Human-readable description of watering needs
+}
+
+export interface CareInstructions {
+  light?: string; // Light requirements description
+  soil?: string; // Soil requirements description
+  temperature?: string; // Temperature requirements description
+  humidity?: string; // Humidity requirements description
+  fertilizer?: string; // Fertilizer recommendations
+  pruning?: string; // Pruning recommendations
+  repotting?: string; // Repotting recommendations
+  commonIssues?: string; // Common issues and how to address them
 }
 
 export enum PlantHealth {

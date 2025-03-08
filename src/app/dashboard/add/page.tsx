@@ -5,8 +5,8 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { createPlant } from '@/services/plants';
 import { uploadPlantImage } from '@/services/storage';
-import { generatePlantPersonality } from '@/services/claude';
-import { PlantHealth } from '@/types';
+import { generatePlantPersonality, generatePlantCareInfo } from '@/services/claude';
+import { PlantHealth, CareInstructions } from '@/types';
 import FormInput from '@/components/FormInput';
 import ButtonSelector from '@/components/ButtonSelector';
 import AutocompleteInput from '@/components/AutocompleteInput';
@@ -68,6 +68,12 @@ export default function AddPlant() {
   const [aiGenerated, setAiGenerated] = useState(false);
   const [manualMode, setManualMode] = useState(false);
   
+  // New state variables for care information
+  const [wateringFrequency, setWateringFrequency] = useState(7);
+  const [wateringDescription, setWateringDescription] = useState('');
+  const [careInstructions, setCareInstructions] = useState<CareInstructions>({});
+  const [careInfoGenerated, setCareInfoGenerated] = useState(false);
+  
   // Check if all required fields are filled
   const requiredFieldsFilled = species && locationType && sunlight && soil && potSize;
   
@@ -90,6 +96,13 @@ export default function AddPlant() {
       generateAiPersonality();
     }
   }, [species, locationType, sunlight, soil, potSize, photoUrl, aiGenerated, manualMode]);
+  
+  // Generate care information when all required fields are filled for the first time
+  useEffect(() => {
+    if (requiredFieldsFilled && !careInfoGenerated && !manualMode && !aiGenerating) {
+      generateAiCareInfo();
+    }
+  }, [species, locationType, sunlight, soil, potSize, photoUrl, careInfoGenerated, manualMode]);
   
   const clearPersonality = () => {
     setPersonality('');
@@ -132,6 +145,34 @@ export default function AddPlant() {
       setAiGenerated(true);
     } catch (error) {
       console.error('Error generating plant personality:', error);
+      // Don't set error message to avoid confusing the user
+    } finally {
+      setAiGenerating(false);
+    }
+  };
+  
+  const generateAiCareInfo = async () => {
+    if (!requiredFieldsFilled || aiGenerating) return;
+    
+    setAiGenerating(true);
+    try {
+      const careInfo = await generatePlantCareInfo({
+        species,
+        locationType,
+        locationSpace,
+        sunlight,
+        soil,
+        potSize,
+        imageUrl: photoUrl || undefined
+      });
+      
+      // Update all fields with AI-generated content
+      setWateringFrequency(careInfo.wateringSchedule.frequency);
+      setWateringDescription(careInfo.wateringSchedule.description);
+      setCareInstructions(careInfo.careInstructions);
+      setCareInfoGenerated(true);
+    } catch (error) {
+      console.error('Error generating plant care information:', error);
       // Don't set error message to avoid confusing the user
     } finally {
       setAiGenerating(false);
@@ -191,6 +232,11 @@ export default function AddPlant() {
         imageUrl = await uploadPlantImage(user.uid, photoFile);
       }
       
+      // Calculate next watering date based on frequency
+      const lastWatered = new Date(lastWateredDate);
+      const nextWateringDate = new Date(lastWatered);
+      nextWateringDate.setDate(lastWatered.getDate() + wateringFrequency);
+      
       // Create the plant with the image URL if available
       await createPlant({
         userId: user.uid,
@@ -199,14 +245,16 @@ export default function AddPlant() {
         image: imageUrl, // Add the image URL to the plant data
         location: locationSpace || 'Unassigned', // Use 'Unassigned' if locationSpace is empty
         wateringSchedule: {
-          frequency: 7, // Default to weekly watering
+          frequency: wateringFrequency,
+          description: wateringDescription || undefined,
         },
-        lastWatered: new Date(lastWateredDate),
-        nextWateringDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+        lastWatered: lastWatered,
+        nextWateringDate: nextWateringDate,
         health: PlantHealth.Good,
         notes: `Location Type: ${locationType}, Sunlight: ${sunlight}, Soil: ${soil}, Pot Size: ${potSize}${personality ? ', Personality: ' + personality : ''}`,
         personalityType: personality || undefined,
         bio: bio || undefined,
+        careInstructions: Object.keys(careInstructions).length > 0 ? careInstructions : undefined,
       });
       
       router.push('/dashboard');
@@ -476,6 +524,194 @@ export default function AddPlant() {
               className="text-xs text-gray-500 hover:text-gray-700 underline"
             >
               {manualMode ? 'Use AI' : 'Edit'}
+            </button>
+          </div>
+        </div>
+        
+        {/* New Section - Care Information */}
+        <div className="mt-8 bg-green-50 p-4 rounded-xl border border-green-200">
+          <div className="flex justify-between items-center mb-3">
+            <h3 className="text-lg font-medium text-green-800">Care Information</h3>
+            {!manualMode && careInfoGenerated && (
+              <button
+                type="button"
+                onClick={generateAiCareInfo}
+                disabled={aiGenerating || !requiredFieldsFilled}
+                className="text-xs bg-green-600 text-white p-1 rounded-full hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                aria-label="Refresh care info"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+              </button>
+            )}
+          </div>
+
+          {!manualMode && (
+            <div className="mb-4">
+              {!careInfoGenerated && !aiGenerating && requiredFieldsFilled && (
+                <div className="text-center mb-2">
+                  <button
+                    type="button"
+                    onClick={generateAiCareInfo}
+                    disabled={aiGenerating || !requiredFieldsFilled}
+                    className="px-3 py-1 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Generate Care Information
+                  </button>
+                </div>
+              )}
+              
+              {aiGenerating && !aiGenerated && !careInfoGenerated && (
+                <div className="w-full text-center py-4">
+                  <div className="inline-block animate-spin rounded-full h-6 w-6 border-t-2 border-green-500 border-r-2 border-green-500 border-b-2 border-green-500 border-l-2 border-gray-200"></div>
+                </div>
+              )}
+            </div>
+          )}
+          
+          {/* AI Generated Care Info Display */}
+          {!manualMode && careInfoGenerated && !aiGenerating && (
+            <div className="bg-white rounded-lg p-4 mb-4 border border-green-100 shadow-sm">
+              <div className="mb-4">
+                <h4 className="text-sm font-medium text-gray-500 mb-1">Watering Schedule</h4>
+                <p className="text-sm text-gray-700">Every {wateringFrequency} days</p>
+                <p className="text-sm text-gray-700 mt-1">{wateringDescription}</p>
+              </div>
+              
+              {careInstructions.light && (
+                <div className="mb-3">
+                  <h4 className="text-sm font-medium text-gray-500 mb-1">Light</h4>
+                  <p className="text-sm text-gray-700">{careInstructions.light}</p>
+                </div>
+              )}
+              
+              {careInstructions.soil && (
+                <div className="mb-3">
+                  <h4 className="text-sm font-medium text-gray-500 mb-1">Soil</h4>
+                  <p className="text-sm text-gray-700">{careInstructions.soil}</p>
+                </div>
+              )}
+              
+              {careInstructions.temperature && (
+                <div className="mb-3">
+                  <h4 className="text-sm font-medium text-gray-500 mb-1">Temperature</h4>
+                  <p className="text-sm text-gray-700">{careInstructions.temperature}</p>
+                </div>
+              )}
+              
+              {careInstructions.humidity && (
+                <div className="mb-3">
+                  <h4 className="text-sm font-medium text-gray-500 mb-1">Humidity</h4>
+                  <p className="text-sm text-gray-700">{careInstructions.humidity}</p>
+                </div>
+              )}
+              
+              {careInstructions.fertilizer && (
+                <div className="mb-3">
+                  <h4 className="text-sm font-medium text-gray-500 mb-1">Fertilizer</h4>
+                  <p className="text-sm text-gray-700">{careInstructions.fertilizer}</p>
+                </div>
+              )}
+              
+              {careInstructions.pruning && (
+                <div className="mb-3">
+                  <h4 className="text-sm font-medium text-gray-500 mb-1">Pruning</h4>
+                  <p className="text-sm text-gray-700">{careInstructions.pruning}</p>
+                </div>
+              )}
+              
+              {careInstructions.repotting && (
+                <div className="mb-3">
+                  <h4 className="text-sm font-medium text-gray-500 mb-1">Repotting</h4>
+                  <p className="text-sm text-gray-700">{careInstructions.repotting}</p>
+                </div>
+              )}
+              
+              {careInstructions.commonIssues && (
+                <div className="mb-3">
+                  <h4 className="text-sm font-medium text-gray-500 mb-1">Common Issues</h4>
+                  <p className="text-sm text-gray-700">{careInstructions.commonIssues}</p>
+                </div>
+              )}
+            </div>
+          )}
+          
+          {/* Manual Mode for Care Info */}
+          {manualMode && (
+            <div className="space-y-4">
+              <div>
+                <label htmlFor="wateringFrequency" className="block text-sm font-medium text-gray-800 mb-1">
+                  Watering Frequency (days)
+                </label>
+                <input
+                  id="wateringFrequency"
+                  type="number"
+                  min="1"
+                  max="90"
+                  value={wateringFrequency}
+                  onChange={(e) => setWateringFrequency(parseInt(e.target.value) || 7)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                />
+              </div>
+              
+              <div>
+                <label htmlFor="wateringDescription" className="block text-sm font-medium text-gray-800 mb-1">
+                  Watering Description
+                </label>
+                <textarea
+                  id="wateringDescription"
+                  value={wateringDescription}
+                  onChange={(e) => setWateringDescription(e.target.value)}
+                  placeholder="Describe how to water this plant"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  rows={2}
+                />
+              </div>
+              
+              <div>
+                <label htmlFor="lightNeeds" className="block text-sm font-medium text-gray-800 mb-1">
+                  Light Needs
+                </label>
+                <textarea
+                  id="lightNeeds"
+                  value={careInstructions.light || ''}
+                  onChange={(e) => setCareInstructions({...careInstructions, light: e.target.value})}
+                  placeholder="Describe light requirements"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  rows={2}
+                />
+              </div>
+              
+              <div>
+                <label htmlFor="soilNeeds" className="block text-sm font-medium text-gray-800 mb-1">
+                  Soil Needs
+                </label>
+                <textarea
+                  id="soilNeeds"
+                  value={careInstructions.soil || ''}
+                  onChange={(e) => setCareInstructions({...careInstructions, soil: e.target.value})}
+                  placeholder="Describe soil requirements"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  rows={2}
+                />
+              </div>
+            </div>
+          )}
+          
+          {/* Mode Toggle Button */}
+          <div className="mt-4 text-center">
+            <button
+              type="button"
+              onClick={() => {
+                setManualMode(!manualMode);
+                if (!careInfoGenerated && !manualMode) {
+                  generateAiCareInfo();
+                }
+              }}
+              className="text-xs text-gray-500 hover:text-gray-700 underline"
+            >
+              {manualMode ? 'Use AI' : 'Edit Manually'}
             </button>
           </div>
         </div>
