@@ -19,12 +19,13 @@ export default function Logo({ showText = false, size = 'medium', className = ''
 
   return (
     <div className={`flex ${vertical ? 'flex-col items-center' : 'items-center'} ${className}`}>
-      <div className="relative drop-shadow-md" style={{ width, height, marginBottom: vertical ? '-5px' : 0 }}>
+      <div className={`relative drop-shadow-md ${vertical ? '-mb-[5px]' : ''}`}>
         <Image
           src="/images/greenhearts-logo.png"
           alt="GreenHearts Logo"
           width={width}
           height={height}
+          style={{ width: `${width}px`, height: `${height}px` }}
           className="object-contain"
           priority
         />
