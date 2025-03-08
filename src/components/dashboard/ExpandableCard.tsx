@@ -38,6 +38,7 @@ type ExpandableCardProps = {
   plant: Plant;
   onWater: (plantId: string) => void;
   onUpdate?: (plantId: string, updates: Partial<Plant>) => void;
+  organizationView: 'location' | 'alphabetical' | 'wateringPriority' | 'health';
 };
 
 enum ExpansionState {
@@ -46,7 +47,7 @@ enum ExpansionState {
   FullyExpanded = 2,
 }
 
-export default function ExpandableCard({ plant, onWater, onUpdate }: ExpandableCardProps) {
+export default function ExpandableCard({ plant, onWater, onUpdate, organizationView }: ExpandableCardProps) {
   const [expansionState, setExpansionState] = useState<ExpansionState>(ExpansionState.Collapsed);
   const [isEditingWateringDate, setIsEditingWateringDate] = useState(false);
   const [selectedDate, setSelectedDate] = useState<string>('');
@@ -80,6 +81,121 @@ export default function ExpandableCard({ plant, onWater, onUpdate }: ExpandableC
   const dateToInputValue = (date: Date | undefined) => {
     if (!date) return '';
     return date.toISOString().split('T')[0];
+  };
+
+  // Calculate days until next watering
+  const getDaysUntilWatering = (): number | null => {
+    if (!plant.nextWateringDate) return null;
+    
+    const today = new Date();
+    const nextWatering = new Date(plant.nextWateringDate);
+    
+    // Calculate difference in days
+    const diffTime = nextWatering.getTime() - today.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    return diffDays;
+  };
+  
+  // Get the third line content based on organization view
+  const getThirdLineContent = () => {
+    const daysUntilWatering = getDaysUntilWatering();
+    const isOverdue = daysUntilWatering !== null && daysUntilWatering < 0;
+    
+    switch (organizationView) {
+      case 'location':
+      case 'alphabetical':
+        // Show health and days to next watering
+        return (
+          <div className="flex items-center space-x-2 mt-1">
+            <div className="flex items-center">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 text-green-500 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+              <span className="text-xs text-gray-500">
+                {plant.health ? plant.health.charAt(0).toUpperCase() + plant.health.slice(1) : 'No health data'}
+              </span>
+            </div>
+            <div className="flex items-center">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 text-blue-500 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 2.5c-1.7 2.3-6 7.6-6 11.5 0 3.3 2.7 6 6 6s6-2.7 6-6c0-3.9-4.3-9.2-6-11.5z" />
+              </svg>
+              <span className={`text-xs ${isOverdue ? 'text-red-500' : 'text-gray-500'}`}>
+                {daysUntilWatering === null 
+                  ? 'No watering schedule' 
+                  : isOverdue
+                    ? `${Math.abs(daysUntilWatering)} days overdue`
+                    : daysUntilWatering === 0
+                      ? 'Water today'
+                      : daysUntilWatering === 1
+                        ? 'Water tomorrow'
+                        : `${daysUntilWatering} days to water`
+                }
+              </span>
+            </div>
+          </div>
+        );
+        
+      case 'wateringPriority':
+        // Show health and location
+        return (
+          <div className="flex items-center space-x-2 mt-1">
+            <div className="flex items-center">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 text-green-500 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+              <span className="text-xs text-gray-500">
+                {plant.health ? plant.health.charAt(0).toUpperCase() + plant.health.slice(1) : 'No health data'}
+              </span>
+            </div>
+            <div className="flex items-center">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 text-gray-500 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+              <span className="text-xs text-gray-500">
+                {plant.location || 'No location set'}
+              </span>
+            </div>
+          </div>
+        );
+        
+      case 'health':
+        // Show location and days to next watering
+        return (
+          <div className="flex items-center space-x-2 mt-1">
+            <div className="flex items-center">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 text-gray-500 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+              <span className="text-xs text-gray-500">
+                {plant.location || 'No location set'}
+              </span>
+            </div>
+            <div className="flex items-center">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 text-blue-500 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 2.5c-1.7 2.3-6 7.6-6 11.5 0 3.3 2.7 6 6 6s6-2.7 6-6c0-3.9-4.3-9.2-6-11.5z" />
+              </svg>
+              <span className={`text-xs ${isOverdue ? 'text-red-500' : 'text-gray-500'}`}>
+                {daysUntilWatering === null 
+                  ? 'No watering schedule' 
+                  : isOverdue
+                    ? `${Math.abs(daysUntilWatering)} days overdue`
+                    : daysUntilWatering === 0
+                      ? 'Water today'
+                      : daysUntilWatering === 1
+                        ? 'Water tomorrow'
+                        : `${daysUntilWatering} days to water`
+                }
+              </span>
+            </div>
+          </div>
+        );
+        
+      default:
+        return null;
+    }
   };
 
   // Effect to handle clicks outside the card
@@ -412,43 +528,8 @@ export default function ExpandableCard({ plant, onWater, onUpdate }: ExpandableC
               )}
             </div>
             
-            {/* Location info (always shown) */}
-            {isEditingLocation ? (
-              <form onSubmit={handleLocationUpdate} onClick={handleFormClick} className="mt-1">
-                <input
-                  ref={locationInputRef}
-                  type="text"
-                  value={editedLocation}
-                  onChange={handleLocationChange}
-                  className="w-full p-1 text-xs border border-gray-300 rounded"
-                  placeholder="Enter location"
-                />
-                <div className="flex gap-2 mt-1">
-                  <button
-                    type="submit"
-                    className="px-2 py-1 text-xs bg-green-500 text-white rounded hover:bg-green-600"
-                    disabled={isUpdating}
-                  >
-                    Save
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleCancelLocationEdit}
-                    className="px-2 py-1 text-xs bg-gray-200 text-gray-700 rounded hover:bg-gray-300"
-                    disabled={isUpdating}
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </form>
-            ) : (
-              <button
-                onClick={handleLocationClick}
-                className="text-xs text-gray-500 mt-1 hover:text-blue-500 text-left"
-              >
-                {plant.location || 'No location assigned'}
-              </button>
-            )}
+            {/* Third line content based on organization view */}
+            {getThirdLineContent()}
             
             {/* Expanded Content */}
             <AnimatePresence>
@@ -502,7 +583,18 @@ export default function ExpandableCard({ plant, onWater, onUpdate }: ExpandableC
                     </div>
                     <div>
                       <span className="text-gray-500">Next watering:</span>
-                      <p className="font-medium text-gray-700 mt-1">{formatDate(plant.nextWateringDate)}</p>
+                      <div 
+                        className={`font-medium ${
+                          plant.nextWateringDate && plant.nextWateringDate <= new Date() 
+                            ? 'text-red-500' 
+                            : 'text-gray-700'
+                        }`}
+                      >
+                        {plant.nextWateringDate 
+                          ? formatDate(plant.nextWateringDate)
+                          : 'Not scheduled'
+                        }
+                      </div>
                     </div>
                     <div>
                       <span className="text-gray-500">Health:</span>
@@ -763,7 +855,18 @@ export default function ExpandableCard({ plant, onWater, onUpdate }: ExpandableC
               
               <div className="bg-gray-50 p-3 rounded-lg">
                 <h3 className="text-sm font-medium text-gray-500 mb-1">Next Watering</h3>
-                <p className="text-gray-800">{formatDate(plant.nextWateringDate)}</p>
+                <div 
+                  className={`font-medium ${
+                    plant.nextWateringDate && plant.nextWateringDate <= new Date() 
+                      ? 'text-red-500' 
+                      : 'text-gray-700'
+                  }`}
+                >
+                  {plant.nextWateringDate 
+                    ? formatDate(plant.nextWateringDate)
+                    : 'Not scheduled'
+                  }
+                </div>
               </div>
             </div>
             

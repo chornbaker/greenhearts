@@ -12,7 +12,7 @@ import ExpandableCard from '@/components/dashboard/ExpandableCard';
 import { generateThirstyPlantMessage } from '@/services/claude';
 
 // Organization view types
-type OrganizationView = 'location' | 'alphabetical' | 'wateringPriority';
+type OrganizationView = 'location' | 'alphabetical' | 'wateringPriority' | 'health';
 
 export default function Dashboard() {
   const { user } = useAuth();
@@ -193,23 +193,71 @@ export default function Dashboard() {
   const getOrganizedPlants = () => {
     switch (organizationView) {
       case 'location':
-        // Group by location
-        const locationGroups: { [key: string]: Plant[] } = {};
+        // Group by indoor/outdoor first, then by location
+        const indoorLocations: { [key: string]: Plant[] } = {};
+        const outdoorLocations: { [key: string]: Plant[] } = {};
+        const unassignedPlants: Plant[] = [];
+        
         plants.forEach((plant) => {
-          const location = plant.location || 'Unassigned';
-          if (!locationGroups[location]) {
-            locationGroups[location] = [];
+          if (!plant.location) {
+            unassignedPlants.push(plant);
+            return;
           }
-          locationGroups[location].push(plant);
+          
+          // Check if location is indoor or outdoor
+          const isOutdoor = ['Patio', 'Balcony', 'Front Yard', 'Back Yard', 'Garden', 'Porch'].some(
+            outdoor => plant.location?.includes(outdoor)
+          );
+          
+          if (isOutdoor) {
+            if (!outdoorLocations[plant.location]) {
+              outdoorLocations[plant.location] = [];
+            }
+            outdoorLocations[plant.location].push(plant);
+          } else {
+            if (!indoorLocations[plant.location]) {
+              indoorLocations[plant.location] = [];
+            }
+            indoorLocations[plant.location].push(plant);
+          }
         });
         
-        // Sort locations alphabetically
-        return Object.entries(locationGroups)
-          .sort(([a], [b]) => a.localeCompare(b))
-          .map(([location, plants]) => ({
-            title: location,
-            plants: plants.sort((a, b) => a.name.localeCompare(b.name))
-          }));
+        // Create groups array with indoor locations first, then outdoor
+        const groups = [];
+        
+        // Add indoor locations
+        if (Object.keys(indoorLocations).length > 0) {
+          Object.entries(indoorLocations)
+            .sort(([a], [b]) => a.localeCompare(b))
+            .forEach(([location, plants]) => {
+              groups.push({
+                title: location,
+                plants: plants.sort((a, b) => a.name.localeCompare(b.name))
+              });
+            });
+        }
+        
+        // Add outdoor locations
+        if (Object.keys(outdoorLocations).length > 0) {
+          Object.entries(outdoorLocations)
+            .sort(([a], [b]) => a.localeCompare(b))
+            .forEach(([location, plants]) => {
+              groups.push({
+                title: location,
+                plants: plants.sort((a, b) => a.name.localeCompare(b.name))
+              });
+            });
+        }
+        
+        // Add unassigned plants if any
+        if (unassignedPlants.length > 0) {
+          groups.push({
+            title: 'Unassigned',
+            plants: unassignedPlants.sort((a, b) => a.name.localeCompare(b.name))
+          });
+        }
+        
+        return groups;
         
       case 'alphabetical':
         // Just one group with all plants sorted alphabetically
@@ -219,16 +267,118 @@ export default function Dashboard() {
         }];
         
       case 'wateringPriority':
-        // Sort by watering date
-        return [{
-          title: 'Watering Priority',
-          plants: [...plants].sort((a, b) => {
-            // Plants without watering dates go last
-            if (!a.nextWateringDate) return 1;
-            if (!b.nextWateringDate) return -1;
-            return a.nextWateringDate.getTime() - b.nextWateringDate.getTime();
-          })
-        }];
+        // Group by watering status: overdue first, then by date
+        const today = new Date();
+        const overduePlants: Plant[] = [];
+        const wateringGroups: { [key: string]: Plant[] } = {};
+        const noDatePlants: Plant[] = [];
+        
+        plants.forEach((plant) => {
+          if (!plant.nextWateringDate) {
+            noDatePlants.push(plant);
+            return;
+          }
+          
+          const nextWatering = new Date(plant.nextWateringDate);
+          
+          // Check if overdue
+          if (nextWatering < today) {
+            overduePlants.push(plant);
+            return;
+          }
+          
+          // Format date as key for grouping
+          const dateKey = nextWatering.toLocaleDateString(undefined, { 
+            month: 'short', 
+            day: 'numeric' 
+          });
+          
+          if (!wateringGroups[dateKey]) {
+            wateringGroups[dateKey] = [];
+          }
+          wateringGroups[dateKey].push(plant);
+        });
+        
+        // Create groups array with overdue first, then by date
+        const wateringGroupsArray = [];
+        
+        // Add overdue plants if any
+        if (overduePlants.length > 0) {
+          wateringGroupsArray.push({
+            title: 'Overdue',
+            plants: overduePlants.sort((a, b) => {
+              // Sort overdue plants by most overdue first
+              return a.nextWateringDate!.getTime() - b.nextWateringDate!.getTime();
+            })
+          });
+        }
+        
+        // Add plants by watering date
+        const sortedDates = Object.keys(wateringGroups).sort((a, b) => {
+          const dateA = new Date(wateringGroups[a][0].nextWateringDate!);
+          const dateB = new Date(wateringGroups[b][0].nextWateringDate!);
+          return dateA.getTime() - dateB.getTime();
+        });
+        
+        sortedDates.forEach(dateKey => {
+          wateringGroupsArray.push({
+            title: `Water on ${dateKey}`,
+            plants: wateringGroups[dateKey].sort((a, b) => a.name.localeCompare(b.name))
+          });
+        });
+        
+        // Add plants with no watering date if any
+        if (noDatePlants.length > 0) {
+          wateringGroupsArray.push({
+            title: 'No Watering Schedule',
+            plants: noDatePlants.sort((a, b) => a.name.localeCompare(b.name))
+          });
+        }
+        
+        return wateringGroupsArray;
+        
+      case 'health':
+        // Group by health status, poorest health first
+        const healthGroups: { [key: string]: Plant[] } = {};
+        const noHealthPlants: Plant[] = [];
+        
+        // Define health order for sorting
+        const healthOrder = ['poor', 'fair', 'good', 'excellent'];
+        
+        plants.forEach((plant) => {
+          if (!plant.health) {
+            noHealthPlants.push(plant);
+            return;
+          }
+          
+          if (!healthGroups[plant.health]) {
+            healthGroups[plant.health] = [];
+          }
+          healthGroups[plant.health].push(plant);
+        });
+        
+        // Create groups array with poorest health first
+        const healthGroupsArray = [];
+        
+        // Add plants by health status in order
+        healthOrder.forEach(health => {
+          if (healthGroups[health] && healthGroups[health].length > 0) {
+            healthGroupsArray.push({
+              title: `${health.charAt(0).toUpperCase() + health.slice(1)} Health`,
+              plants: healthGroups[health].sort((a, b) => a.name.localeCompare(b.name))
+            });
+          }
+        });
+        
+        // Add plants with no health status if any
+        if (noHealthPlants.length > 0) {
+          healthGroupsArray.push({
+            title: 'Health Not Set',
+            plants: noHealthPlants.sort((a, b) => a.name.localeCompare(b.name))
+          });
+        }
+        
+        return healthGroupsArray;
         
       default:
         return [];
@@ -447,6 +597,16 @@ export default function Dashboard() {
           >
             Watering
           </button>
+          <button 
+            onClick={() => setOrganizationView('health')}
+            className={`text-xs px-2 py-1 rounded ${
+              organizationView === 'health' 
+                ? 'bg-green-600 text-white' 
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+            }`}
+          >
+            Health
+          </button>
         </div>
       </div>
       
@@ -467,6 +627,7 @@ export default function Dashboard() {
                   plant={plant} 
                   onWater={handleWaterPlant}
                   onUpdate={handleUpdatePlant}
+                  organizationView={organizationView}
                 />
               ))}
             </div>
