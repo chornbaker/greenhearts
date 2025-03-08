@@ -77,10 +77,10 @@ export default function DashboardLayout({
           <div className="relative" ref={dropdownRef}>
             <button 
               onClick={() => setShowDropdown(!showDropdown)}
-              className="flex items-center focus:outline-none"
+              className="flex items-center focus:outline-none focus:ring-2 focus:ring-green-500 rounded-full"
               aria-label="Profile menu"
             >
-              <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center overflow-hidden border border-green-200">
+              <div className="w-9 h-9 rounded-full bg-green-100 flex items-center justify-center overflow-hidden border-2 border-green-500 shadow-sm">
                 {user && user.photoURL && !imageError ? (
                   <Image 
                     src={user.photoURL} 
@@ -99,7 +99,7 @@ export default function DashboardLayout({
             </button>
             
             {showDropdown && (
-              <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-1 z-10">
+              <div className="absolute right-0 mt-2 min-w-[160px] w-auto whitespace-nowrap bg-white rounded-lg shadow-lg py-1 z-10 border border-gray-100">
                 <Link 
                   href="/dashboard/profile" 
                   className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
