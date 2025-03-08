@@ -272,7 +272,7 @@ export default function Dashboard() {
                       {calculateDaysOverdue(plant)} days overdue
                     </p>
                     {waterMessages[plant.id] && (
-                      <p className="text-xs text-gray-600 italic mt-1 line-clamp-2">
+                      <p className="text-xs text-gray-600 italic mt-1">
                         "{waterMessages[plant.id]}"
                       </p>
                     )}
