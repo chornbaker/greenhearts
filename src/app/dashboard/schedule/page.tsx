@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { useAuth } from '@/context/AuthContext';
-import { getUserPlants } from '@/services/plants';
+import { getUserPlants, waterPlant as waterPlantService } from '@/services/plants';
 import { Plant } from '@/types';
 
 export default function Schedule() {
@@ -13,6 +13,7 @@ export default function Schedule() {
   const [error, setError] = useState('');
   const [selectedDay, setSelectedDay] = useState(0); // 0 = today, 1 = tomorrow, etc.
   const [view, setView] = useState<'calendar' | 'list'>('calendar');
+  const [wateringPlant, setWateringPlant] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchPlants = async () => {
@@ -32,58 +33,6 @@ export default function Schedule() {
     fetchPlants();
   }, [user]);
 
-  // Placeholder plants for demo
-  const demoPlants = [
-    {
-      id: '1',
-      name: 'Monstera Deliciosa',
-      image: '/images/plants-header.jpg',
-      species: 'Monstera',
-      lastWatered: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000), // 3 days ago
-      nextWateringDate: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000), // 2 days from now
-      wateringFrequency: 5, // days
-    },
-    {
-      id: '2',
-      name: 'Snake Plant',
-      image: '/images/plants-header.jpg',
-      species: 'Sansevieria',
-      lastWatered: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000), // 10 days ago
-      nextWateringDate: new Date(Date.now() + 4 * 24 * 60 * 60 * 1000), // 4 days from now
-      wateringFrequency: 14, // days
-    },
-    {
-      id: '3',
-      name: 'Fiddle Leaf Fig',
-      image: '/images/plants-header.jpg',
-      species: 'Ficus lyrata',
-      lastWatered: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000), // 5 days ago
-      nextWateringDate: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000), // 1 day ago (needs water)
-      wateringFrequency: 7, // days
-    },
-    {
-      id: '4',
-      name: 'Peace Lily',
-      image: '/images/plants-header.jpg',
-      species: 'Spathiphyllum',
-      lastWatered: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000), // 2 days ago
-      nextWateringDate: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000), // 1 day from now
-      wateringFrequency: 3, // days
-    },
-    {
-      id: '5',
-      name: 'Aloe Vera',
-      image: '/images/plants-header.jpg',
-      species: 'Aloe',
-      lastWatered: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000), // 14 days ago
-      nextWateringDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days from now
-      wateringFrequency: 21, // days
-    },
-  ];
-
-  // Use demo plants for now
-  const displayPlants = demoPlants;
-
   // Generate dates for the next 14 days
   const dates = Array.from({ length: 14 }, (_, i) => {
     const date = new Date();
@@ -100,7 +49,7 @@ export default function Schedule() {
     const nextDate = new Date(targetDate);
     nextDate.setDate(nextDate.getDate() + 1);
     
-    return displayPlants.filter(plant => {
+    return plants.filter(plant => {
       if (!plant.nextWateringDate) return false;
       const wateringDate = new Date(plant.nextWateringDate);
       wateringDate.setHours(0, 0, 0, 0);
@@ -116,7 +65,7 @@ export default function Schedule() {
 
   // Get all watering events for the next 14 days
   const getAllWateringEvents = () => {
-    const events: { date: Date; plants: typeof demoPlants }[] = [];
+    const events: { date: Date; plants: Plant[] }[] = [];
     
     for (let i = 0; i < 14; i++) {
       const plantsForDay = getPlantsByDay(i);
@@ -155,10 +104,23 @@ export default function Schedule() {
     }
   };
 
-  const handleWaterPlant = (plantId: string) => {
-    // In a real implementation, this would call the waterPlant service
-    console.log(`Watering plant ${plantId}`);
-    alert('Plant watered! This is a placeholder for the actual watering functionality.');
+  const handleWaterPlant = async (plantId: string) => {
+    try {
+      setWateringPlant(plantId);
+      await waterPlantService(plantId);
+      
+      // Update the local plants state to reflect the watering
+      const updatedPlants = await getUserPlants(user!.uid);
+      setPlants(updatedPlants);
+      
+      // Show success message
+      alert('Plant watered successfully!');
+    } catch (error) {
+      console.error('Error watering plant:', error);
+      alert('Failed to water plant. Please try again.');
+    } finally {
+      setWateringPlant(null);
+    }
   };
 
   return (
@@ -297,17 +259,24 @@ export default function Schedule() {
                         <h3 className="font-medium text-gray-800">{plant.name}</h3>
                         <p className="text-xs text-gray-500">{plant.species}</p>
                         <p className="text-xs text-green-600 mt-1">
-                          {selectedDay === 0 && new Date() > plant.nextWateringDate! 
+                          {selectedDay === 0 && plant.nextWateringDate && new Date() > plant.nextWateringDate 
                             ? 'Watering overdue' 
-                            : `Water every ${plant.wateringFrequency} days`
+                            : `Water every ${plant.wateringSchedule.frequency} days`
                           }
                         </p>
                       </div>
                       <button
                         onClick={() => handleWaterPlant(plant.id)}
-                        className="bg-green-600 text-white py-2 px-4 rounded-lg text-sm font-medium"
+                        disabled={wateringPlant === plant.id}
+                        className={`
+                          py-2 px-4 rounded-lg text-sm font-medium
+                          ${wateringPlant === plant.id 
+                            ? 'bg-green-300 text-green-800' 
+                            : 'bg-green-600 text-white'
+                          }
+                        `}
                       >
-                        Water
+                        {wateringPlant === plant.id ? 'Watering...' : 'Water'}
                       </button>
                     </div>
                   </div>
@@ -351,9 +320,16 @@ export default function Schedule() {
                       </div>
                       <button
                         onClick={() => handleWaterPlant(plant.id)}
-                        className="bg-green-600 text-white py-1 px-3 rounded-lg text-sm"
+                        disabled={wateringPlant === plant.id}
+                        className={`
+                          py-1 px-3 rounded-lg text-sm
+                          ${wateringPlant === plant.id 
+                            ? 'bg-green-300 text-green-800' 
+                            : 'bg-green-600 text-white'
+                          }
+                        `}
                       >
-                        Water
+                        {wateringPlant === plant.id ? 'Watering...' : 'Water'}
                       </button>
                     </div>
                   ))}
