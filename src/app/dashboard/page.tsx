@@ -11,30 +11,26 @@ import { Plant } from '@/types';
 import ExpandableCard from '@/components/dashboard/ExpandableCard';
 import { generateThirstyPlantMessage } from '@/services/claude';
 import { getDaysOverdue, isDueToday, getWateringStatusText } from '@/utils/dateUtils';
+import { useWaterMessages } from '@/context/WaterMessageContext';
 
 // Organization view types
 type OrganizationView = 'location' | 'alphabetical' | 'wateringPriority' | 'health';
 
 export default function Dashboard() {
   const { user } = useAuth();
-  const router = useRouter();
+  const { getWaterMessage, generateDailyMessages } = useWaterMessages();
   const [plants, setPlants] = useState<Plant[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [plantHavenName, setPlantHavenName] = useState('My Plant Haven');
   const [displayName, setDisplayName] = useState('');
   const [organizationView, setOrganizationView] = useState<OrganizationView>('location');
-  const [thirstyMessages, setThirstyMessages] = useState<Record<string, string>>({});
-  const [lastMessageDate, setLastMessageDate] = useState<string>('');
-  const [messagesLoaded, setMessagesLoaded] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
-    const fetchData = async () => {
-      if (!user) {
-        setLoading(false);
-        return;
-      }
+    if (!user) return;
 
+    const fetchData = async () => {
       try {
         // Fetch user profile
         const userProfile = await getUserProfile(user.uid);
@@ -50,18 +46,6 @@ export default function Dashboard() {
         // Fetch plants from Firebase
         const userPlants = await getUserPlants(user.uid);
         setPlants(userPlants);
-        
-        // Fetch thirsty messages from Firebase
-        const { messages, updatedAt } = await getThirstyMessages(user.uid);
-        if (Object.keys(messages).length > 0) {
-          setThirstyMessages(messages);
-          
-          // Set last message date if available
-          if (updatedAt) {
-            setLastMessageDate(updatedAt.toDateString());
-          }
-        }
-        setMessagesLoaded(true);
         
         // Redirect to Add Plant page if no plants
         if (userPlants.length === 0 && !loading) {
@@ -108,25 +92,6 @@ export default function Dashboard() {
       // Get the updated plant data
       const updatedPlants = await getUserPlants(user!.uid);
       setPlants(updatedPlants);
-      
-      // Remove the thirsty message for this plant
-      if (thirstyMessages[plantId]) {
-        const updatedMessages = { ...thirstyMessages };
-        delete updatedMessages[plantId];
-        setThirstyMessages(updatedMessages);
-        
-        // Update localStorage
-        localStorage.setItem('thirstyMessages', JSON.stringify(updatedMessages));
-        
-        // Update Firebase
-        if (user) {
-          try {
-            await saveThirstyMessages(user.uid, updatedMessages);
-          } catch (error) {
-            console.error('Error updating thirsty messages in Firebase:', error);
-          }
-        }
-      }
     } catch (error) {
       console.error('Error watering plant:', error);
     }
@@ -167,23 +132,23 @@ export default function Dashboard() {
           });
           
           // Update the thirsty messages state
-          const updatedMessages = {
-            ...thirstyMessages,
-            [plantId]: message
-          };
-          setThirstyMessages(updatedMessages);
+          // const updatedMessages = {
+          //   ...thirstyMessages,
+          //   [plantId]: message
+          // };
+          // setThirstyMessages(updatedMessages);
           
           // Update localStorage
-          localStorage.setItem('thirstyMessages', JSON.stringify(updatedMessages));
+          // localStorage.setItem('thirstyMessages', JSON.stringify(updatedMessages));
           
           // Update Firebase
-          if (user) {
-            try {
-              await saveThirstyMessages(user.uid, updatedMessages);
-            } catch (error) {
-              console.error('Error updating thirsty messages in Firebase:', error);
-            }
-          }
+          // if (user) {
+          //   try {
+          //     await saveThirstyMessages(user.uid, updatedMessages);
+          //   } catch (error) {
+          //     console.error('Error updating thirsty messages in Firebase:', error);
+          //   }
+          // }
         } catch (error) {
           console.error(`Error generating message for ${updatedPlant.name}:`, error);
         }
@@ -455,77 +420,12 @@ export default function Dashboard() {
     }
   };
 
-  // Generate thirsty messages for plants
-  const generateThirstyMessages = useCallback(async () => {
-    if (!user) return;
-    
-    // Check if we already generated messages today
-    const today = new Date().toDateString();
-    if (lastMessageDate === today) return;
-    
-    const messages: Record<string, string> = {};
-    const messagePromises = plantsNeedingWater.map(async (plant) => {
-      if (!plant.personalityType) return;
-      
-      try {
-        const daysOverdue = getDaysOverdue(plant);
-        const message = await generateThirstyPlantMessage({
-          name: plant.name,
-          species: plant.species || '',
-          personalityType: plant.personalityType,
-          daysOverdue,
-          userName: displayName || undefined,
-          location: plant.location
-        });
-        
-        messages[plant.id] = message;
-      } catch (error) {
-        console.error(`Error generating message for ${plant.name}:`, error);
-      }
-    });
-    
-    await Promise.all(messagePromises);
-    
-    // Only update if we have new messages
-    if (Object.keys(messages).length > 0) {
-      setThirstyMessages(messages);
-      setLastMessageDate(today);
-      
-      // Save messages to Firebase
-      try {
-        await saveThirstyMessages(user.uid, messages);
-      } catch (error) {
-        console.error('Error saving thirsty messages to Firebase:', error);
-      }
-      
-      // Also save to localStorage as a backup
-      localStorage.setItem('thirstyMessages', JSON.stringify(messages));
-      localStorage.setItem('lastMessageDate', today);
-    }
-  }, [plantsNeedingWater, lastMessageDate, user, displayName]);
-
-  // Load saved messages from localStorage as a fallback
-  useEffect(() => {
-    if (messagesLoaded && Object.keys(thirstyMessages).length === 0) {
-      const savedMessages = localStorage.getItem('thirstyMessages');
-      const savedDate = localStorage.getItem('lastMessageDate');
-      
-      if (savedMessages) {
-        setThirstyMessages(JSON.parse(savedMessages));
-      }
-      
-      if (savedDate) {
-        setLastMessageDate(savedDate);
-      }
-    }
-  }, [messagesLoaded, thirstyMessages]);
-
-  // Generate new messages when plants needing water changes
+  // Generate thirsty messages when plants needing water changes
   useEffect(() => {
     if (plantsNeedingWater.length > 0 && !loading && user) {
-      generateThirstyMessages();
+      generateDailyMessages(plantsNeedingWater);
     }
-  }, [plantsNeedingWater, loading, generateThirstyMessages, user]);
+  }, [plantsNeedingWater, loading, generateDailyMessages, user]);
 
   // Handle plant archive
   const handleArchivePlant = (plantId: string) => {
@@ -603,9 +503,9 @@ export default function Dashboard() {
                   <p className={`text-xs ${isDueToday(plant) ? 'text-green-600' : 'text-red-600'}`}>
                     {getWateringStatusText(plant)}
                   </p>
-                  {thirstyMessages[plant.id] && (
+                  {getWaterMessage(plant) && (
                     <p className="text-xs text-gray-600 italic mt-1">
-                      {thirstyMessages[plant.id]}
+                      {getWaterMessage(plant)}
                     </p>
                   )}
                 </div>

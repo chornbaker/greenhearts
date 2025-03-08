@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import { Plant } from '@/types';
 import { getDaysOverdue, isDueToday } from '@/utils/dateUtils';
+import { generateThirstyPlantMessage } from '@/services/claude';
 
 type WaterMessage = {
   message: string;
@@ -12,7 +13,8 @@ type WaterMessageContextType = {
   generateDailyMessages: (plants: Plant[]) => void;
 };
 
-const generateMessageForPlant = (plant: Plant, isOverdue: boolean): string => {
+// Fallback message generator if API call fails
+const generateFallbackMessageForPlant = (plant: Plant, isOverdue: boolean): string => {
   const personality = plant.personalityType || 'friendly';
   const daysOverdue = getDaysOverdue(plant);
   const location = plant.location ? ` in the ${plant.location.toLowerCase()}` : '';
@@ -137,6 +139,7 @@ const WaterMessageContext = createContext<WaterMessageContextType | undefined>(u
 
 export function WaterMessageProvider({ children }: { children: React.ReactNode }) {
   const [messages, setMessages] = useState<Record<string, WaterMessage>>({});
+  const [isGenerating, setIsGenerating] = useState(false);
 
   // Load messages from localStorage on mount
   useEffect(() => {
@@ -186,22 +189,60 @@ export function WaterMessageProvider({ children }: { children: React.ReactNode }
     return message.message;
   };
 
-  const generateDailyMessages = (plants: Plant[]) => {
+  const generateDailyMessages = async (plants: Plant[]) => {
+    if (isGenerating) return;
+    setIsGenerating(true);
+    
     const today = new Date();
     const newMessages = { ...messages };
-
-    plants.forEach(plant => {
-      const existingMessage = messages[plant.id];
-      if (!existingMessage || isMessageExpired(existingMessage)) {
-        const isOverdue = plant.nextWateringDate ? new Date(plant.nextWateringDate) < today : false;
-        newMessages[plant.id] = {
-          message: generateMessageForPlant(plant, isOverdue),
-          generatedDate: today
-        };
+    
+    try {
+      // Process plants in sequence to avoid overwhelming the API
+      for (const plant of plants) {
+        const existingMessage = messages[plant.id];
+        if (!existingMessage || isMessageExpired(existingMessage)) {
+          const isOverdue = getDaysOverdue(plant) > 0;
+          
+          try {
+            // Try to generate a message using the Claude API
+            if (plant.personalityType) {
+              const message = await generateThirstyPlantMessage({
+                name: plant.name,
+                species: plant.species || '',
+                personalityType: plant.personalityType,
+                daysOverdue: getDaysOverdue(plant),
+                userName: plant.userDisplayName,
+                location: plant.location
+              });
+              
+              newMessages[plant.id] = {
+                message,
+                generatedDate: today
+              };
+            } else {
+              // Fallback to template if no personality type
+              newMessages[plant.id] = {
+                message: generateFallbackMessageForPlant(plant, isOverdue),
+                generatedDate: today
+              };
+            }
+          } catch (error) {
+            console.error(`Error generating message for ${plant.name}:`, error);
+            // Use fallback message generator if API call fails
+            newMessages[plant.id] = {
+              message: generateFallbackMessageForPlant(plant, isOverdue),
+              generatedDate: today
+            };
+          }
+        }
       }
-    });
-
-    setMessages(newMessages);
+      
+      setMessages(newMessages);
+    } catch (error) {
+      console.error('Error generating daily messages:', error);
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
   return (

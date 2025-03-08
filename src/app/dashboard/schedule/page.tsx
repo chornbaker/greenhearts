@@ -43,7 +43,8 @@ export default function Schedule() {
           return wateringDate <= today;
         });
         
-        generateDailyMessages(plantsNeedingWater);
+        // Ensure we generate messages for all plants needing water
+        await generateDailyMessages(plantsNeedingWater);
       } catch (error) {
         console.error('Error fetching plants:', error);
         setError('Failed to load your plants. Please try again later.');
@@ -126,20 +127,33 @@ export default function Schedule() {
     }
   };
 
+  // Handle watering a plant
   const handleWaterPlant = async (plantId: string) => {
+    if (wateringPlant) return; // Prevent multiple simultaneous watering
+    
+    setWateringPlant(plantId);
+    
     try {
-      setWateringPlant(plantId);
+      // Call the watering service
       await waterPlantService(plantId);
       
-      // Update the local plants state to reflect the watering
+      // Refresh plants data
       const updatedPlants = await getUserPlants(user!.uid);
       setPlants(updatedPlants);
       
-      // Show success message
-      alert('Plant watered successfully!');
+      // Regenerate messages for the updated plants that need water
+      const plantsNeedingWater = updatedPlants.filter(plant => {
+        if (!plant.nextWateringDate) return false;
+        const wateringDate = new Date(plant.nextWateringDate);
+        const today = new Date();
+        wateringDate.setHours(0, 0, 0, 0);
+        today.setHours(0, 0, 0, 0);
+        return wateringDate <= today;
+      });
+      
+      await generateDailyMessages(plantsNeedingWater);
     } catch (error) {
       console.error('Error watering plant:', error);
-      alert('Failed to water plant. Please try again.');
     } finally {
       setWateringPlant(null);
     }
