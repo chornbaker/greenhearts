@@ -94,13 +94,20 @@ export function AuthProvider({ children }: AuthProviderProps) {
       const result = await signInWithPopup(auth as Auth, provider);
       
       if (result.user) {
+        // Extract first name from displayName
+        let firstName = "";
+        if (result.user.displayName) {
+          // Split the display name by spaces and take the first part
+          firstName = result.user.displayName.split(' ')[0];
+        }
+        
         // Create/update user document in Firestore
         const userRef = doc(db as Firestore, 'users', result.user.uid);
         await setDoc(userRef, {
           uid: result.user.uid,
           email: result.user.email,
           plantHavenName: "My Plant Haven",
-          displayName: result.user.displayName || "",
+          displayName: firstName,
         }, { merge: true });
       }
     } catch (error) {
