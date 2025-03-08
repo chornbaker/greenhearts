@@ -105,6 +105,28 @@ export default function Dashboard() {
     }
   };
 
+  // Handle updating a plant
+  const handleUpdatePlant = async (plantId: string, updates: Partial<Plant>) => {
+    if (!user) return;
+    
+    try {
+      // Update the local state to reflect the changes
+      const updatedPlants = plants.map(plant => {
+        if (plant.id === plantId) {
+          return {
+            ...plant,
+            ...updates
+          };
+        }
+        return plant;
+      });
+      
+      setPlants(updatedPlants);
+    } catch (error) {
+      console.error('Error updating plant:', error);
+    }
+  };
+
   // Get plants organized by the selected view
   const getOrganizedPlants = () => {
     switch (organizationView) {
@@ -282,6 +304,7 @@ export default function Dashboard() {
                   key={plant.id || index}
                   plant={plant} 
                   onWater={handleWaterPlant}
+                  onUpdate={handleUpdatePlant}
                 />
               ))}
             </div>
