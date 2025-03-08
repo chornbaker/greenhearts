@@ -5,12 +5,12 @@ import { generateThirstyPlantMessage } from '@/services/claude';
 
 type WaterMessage = {
   message: string;
-  generatedDate: Date;
+  generatedDate: string; // Store as ISO string instead of Date object
 };
 
 type WaterMessageContextType = {
   getWaterMessage: (plant: Plant) => string | null;
-  generateDailyMessages: (plants: Plant[]) => void;
+  generateDailyMessages: (plants: Plant[]) => Promise<void>;
 };
 
 // Fallback message generator if API call fails
@@ -147,17 +147,7 @@ export function WaterMessageProvider({ children }: { children: React.ReactNode }
       const savedMessages = localStorage.getItem('waterMessages');
       if (savedMessages) {
         const parsed = JSON.parse(savedMessages);
-        
-        // Convert string dates back to Date objects
-        const messagesWithDates: Record<string, WaterMessage> = {};
-        Object.entries(parsed).forEach(([key, value]: [string, any]) => {
-          messagesWithDates[key] = {
-            ...value,
-            generatedDate: new Date(value.generatedDate)
-          };
-        });
-        
-        setMessages(messagesWithDates);
+        setMessages(parsed);
       }
     } catch (error) {
       console.error('Error loading water messages:', error);
@@ -167,6 +157,7 @@ export function WaterMessageProvider({ children }: { children: React.ReactNode }
   // Save messages to localStorage when they change
   useEffect(() => {
     try {
+      // Create a safe copy for serialization
       localStorage.setItem('waterMessages', JSON.stringify(messages));
     } catch (error) {
       console.error('Error saving water messages:', error);
@@ -182,6 +173,8 @@ export function WaterMessageProvider({ children }: { children: React.ReactNode }
   };
 
   const getWaterMessage = (plant: Plant): string | null => {
+    if (!plant || !plant.id) return null;
+    
     const message = messages[plant.id];
     if (!message || isMessageExpired(message)) {
       return null;
@@ -190,7 +183,7 @@ export function WaterMessageProvider({ children }: { children: React.ReactNode }
   };
 
   const generateDailyMessages = async (plants: Plant[]) => {
-    if (isGenerating) return;
+    if (isGenerating || !plants || plants.length === 0) return;
     setIsGenerating(true);
     
     const today = new Date();
@@ -199,6 +192,8 @@ export function WaterMessageProvider({ children }: { children: React.ReactNode }
     try {
       // Process plants in sequence to avoid overwhelming the API
       for (const plant of plants) {
+        if (!plant || !plant.id) continue;
+        
         const existingMessage = messages[plant.id];
         if (!existingMessage || isMessageExpired(existingMessage)) {
           const isOverdue = getDaysOverdue(plant) > 0;
@@ -217,13 +212,13 @@ export function WaterMessageProvider({ children }: { children: React.ReactNode }
               
               newMessages[plant.id] = {
                 message,
-                generatedDate: today
+                generatedDate: today.toISOString() // Store as ISO string
               };
             } else {
               // Fallback to template if no personality type
               newMessages[plant.id] = {
                 message: generateFallbackMessageForPlant(plant, isOverdue),
-                generatedDate: today
+                generatedDate: today.toISOString() // Store as ISO string
               };
             }
           } catch (error) {
@@ -231,7 +226,7 @@ export function WaterMessageProvider({ children }: { children: React.ReactNode }
             // Use fallback message generator if API call fails
             newMessages[plant.id] = {
               message: generateFallbackMessageForPlant(plant, isOverdue),
-              generatedDate: today
+              generatedDate: today.toISOString() // Store as ISO string
             };
           }
         }

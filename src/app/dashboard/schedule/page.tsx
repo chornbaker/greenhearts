@@ -44,7 +44,13 @@ export default function Schedule() {
         });
         
         // Ensure we generate messages for all plants needing water
-        await generateDailyMessages(plantsNeedingWater);
+        if (plantsNeedingWater.length > 0) {
+          try {
+            await generateDailyMessages(plantsNeedingWater);
+          } catch (error) {
+            console.error('Error generating messages:', error);
+          }
+        }
       } catch (error) {
         console.error('Error fetching plants:', error);
         setError('Failed to load your plants. Please try again later.');
@@ -151,7 +157,13 @@ export default function Schedule() {
         return wateringDate <= today;
       });
       
-      await generateDailyMessages(plantsNeedingWater);
+      if (plantsNeedingWater.length > 0) {
+        try {
+          await generateDailyMessages(plantsNeedingWater);
+        } catch (error) {
+          console.error('Error regenerating messages:', error);
+        }
+      }
     } catch (error) {
       console.error('Error watering plant:', error);
     } finally {

@@ -82,16 +82,27 @@ export default function Dashboard() {
   // Handle watering a plant
   const handleWaterPlant = async (plantId: string) => {
     try {
-      // Find the plant in our state
-      const plantIndex = plants.findIndex(p => p.id === plantId);
-      if (plantIndex === -1) return;
-      
-      // Update the plant in the database
+      // Call the watering service
       await waterPlant(plantId);
       
-      // Get the updated plant data
+      // Refresh plants data
       const updatedPlants = await getUserPlants(user!.uid);
       setPlants(updatedPlants);
+      
+      // Find plants that need water after the update
+      const updatedPlantsNeedingWater = updatedPlants.filter((plant) => {
+        if (!plant.nextWateringDate) return false;
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const nextWatering = new Date(plant.nextWateringDate);
+        nextWatering.setHours(0, 0, 0, 0);
+        return nextWatering <= today;
+      });
+      
+      // Regenerate messages for plants that need water
+      if (updatedPlantsNeedingWater.length > 0) {
+        await generateDailyMessages(updatedPlantsNeedingWater);
+      }
     } catch (error) {
       console.error('Error watering plant:', error);
     }
@@ -422,9 +433,17 @@ export default function Dashboard() {
 
   // Generate thirsty messages when plants needing water changes
   useEffect(() => {
-    if (plantsNeedingWater.length > 0 && !loading && user) {
-      generateDailyMessages(plantsNeedingWater);
-    }
+    const generateMessages = async () => {
+      if (plantsNeedingWater.length > 0 && !loading && user) {
+        try {
+          await generateDailyMessages(plantsNeedingWater);
+        } catch (error) {
+          console.error('Error generating messages:', error);
+        }
+      }
+    };
+    
+    generateMessages();
   }, [plantsNeedingWater, loading, generateDailyMessages, user]);
 
   // Handle plant archive
