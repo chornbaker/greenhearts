@@ -87,8 +87,7 @@ export default function DashboardNavigation({ userId }: DashboardNavigationProps
           display: 'flex',
           justifyContent: 'space-around',
           position: 'relative',
-          alignItems: 'flex-end',
-          paddingBottom: '0.5rem'
+          height: '72px'
         }}>
           <Link
             href="/dashboard"
@@ -105,7 +104,9 @@ export default function DashboardNavigation({ userId }: DashboardNavigationProps
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
-            width: '60px'
+            width: '60px',
+            position: 'relative',
+            paddingTop: '0.75rem'
           }}>
             <Link
               href="/dashboard/add"
@@ -117,17 +118,17 @@ export default function DashboardNavigation({ userId }: DashboardNavigationProps
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                marginBottom: '0.25rem',
                 boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
-                position: 'relative',
+                position: 'absolute',
                 zIndex: 20,
-                transform: 'translateY(-12px)'
+                top: '-24px'
               }}
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="white">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
               </svg>
             </Link>
+            <div style={{ height: '24px' }}></div>
             <span style={textStyle}>
               Add Plant
             </span>
