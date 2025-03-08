@@ -34,11 +34,14 @@ const FormSelect: React.FC<FormSelectProps> = ({
             MozAppearance: 'none',
             appearance: 'none',
             color: '#171717',
+            WebkitTextFillColor: '#171717',
             backgroundColor: '#ffffff',
             fontSize: '1rem',
             lineHeight: '1.5',
             paddingRight: '2.5rem',
             boxShadow: '0 1px 2px rgba(0, 0, 0, 0.05)',
+            fontWeight: 500,
+            opacity: 1,
           }}
           {...props}
         >

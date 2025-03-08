@@ -30,6 +30,9 @@
     --text-muted: #8d8d8d;
     --green-primary: #84cc16;
     --green-secondary: #a3e635;
+    --input-text: #e5e5e5;
+    --placeholder-text: #a3a3a3;
+    --input-border: #3f3f46;
   }
 }
 
@@ -83,7 +86,7 @@ select {
   -webkit-appearance: none;
   -moz-appearance: none;
   appearance: none;
-  color: var(--input-text);
+  color: var(--input-text) !important;
   background-color: #ffffff;
   border: 1px solid var(--input-border);
   border-radius: 0.75rem;
@@ -92,6 +95,7 @@ select {
   padding: 0.5rem 0.75rem;
   width: 100%;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  opacity: 1 !important;
 }
 
 /* Placeholder styling */
@@ -114,9 +118,24 @@ select::placeholder {
     input[type="url"],
     textarea,
     select {
-      font-weight: 400;
-      -webkit-text-fill-color: var(--input-text);
-      opacity: 1;
+      font-weight: 500 !important;
+      -webkit-text-fill-color: var(--input-text) !important;
+      opacity: 1 !important;
+      color: var(--input-text) !important;
+    }
+    
+    /* Force Safari to respect text color */
+    input, select, textarea {
+      font-weight: 500 !important;
+      -webkit-text-fill-color: var(--input-text) !important;
+      color: var(--input-text) !important;
+    }
+    
+    /* Additional Safari-specific fixes for input text */
+    .w-full.px-3.py-2.border.border-gray-300.rounded-xl.text-gray-900 {
+      -webkit-text-fill-color: var(--input-text) !important;
+      color: var(--input-text) !important;
+      font-weight: 500 !important;
     }
     
     select {
