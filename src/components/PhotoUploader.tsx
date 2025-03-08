@@ -223,7 +223,7 @@ export default function PhotoUploader({
               accept="image/*"
               onChange={handleFileChange}
               className="hidden"
-              aria-label="Upload photo from device"
+              aria-label="Add photo from device"
             />
             <input
               ref={cameraInputRef}
