@@ -16,6 +16,7 @@ export default function DashboardLayout({
   const router = useRouter();
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const [imageError, setImageError] = useState(false);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -36,6 +37,11 @@ export default function DashboardLayout({
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, []);
+
+  // Reset image error state when user changes
+  useEffect(() => {
+    setImageError(false);
+  }, [user]);
 
   const handleSignOut = async () => {
     try {
@@ -60,6 +66,30 @@ export default function DashboardLayout({
     return null; // Will redirect in useEffect
   }
 
+  // Render profile avatar - either image or fallback icon
+  const renderProfileAvatar = () => {
+    if (user && user.photoURL && !imageError) {
+      return (
+        <div className="relative w-8 h-8">
+          <Image 
+            src={user.photoURL} 
+            alt="Profile" 
+            fill
+            sizes="32px"
+            className="rounded-full object-cover"
+            onError={() => setImageError(true)}
+          />
+        </div>
+      );
+    } else {
+      return (
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-green-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+        </svg>
+      );
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[#f8f8f5] flex flex-col">
       {/* Header */}
@@ -74,19 +104,7 @@ export default function DashboardLayout({
               className="flex items-center focus:outline-none"
             >
               <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center overflow-hidden border border-green-200">
-                {user && user.photoURL ? (
-                  <Image 
-                    src={user.photoURL} 
-                    alt="Profile" 
-                    width={32} 
-                    height={32}
-                    className="object-cover"
-                  />
-                ) : (
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-green-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                  </svg>
-                )}
+                {renderProfileAvatar()}
               </div>
             </button>
             
