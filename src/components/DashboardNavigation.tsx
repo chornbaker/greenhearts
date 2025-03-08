@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { getUserPlants } from '@/services/plants';
 import { CSSProperties } from 'react';
 
@@ -12,6 +12,7 @@ interface DashboardNavigationProps {
 
 export default function DashboardNavigation({ userId }: DashboardNavigationProps) {
   const router = useRouter();
+  const pathname = usePathname();
   const [hasPlants, setHasPlants] = useState<boolean | null>(null);
 
   useEffect(() => {
@@ -32,7 +33,8 @@ export default function DashboardNavigation({ userId }: DashboardNavigationProps
   }, [userId]);
 
   const handleHomeClick = (e: React.MouseEvent) => {
-    if (hasPlants === false) {
+    // Only redirect to Add Plant if we have no plants and we're not already on the Add Plant page
+    if (hasPlants === false && pathname !== '/dashboard/add') {
       e.preventDefault();
       e.stopPropagation();
       router.push('/dashboard/add');

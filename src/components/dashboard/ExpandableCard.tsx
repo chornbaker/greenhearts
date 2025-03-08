@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Plant, PlantHealth } from '@/types';
 import { updatePlant, waterPlant } from '@/services/plants';
 import AutocompleteInput from '@/components/AutocompleteInput';
+import { getDaysOverdue, isDueToday, getWateringStatusText } from '@/utils/dateUtils';
 
 // Predefined room/space options
 const INDOOR_LOCATIONS = [
@@ -117,25 +118,8 @@ export default function ExpandableCard({ plant, onWater, onUpdate, organizationV
     return date.toISOString().split('T')[0];
   };
 
-  // Calculate days until next watering
-  const getDaysUntilWatering = (): number | null => {
-    if (!plant.nextWateringDate) return null;
-    
-    const today = new Date();
-    const nextWatering = new Date(plant.nextWateringDate);
-    
-    // Calculate difference in days
-    const diffTime = nextWatering.getTime() - today.getTime();
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    
-    return diffDays;
-  };
-  
   // Get the third line content based on organization view
   const getThirdLineContent = () => {
-    const daysUntilWatering = getDaysUntilWatering();
-    const isOverdue = daysUntilWatering !== null && daysUntilWatering < 0;
-    
     switch (organizationView) {
       case 'location':
       case 'alphabetical':
@@ -154,17 +138,8 @@ export default function ExpandableCard({ plant, onWater, onUpdate, organizationV
               <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 text-blue-500 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 2.5c-1.7 2.3-6 7.6-6 11.5 0 3.3 2.7 6 6 6s6-2.7 6-6c0-3.9-4.3-9.2-6-11.5z" />
               </svg>
-              <span className={`text-xs ${isOverdue ? 'text-red-500' : 'text-gray-500'}`}>
-                {daysUntilWatering === null 
-                  ? 'No watering schedule' 
-                  : isOverdue
-                    ? `${Math.abs(daysUntilWatering)} days overdue`
-                    : daysUntilWatering === 0
-                      ? 'Water today'
-                      : daysUntilWatering === 1
-                        ? 'Water tomorrow'
-                        : `${daysUntilWatering} days to water`
-                }
+              <span className={`text-xs ${getDaysOverdue(plant) > 0 ? 'text-red-500' : 'text-gray-500'}`}>
+                {getWateringStatusText(plant)}
               </span>
             </div>
           </div>
@@ -211,17 +186,8 @@ export default function ExpandableCard({ plant, onWater, onUpdate, organizationV
               <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 text-green-500 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
               </svg>
-              <span className={`text-xs ${isOverdue ? 'text-red-500' : 'text-gray-500'}`}>
-                {daysUntilWatering === null 
-                  ? 'No watering schedule' 
-                  : isOverdue
-                    ? `${Math.abs(daysUntilWatering)} days overdue`
-                    : daysUntilWatering === 0
-                      ? 'Water today'
-                      : daysUntilWatering === 1
-                        ? 'Water tomorrow'
-                        : `${daysUntilWatering} days to water`
-                }
+              <span className={`text-xs ${getDaysOverdue(plant) > 0 ? 'text-red-500' : 'text-gray-500'}`}>
+                {getWateringStatusText(plant)}
               </span>
             </div>
           </div>

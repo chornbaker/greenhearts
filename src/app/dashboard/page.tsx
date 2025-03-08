@@ -10,6 +10,7 @@ import { getUserProfile } from '@/services/user';
 import { Plant } from '@/types';
 import ExpandableCard from '@/components/dashboard/ExpandableCard';
 import { generateThirstyPlantMessage } from '@/services/claude';
+import { getDaysOverdue, isDueToday, getWateringStatusText } from '@/utils/dateUtils';
 
 // Organization view types
 type OrganizationView = 'location' | 'alphabetical' | 'wateringPriority' | 'health';
@@ -243,11 +244,11 @@ export default function Dashboard() {
         // Add outdoor locations
         if (Object.keys(outdoorLocations).length > 0) {
           Object.entries(outdoorLocations)
-            .sort(([a], [b]) => a.localeCompare(b))
+          .sort(([a], [b]) => a.localeCompare(b))
             .forEach(([location, plants]) => {
               groups.push({
-                title: location,
-                plants: plants.sort((a, b) => a.name.localeCompare(b.name))
+            title: location,
+            plants: plants.sort((a, b) => a.name.localeCompare(b.name))
               });
             });
         }
@@ -453,27 +454,6 @@ export default function Dashboard() {
         return [];
     }
   };
-  
-  // Calculate days overdue for watering
-  const getDaysOverdue = (plant: Plant): number => {
-    if (!plant.nextWateringDate) return 0;
-    
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const nextWatering = new Date(plant.nextWateringDate);
-    nextWatering.setHours(0, 0, 0, 0);
-    
-    // If due today, not overdue
-    if (nextWatering.getTime() === today.getTime()) {
-      return 0;
-    }
-    
-    // Calculate difference in days
-    const diffTime = today.getTime() - nextWatering.getTime();
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    
-    return diffDays > 0 ? diffDays : 0;
-  };
 
   // Generate thirsty messages for plants
   const generateThirstyMessages = useCallback(async () => {
@@ -593,57 +573,44 @@ export default function Dashboard() {
         <div className="bg-amber-50 p-4 rounded-2xl border border-amber-200 mb-6">
           <h2 className="text-lg font-semibold text-amber-800 mb-3">Your Plants are Thirsty...</h2>
           <div className="space-y-3">
-            {plantsNeedingWater.map((plant) => {
-              const today = new Date();
-              today.setHours(0, 0, 0, 0);
-              const nextWatering = new Date(plant.nextWateringDate!);
-              nextWatering.setHours(0, 0, 0, 0);
-              const isToday = nextWatering.getTime() === today.getTime();
-              
-              return (
-                <div key={plant.id} className="flex items-center gap-3 bg-white bg-opacity-50 p-3 rounded-xl">
-                  <div className="w-12 h-12 bg-amber-100 rounded-full overflow-hidden relative">
-                    {plant.image && (
-                      <Image 
-                        src={plant.image} 
-                        alt={plant.name} 
-                        fill 
-                        sizes="(max-width: 768px) 33vw, 96px"
-                        style={{ objectFit: 'cover' }}
-                      />
-                    )}
-                  </div>
-                  <div className="flex-1">
-                    <p className="font-medium text-gray-800">{plant.name}</p>
-                    <p className={`text-xs ${isToday ? 'text-green-600' : 'text-red-600'}`}>
-                      {isToday 
-                        ? 'Water Today'
-                        : getDaysOverdue(plant) === 1 
-                          ? '1 day overdue' 
-                          : `${getDaysOverdue(plant)} days overdue`
-                      }
-                    </p>
-                    {thirstyMessages[plant.id] && (
-                      <p className="text-xs text-gray-600 italic mt-1">
-                        {thirstyMessages[plant.id]}
-                      </p>
-                    )}
-                  </div>
-                  <button 
-                    className="bg-blue-500 hover:bg-blue-600 text-white h-8 w-8 rounded-full flex items-center justify-center"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      handleWaterPlant(plant.id);
-                    }}
-                    aria-label="Water plant"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
-                      <path d="M12 2.5c-1.7 2.3-6 7.6-6 11.5 0 3.3 2.7 6 6 6s6-2.7 6-6c0-3.9-4.3-9.2-6-11.5z" />
-                    </svg>
-                  </button>
+            {plantsNeedingWater.map((plant) => (
+              <div key={plant.id} className="flex items-center gap-3 bg-white bg-opacity-50 p-3 rounded-xl">
+                <div className="w-12 h-12 bg-amber-100 rounded-full overflow-hidden relative">
+                  {plant.image && (
+                    <Image 
+                      src={plant.image} 
+                      alt={plant.name} 
+                      fill 
+                      sizes="(max-width: 768px) 33vw, 96px"
+                      style={{ objectFit: 'cover' }}
+                    />
+                  )}
                 </div>
-              );
-            })}
+                <div className="flex-1">
+                  <p className="font-medium text-gray-800">{plant.name}</p>
+                  <p className={`text-xs ${isDueToday(plant) ? 'text-green-600' : 'text-red-600'}`}>
+                    {getWateringStatusText(plant)}
+                  </p>
+                  {thirstyMessages[plant.id] && (
+                    <p className="text-xs text-gray-600 italic mt-1">
+                      {thirstyMessages[plant.id]}
+                    </p>
+                  )}
+                </div>
+                <button 
+                  className="bg-blue-500 hover:bg-blue-600 text-white h-8 w-8 rounded-full flex items-center justify-center"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    handleWaterPlant(plant.id);
+                  }}
+                  aria-label="Water plant"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 2.5c-1.7 2.3-6 7.6-6 11.5 0 3.3 2.7 6 6 6s6-2.7 6-6c0-3.9-4.3-9.2-6-11.5z" />
+                  </svg>
+                </button>
+              </div>
+            ))}
           </div>
         </div>
       }

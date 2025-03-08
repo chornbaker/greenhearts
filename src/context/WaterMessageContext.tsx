@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import { Plant } from '@/types';
+import { getDaysOverdue, isDueToday } from '@/utils/dateUtils';
 
 type WaterMessage = {
   message: string;
@@ -13,17 +14,12 @@ type WaterMessageContextType = {
 
 const generateMessageForPlant = (plant: Plant, isOverdue: boolean): string => {
   const personality = plant.personalityType || 'friendly';
-  const daysOverdue = isOverdue ? 
-    Math.ceil((new Date().getTime() - new Date(plant.nextWateringDate!).getTime()) / (1000 * 60 * 60 * 24)) : 0;
+  const daysOverdue = getDaysOverdue(plant);
   const location = plant.location ? ` in the ${plant.location.toLowerCase()}` : '';
   const displayName = plant.userDisplayName || '';
   
   // Check if the plant is due today but not overdue
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const nextWatering = new Date(plant.nextWateringDate!);
-  nextWatering.setHours(0, 0, 0, 0);
-  const isToday = nextWatering.getTime() === today.getTime();
+  const isToday = isDueToday(plant);
 
   const messages = {
     cheerful: {
