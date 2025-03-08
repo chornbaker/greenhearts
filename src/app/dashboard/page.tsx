@@ -99,7 +99,7 @@ export default function Dashboard() {
                           alt={plant.name} 
                           fill 
                           sizes="(max-width: 768px) 33vw, 96px"
-                          priority
+                          priority={plantsNeedingWater.indexOf(plant) === 0}
                           style={{ objectFit: 'cover' }}
                         />
                       )}
@@ -123,7 +123,7 @@ export default function Dashboard() {
           <div>
             <h2 className="text-lg font-semibold text-green-800 mb-3">My Plants</h2>
             <div className="grid grid-cols-3 gap-3">
-              {displayPlants.map((plant) => (
+              {displayPlants.map((plant, index) => (
                 <Link 
                   key={plant.id} 
                   href={`/dashboard/plants/${plant.id}`}
@@ -136,6 +136,7 @@ export default function Dashboard() {
                         alt={plant.name} 
                         fill 
                         sizes="(max-width: 768px) 33vw, 96px"
+                        priority={false}
                         style={{ objectFit: 'cover' }}
                       />
                     )}

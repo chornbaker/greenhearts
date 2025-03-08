@@ -200,7 +200,7 @@ export default function Reminders() {
                           alt={plant.name} 
                           fill 
                           sizes="(max-width: 768px) 33vw, 56px"
-                          priority
+                          priority={plantsToWater.indexOf(plant) === 0}
                           style={{ objectFit: 'cover' }}
                         />
                       )}

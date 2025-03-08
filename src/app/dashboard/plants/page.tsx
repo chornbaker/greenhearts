@@ -127,7 +127,7 @@ export default function Plants() {
                         alt={plant.name} 
                         fill 
                         sizes="(max-width: 768px) 33vw, 64px"
-                        priority
+                        priority={displayPlants.indexOf(plant) === 0}
                         style={{ objectFit: 'cover' }}
                       />
                     )}
