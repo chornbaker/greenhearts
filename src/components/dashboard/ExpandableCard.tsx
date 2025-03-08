@@ -53,6 +53,7 @@ export default function ExpandableCard({ plant, onWater, onUpdate }: ExpandableC
   const [comment, setComment] = useState('');
   const [isAddingComment, setIsAddingComment] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
+  const [showWaterTooltip, setShowWaterTooltip] = useState(false);
   const commentInputRef = useRef<HTMLTextAreaElement>(null);
 
   // Calculate if the plant needs water
@@ -272,16 +273,27 @@ export default function ExpandableCard({ plant, onWater, onUpdate }: ExpandableC
               </div>
             )}
             
-            {/* Water indicator */}
+            {/* Water button for plants that need water */}
             {needsWater && (
-              <motion.div 
-                className="absolute top-2 right-2 w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center"
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ type: "spring", stiffness: 500, damping: 25 }}
+              <motion.button
+                className="absolute top-2 right-2 w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center shadow-sm hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                onClick={handleWaterClick}
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+                disabled={isUpdating}
+                onMouseEnter={() => setShowWaterTooltip(true)}
+                onMouseLeave={() => setShowWaterTooltip(false)}
+                aria-label="Mark as watered"
               >
                 <WaterDropIcon className="h-5 w-5 text-white" />
-              </motion.div>
+                
+                {/* Tooltip */}
+                {showWaterTooltip && (
+                  <div className="absolute top-full mt-1 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-xs rounded py-1 px-2 whitespace-nowrap z-10">
+                    Mark as watered
+                  </div>
+                )}
+              </motion.button>
             )}
           </motion.div>
           
@@ -293,20 +305,6 @@ export default function ExpandableCard({ plant, onWater, onUpdate }: ExpandableC
                 <h3 className="font-medium text-gray-700">{plant.name}</h3>
                 <p className="text-sm text-gray-500">{plant.species || 'Unknown species'}</p>
               </div>
-              
-              {/* Water button for plants that need water */}
-              {needsWater && (
-                <motion.button 
-                  className="bg-blue-500 hover:bg-blue-600 text-white text-sm py-1 px-3 rounded-lg flex items-center gap-1"
-                  onClick={handleWaterClick}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  disabled={isUpdating}
-                >
-                  <WaterDropIcon className="h-4 w-4 text-white" />
-                  <span>Water</span>
-                </motion.button>
-              )}
             </div>
             
             {/* Location info (always shown) */}
@@ -407,41 +405,36 @@ export default function ExpandableCard({ plant, onWater, onUpdate }: ExpandableC
               </div>
             )}
             
-            {/* Water indicator */}
+            {/* Water button for plants that need water */}
             {needsWater && (
-              <motion.div 
-                className="absolute top-4 right-4 w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center shadow-lg"
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ type: "spring", stiffness: 500, damping: 25 }}
+              <motion.button
+                className="absolute top-4 right-4 w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center shadow-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                onClick={handleWaterClick}
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+                disabled={isUpdating}
+                onMouseEnter={() => setShowWaterTooltip(true)}
+                onMouseLeave={() => setShowWaterTooltip(false)}
+                aria-label="Mark as watered"
               >
                 <WaterDropIcon className="h-6 w-6 text-white" />
-              </motion.div>
+                
+                {/* Tooltip */}
+                {showWaterTooltip && (
+                  <div className="absolute top-full mt-2 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-xs rounded py-1 px-2 whitespace-nowrap z-10">
+                    Mark as watered
+                  </div>
+                )}
+              </motion.button>
             )}
           </div>
           
           {/* Content Section */}
           <div className="p-5">
-            {/* Header with name and water button */}
-            <div className="flex justify-between items-center mb-4">
-              <div>
-                <h2 className="text-xl font-semibold text-gray-800">{plant.name}</h2>
-                <p className="text-sm text-gray-500">{plant.species || 'Unknown species'}</p>
-              </div>
-              
-              {/* Water button for plants that need water */}
-              {needsWater && (
-                <motion.button 
-                  className="bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-lg flex items-center gap-2"
-                  onClick={handleWaterClick}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  disabled={isUpdating}
-                >
-                  <WaterDropIcon className="h-5 w-5 text-white" />
-                  <span>Water Now</span>
-                </motion.button>
-              )}
+            {/* Header with name */}
+            <div className="mb-4">
+              <h2 className="text-xl font-semibold text-gray-800">{plant.name}</h2>
+              <p className="text-sm text-gray-500">{plant.species || 'Unknown species'}</p>
             </div>
             
             {/* Personality Quote - Prominent display */}
