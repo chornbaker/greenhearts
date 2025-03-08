@@ -350,7 +350,7 @@ The message should:
 - Reference how many days it's been without water if relevant
 - Be friendly, humorous, or slightly passive-aggressive depending on personality
 - Be concise (1-2 short sentences only)
-${plantInfo.userName ? `- Occasionally (about 30% of the time) address the owner by name (${plantInfo.userName}) to make it more personal` : ''}
+${plantInfo.userName ? `- IMPORTANT: Frequently (about 60-70% of the time) address the owner by name (${plantInfo.userName}) to make it more personal and engaging` : ''}
 ${plantInfo.location ? `- Occasionally (about 30% of the time) reference the plant's location (${plantInfo.location}) in a natural way` : ''}
 
 Return ONLY the message text with no additional formatting, explanations, or JSON.
@@ -400,12 +400,12 @@ function getDefaultThirstyMessage(plantInfo: {
   const { name, personalityType, daysOverdue, userName, location } = plantInfo;
   
   // Determine what to include in the message
-  const includeUserName = userName && Math.random() < 0.3; // 30% chance to include user name
+  const includeUserName = userName && Math.random() < 0.7; // 70% chance to include user name
   const includeLocation = location && Math.random() < 0.3; // 30% chance to include location
   
-  // If both userName and location should be included, randomly choose one to avoid overcrowding
-  const finalIncludeUserName = includeUserName && includeLocation ? Math.random() < 0.5 : includeUserName;
-  const finalIncludeLocation = includeUserName && includeLocation ? !finalIncludeUserName : includeLocation;
+  // If both userName and location should be included, prioritize userName
+  const finalIncludeUserName = includeUserName;
+  const finalIncludeLocation = includeUserName && includeLocation ? Math.random() < 0.3 : includeLocation;
   
   // Default messages based on personality type
   switch (personalityType.toLowerCase()) {

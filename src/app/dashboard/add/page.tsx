@@ -6,6 +6,7 @@ import { useAuth } from '@/context/AuthContext';
 import { createPlant } from '@/services/plants';
 import { uploadPlantImage } from '@/services/storage';
 import { generatePlantPersonality, generatePlantCareInfo } from '@/services/claude';
+import { getUserProfile } from '@/services/user';
 import { PlantHealth, CareInstructions } from '@/types';
 import FormInput from '@/components/FormInput';
 import ButtonSelector from '@/components/ButtonSelector';
@@ -75,6 +76,7 @@ export default function AddPlant() {
   const [aiGenerating, setAiGenerating] = useState(false);
   const [aiGenerated, setAiGenerated] = useState(false);
   const [manualMode, setManualMode] = useState(false);
+  const [userDisplayName, setUserDisplayName] = useState('');
   
   // New state variables for care information
   const [wateringFrequency, setWateringFrequency] = useState(7);
@@ -111,6 +113,24 @@ export default function AddPlant() {
       generateAiCareInfo();
     }
   }, [species, locationType, sunlight, soil, potSize, photoUrl, careInfoGenerated, manualMode]);
+  
+  // Fetch user profile to get display name
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      if (!user) return;
+      
+      try {
+        const userProfile = await getUserProfile(user.uid);
+        if (userProfile && userProfile.displayName) {
+          setUserDisplayName(userProfile.displayName);
+        }
+      } catch (error) {
+        console.error('Error fetching user profile:', error);
+      }
+    };
+    
+    fetchUserProfile();
+  }, [user]);
   
   const clearPersonality = () => {
     setPersonality('');
@@ -263,6 +283,7 @@ export default function AddPlant() {
         personalityType: personality || undefined,
         bio: bio || undefined,
         careInstructions: Object.keys(careInstructions).length > 0 ? careInstructions : undefined,
+        userDisplayName: userDisplayName || undefined,
       });
       
       router.push('/dashboard');

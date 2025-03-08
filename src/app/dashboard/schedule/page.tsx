@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { useAuth } from '@/context/AuthContext';
 import { getUserPlants, waterPlant as waterPlantService } from '@/services/plants';
+import { getUserProfile } from '@/services/user';
 import { Plant } from '@/types';
 import { useWaterMessages } from '@/context/WaterMessageContext';
 import { getDaysOverdue, isDueToday, getWateringStatusText } from '@/utils/dateUtils';
@@ -24,17 +25,31 @@ export default function Schedule() {
   const [selectedDay, setSelectedDay] = useState(0); // 0 = today, 1 = tomorrow, etc.
   const [view, setView] = useState<'calendar' | 'list'>('calendar');
   const [wateringPlant, setWateringPlant] = useState<string | null>(null);
+  const [displayName, setDisplayName] = useState('');
 
   useEffect(() => {
     const fetchPlants = async () => {
       if (!user) return;
       
       try {
+        // Fetch user profile to get display name
+        const userProfile = await getUserProfile(user.uid);
+        if (userProfile && userProfile.displayName) {
+          setDisplayName(userProfile.displayName);
+        }
+        
         const userPlants = await getUserPlants(user.uid);
-        setPlants(userPlants);
+        
+        // Set the user's display name on each plant
+        const plantsWithDisplayName = userPlants.map(plant => ({
+          ...plant,
+          userDisplayName: userProfile?.displayName || ''
+        }));
+        
+        setPlants(plantsWithDisplayName);
         
         // Generate messages for plants that need watering today
-        const plantsNeedingWater = userPlants.filter(plant => {
+        const plantsNeedingWater = plantsWithDisplayName.filter(plant => {
           if (!plant.nextWateringDate) return false;
           const wateringDate = new Date(plant.nextWateringDate);
           const today = new Date();
@@ -145,10 +160,17 @@ export default function Schedule() {
       
       // Refresh plants data
       const updatedPlants = await getUserPlants(user!.uid);
-      setPlants(updatedPlants);
+      
+      // Set the user's display name on each plant
+      const updatedPlantsWithDisplayName = updatedPlants.map(plant => ({
+        ...plant,
+        userDisplayName: displayName || ''
+      }));
+      
+      setPlants(updatedPlantsWithDisplayName);
       
       // Regenerate messages for the updated plants that need water
-      const plantsNeedingWater = updatedPlants.filter(plant => {
+      const plantsNeedingWater = updatedPlantsWithDisplayName.filter(plant => {
         if (!plant.nextWateringDate) return false;
         const wateringDate = new Date(plant.nextWateringDate);
         const today = new Date();

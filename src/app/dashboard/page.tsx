@@ -45,10 +45,17 @@ export default function Dashboard() {
 
         // Fetch plants from Firebase
         const userPlants = await getUserPlants(user.uid);
-        setPlants(userPlants);
+        
+        // Set the user's display name on each plant
+        const plantsWithDisplayName = userPlants.map(plant => ({
+          ...plant,
+          userDisplayName: userProfile?.displayName || ''
+        }));
+        
+        setPlants(plantsWithDisplayName);
         
         // Redirect to Add Plant page if no plants
-        if (userPlants.length === 0 && !loading) {
+        if (plantsWithDisplayName.length === 0 && !loading) {
           router.push('/dashboard/add');
         }
       } catch (err) {
@@ -87,10 +94,17 @@ export default function Dashboard() {
       
       // Refresh plants data
       const updatedPlants = await getUserPlants(user!.uid);
-      setPlants(updatedPlants);
+      
+      // Set the user's display name on each plant
+      const updatedPlantsWithDisplayName = updatedPlants.map(plant => ({
+        ...plant,
+        userDisplayName: displayName || ''
+      }));
+      
+      setPlants(updatedPlantsWithDisplayName);
       
       // Find plants that need water after the update
-      const updatedPlantsNeedingWater = updatedPlants.filter((plant) => {
+      const updatedPlantsNeedingWater = updatedPlantsWithDisplayName.filter((plant) => {
         if (!plant.nextWateringDate) return false;
         const today = new Date();
         today.setHours(0, 0, 0, 0);
