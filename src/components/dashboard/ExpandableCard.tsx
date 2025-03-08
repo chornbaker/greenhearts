@@ -16,7 +16,7 @@ const WaterDropIcon = ({ className = "h-5 w-5" }: { className?: string }) => (
       justifyContent: 'center',
     }}
   >
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style={{ width: '100%', height: '100%' }}>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style={{ width: '100%', height: '100%', transform: 'translateY(-1px)' }}>
       <path d="M12 2.5c-1.7 2.3-6 7.6-6 11.5 0 3.3 2.7 6 6 6s6-2.7 6-6c0-3.9-4.3-9.2-6-11.5z" />
     </svg>
   </div>
