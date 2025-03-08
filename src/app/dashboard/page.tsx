@@ -527,6 +527,18 @@ export default function Dashboard() {
     }
   }, [plantsNeedingWater, loading, generateThirstyMessages, user]);
 
+  // Handle plant archive
+  const handleArchivePlant = (plantId: string) => {
+    // Remove the plant from the local state
+    setPlants(plants.filter(p => p.id !== plantId));
+  };
+
+  // Handle plant delete
+  const handleDeletePlant = (plantId: string) => {
+    // Remove the plant from the local state
+    setPlants(plants.filter(p => p.id !== plantId));
+  };
+
   // If loading or no plants, show loading state or redirect
   if (loading) {
     return (
@@ -681,6 +693,8 @@ export default function Dashboard() {
                   plant={plant} 
                   onWater={handleWaterPlant}
                   onUpdate={handleUpdatePlant}
+                  onArchive={handleArchivePlant}
+                  onDelete={handleDeletePlant}
                   organizationView={organizationView}
                 />
               ))}

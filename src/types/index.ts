@@ -26,6 +26,9 @@ export interface Plant {
   bio?: string; // Plant bio/description
   careInstructions?: CareInstructions; // New field for care instructions
   userDisplayName?: string;
+  archived?: boolean; // Whether the plant is archived
+  archivedAt?: Date; // When the plant was archived
+  archivedReason?: string; // Reason for archiving (e.g., "Died", "Given away", etc.)
 }
 
 export interface WateringSchedule {

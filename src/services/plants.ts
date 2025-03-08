@@ -18,9 +18,10 @@ const PLANTS_COLLECTION = 'plants';
 /**
  * Get all plants for a user
  * @param userId The user ID
+ * @param includeArchived Whether to include archived plants (default: false)
  * @returns Array of plants
  */
-export async function getUserPlants(userId: string): Promise<Plant[]> {
+export async function getUserPlants(userId: string, includeArchived: boolean = false): Promise<Plant[]> {
   try {
     if (!db) throw new Error('Firestore is not initialized');
     
@@ -31,7 +32,7 @@ export async function getUserPlants(userId: string): Promise<Plant[]> {
     
     const snapshot = await getDocs(plantsQuery);
     
-    return snapshot.docs.map((doc) => {
+    const plants = snapshot.docs.map((doc) => {
       const data = doc.data();
       return {
         id: doc.id,
@@ -39,8 +40,12 @@ export async function getUserPlants(userId: string): Promise<Plant[]> {
         createdAt: data.createdAt?.toDate(),
         lastWatered: data.lastWatered?.toDate(),
         nextWateringDate: data.nextWateringDate?.toDate(),
+        archivedAt: data.archivedAt?.toDate(),
       } as Plant;
     });
+    
+    // Filter out archived plants if includeArchived is false
+    return includeArchived ? plants : plants.filter(plant => !plant.archived);
   } catch (error) {
     console.error('Error getting user plants:', error);
     throw error;
@@ -125,7 +130,83 @@ export async function updatePlant(
 }
 
 /**
- * Delete a plant
+ * Archive a plant
+ * @param plantId The plant ID
+ * @param reason The reason for archiving (optional)
+ * @returns Promise that resolves when the archive is complete
+ */
+export async function archivePlant(
+  plantId: string, 
+  reason?: string
+): Promise<void> {
+  try {
+    if (!db) throw new Error('Firestore is not initialized');
+    
+    const plantRef = doc(db, PLANTS_COLLECTION, plantId);
+    
+    // Add archive comment to notes
+    const plant = await getPlant(plantId);
+    if (!plant) {
+      throw new Error('Plant not found');
+    }
+    
+    const archiveDate = new Date();
+    const archiveComment = `${archiveDate.toLocaleDateString()}: Plant archived${reason ? ` - Reason: ${reason}` : ''}`;
+    
+    const updatedNotes = plant.notes 
+      ? `${plant.notes}\n\n${archiveComment}`
+      : archiveComment;
+    
+    await updateDoc(plantRef, {
+      archived: true,
+      archivedAt: serverTimestamp(),
+      archivedReason: reason || null,
+      notes: updatedNotes
+    });
+  } catch (error) {
+    console.error('Error archiving plant:', error);
+    throw error;
+  }
+}
+
+/**
+ * Unarchive a plant
+ * @param plantId The plant ID
+ * @returns Promise that resolves when the unarchive is complete
+ */
+export async function unarchivePlant(plantId: string): Promise<void> {
+  try {
+    if (!db) throw new Error('Firestore is not initialized');
+    
+    const plantRef = doc(db, PLANTS_COLLECTION, plantId);
+    
+    // Add unarchive comment to notes
+    const plant = await getPlant(plantId);
+    if (!plant) {
+      throw new Error('Plant not found');
+    }
+    
+    const unarchiveDate = new Date();
+    const unarchiveComment = `${unarchiveDate.toLocaleDateString()}: Plant unarchived`;
+    
+    const updatedNotes = plant.notes 
+      ? `${plant.notes}\n\n${unarchiveComment}`
+      : unarchiveComment;
+    
+    await updateDoc(plantRef, {
+      archived: false,
+      archivedAt: null,
+      archivedReason: null,
+      notes: updatedNotes
+    });
+  } catch (error) {
+    console.error('Error unarchiving plant:', error);
+    throw error;
+  }
+}
+
+/**
+ * Permanently delete a plant
  * @param plantId The plant ID
  * @returns Promise that resolves when the deletion is complete
  */
