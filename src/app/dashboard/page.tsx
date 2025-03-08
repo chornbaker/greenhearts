@@ -340,7 +340,7 @@ export default function Dashboard() {
                   </p>
                   {thirstyMessages[plant.id] && (
                     <p className="text-xs text-gray-600 italic mt-1">
-                      "{thirstyMessages[plant.id]}"
+                      {thirstyMessages[plant.id]}
                     </p>
                   )}
                 </div>
