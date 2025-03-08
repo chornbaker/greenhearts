@@ -76,7 +76,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         uid: userCredential.user.uid,
         email: userCredential.user.email,
         plantHavenName: "My Plant Haven",
-        displayName: "",
+        displayName: "Human",
       }, { merge: true });
     }
   };
