@@ -127,7 +127,10 @@ export default function Dashboard() {
       className={className} 
       viewBox="0 0 24 24" 
       fill="currentColor"
-      style={{ WebkitUserSelect: 'none' }}
+      style={{ 
+        WebkitUserSelect: 'none',
+        display: 'block' // Ensure SVG is displayed in Safari
+      }}
     >
       <path d="M12 2.5c-1.7 2.3-6 7.6-6 11.5 0 3.3 2.7 6 6 6s6-2.7 6-6c0-3.9-4.3-9.2-6-11.5z" />
     </svg>
@@ -159,7 +162,15 @@ export default function Dashboard() {
         
         {/* Water indicator */}
         {plant.nextWateringDate && plant.nextWateringDate <= new Date() && (
-          <div className="absolute top-2 right-2 bg-blue-500 rounded-full w-8 h-8 flex items-center justify-center shadow-md">
+          <div 
+            className="absolute top-2 right-2 bg-blue-500 rounded-full w-8 h-8 flex items-center justify-center shadow-md"
+            style={{
+              WebkitBorderRadius: '9999px',
+              display: 'flex',
+              WebkitBoxAlign: 'center',
+              WebkitBoxPack: 'center'
+            }}
+          >
             <WaterDropletIcon className="h-5 w-5 text-white" />
           </div>
         )}
@@ -214,12 +225,24 @@ export default function Dashboard() {
       
       {/* Plants needing water */}
       {plantsNeedingWater.length > 0 && (
-        <div className="bg-amber-50 p-4 rounded-2xl border border-amber-200 mb-6">
+        <div 
+          className="bg-amber-50 p-4 rounded-2xl border border-amber-200 mb-6"
+          style={{
+            WebkitBorderRadius: '1rem',
+            borderRadius: '1rem'
+          }}
+        >
           <h2 className="text-lg font-semibold text-amber-800 mb-3">Plants Needing Water</h2>
           <div className="space-y-3">
             {plantsNeedingWater.map((plant) => (
               <div key={plant.id} className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-amber-100 rounded-full overflow-hidden relative">
+                <div 
+                  className="w-12 h-12 bg-amber-100 rounded-full overflow-hidden relative"
+                  style={{
+                    WebkitBorderRadius: '9999px',
+                    borderRadius: '9999px'
+                  }}
+                >
                   {plant.image && (
                     <Image 
                       src={plant.image} 
@@ -234,14 +257,26 @@ export default function Dashboard() {
                   <Link href={`/dashboard/plants/${plant.id}`} className="font-medium text-gray-900 hover:text-green-700">
                     {plant.name}
                   </Link>
-                  <p className="text-xs text-amber-700">Last watered: {plant.lastWatered?.toLocaleDateString()}</p>
+                  <p 
+                    className="text-xs text-red-600"
+                    style={{ color: '#dc2626' }} // Explicit red color for Safari
+                  >
+                    Last watered: {plant.lastWatered?.toLocaleDateString()}
+                  </p>
                 </div>
                 <button 
                   className="bg-blue-500 hover:bg-blue-600 text-white text-sm py-1 px-3 rounded-lg flex items-center gap-1"
                   style={{ 
                     WebkitAppearance: 'none',
                     WebkitBorderRadius: '0.5rem',
-                    WebkitTapHighlightColor: 'transparent'
+                    borderRadius: '0.5rem',
+                    WebkitTapHighlightColor: 'transparent',
+                    display: 'flex',
+                    WebkitBoxAlign: 'center',
+                    alignItems: 'center',
+                    gap: '0.25rem',
+                    backgroundColor: '#3b82f6', // Explicit blue color for Safari
+                    color: 'white'
                   }}
                   onClick={(e) => {
                     e.preventDefault();
@@ -250,7 +285,7 @@ export default function Dashboard() {
                   }}
                 >
                   <WaterDropletIcon className="h-4 w-4" />
-                  Water
+                  <span>Water</span>
                 </button>
               </div>
             ))}
@@ -272,7 +307,9 @@ export default function Dashboard() {
             style={{ 
               WebkitAppearance: 'none',
               WebkitBorderRadius: '0.25rem',
-              borderRadius: '0.25rem'
+              borderRadius: '0.25rem',
+              backgroundColor: organizationView === 'location' ? '#16a34a' : '#f3f4f6',
+              color: organizationView === 'location' ? 'white' : '#374151'
             }}
           >
             By Location
@@ -287,7 +324,9 @@ export default function Dashboard() {
             style={{ 
               WebkitAppearance: 'none',
               WebkitBorderRadius: '0.25rem',
-              borderRadius: '0.25rem'
+              borderRadius: '0.25rem',
+              backgroundColor: organizationView === 'alphabetical' ? '#16a34a' : '#f3f4f6',
+              color: organizationView === 'alphabetical' ? 'white' : '#374151'
             }}
           >
             A-Z
@@ -302,7 +341,9 @@ export default function Dashboard() {
             style={{ 
               WebkitAppearance: 'none',
               WebkitBorderRadius: '0.25rem',
-              borderRadius: '0.25rem'
+              borderRadius: '0.25rem',
+              backgroundColor: organizationView === 'wateringPriority' ? '#16a34a' : '#f3f4f6',
+              color: organizationView === 'wateringPriority' ? 'white' : '#374151'
             }}
           >
             Watering
@@ -330,7 +371,10 @@ export default function Dashboard() {
           style={{
             WebkitAppearance: 'none',
             WebkitBorderRadius: '0.75rem',
-            WebkitTapHighlightColor: 'transparent'
+            borderRadius: '0.75rem',
+            WebkitTapHighlightColor: 'transparent',
+            backgroundColor: '#16a34a',
+            color: 'white'
           }}
         >
           Add a Plant
@@ -338,7 +382,13 @@ export default function Dashboard() {
       </div>
 
       {/* Upcoming watering schedule */}
-      <div className="bg-white rounded-2xl p-4 border border-gray-200 mt-8">
+      <div 
+        className="bg-white rounded-2xl p-4 border border-gray-200 mt-8"
+        style={{
+          WebkitBorderRadius: '1rem',
+          borderRadius: '1rem'
+        }}
+      >
         <h3 className="text-md font-medium text-gray-700 mb-3">Upcoming Watering</h3>
         <div className="space-y-1">
           {plants
@@ -347,7 +397,13 @@ export default function Dashboard() {
             .slice(0, 3)
             .map((plant) => (
               <div key={plant.id} className="flex items-center gap-3 py-2 border-b border-gray-100 last:border-0">
-                <div className="w-10 h-10 bg-green-100 rounded-full overflow-hidden relative">
+                <div 
+                  className="w-10 h-10 bg-green-100 rounded-full overflow-hidden relative"
+                  style={{
+                    WebkitBorderRadius: '9999px',
+                    borderRadius: '9999px'
+                  }}
+                >
                   {plant.image && (
                     <Image 
                       src={plant.image} 
