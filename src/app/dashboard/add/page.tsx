@@ -332,48 +332,35 @@ export default function AddPlant() {
         <div className="mt-8 bg-green-50 p-4 rounded-xl border border-green-200">
           <div className="flex justify-between items-center mb-3">
             <h3 className="text-lg font-medium text-green-800">Give Your Plant a Heart</h3>
-            {!manualMode && (
-              <div className="flex items-center">
-                <span className="text-sm text-gray-600 mr-2">
-                  AI Mode
-                </span>
-              </div>
-            )}
-            {manualMode && (
-              <div className="flex items-center">
-                <span className="text-sm text-gray-600 mr-2">
-                  Manual Mode
-                </span>
-              </div>
+            {!manualMode && aiGenerated && (
+              <button
+                type="button"
+                onClick={generateAiPersonality}
+                disabled={aiGenerating || !requiredFieldsFilled}
+                className="text-xs bg-green-600 text-white p-1 rounded-full hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                aria-label="Refresh personality"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+              </button>
             )}
           </div>
 
           {!manualMode && (
             <div className="mb-4">
-              <div className="flex justify-between items-center mb-2">
-                <p className="text-sm text-gray-600">
-                  {aiGenerated 
-                    ? "Your plant is now brimming with personality!" 
-                    : requiredFieldsFilled 
-                      ? aiGenerating 
-                        ? "Creating your plant's personality..." 
-                        : "Fill in the required fields to give your plant a personality" 
-                      : "Fill in the required fields to give your plant a personality"}
-                </p>
-                {aiGenerated && (
+              {!aiGenerated && !aiGenerating && requiredFieldsFilled && (
+                <div className="text-center mb-2">
                   <button
                     type="button"
                     onClick={generateAiPersonality}
                     disabled={aiGenerating || !requiredFieldsFilled}
-                    className="text-xs bg-green-600 text-white p-1 rounded-full hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                    aria-label="Refresh personality"
+                    className="px-3 py-1 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                    </svg>
+                    Generate Personality
                   </button>
-                )}
-              </div>
+                </div>
+              )}
               
               {aiGenerating && (
                 <div className="w-full text-center py-4">
@@ -420,9 +407,7 @@ export default function AddPlant() {
                   disabled={aiGenerating}
                 />
                 <p className="text-xs text-gray-500 mt-1">
-                  {manualMode 
-                    ? "If left empty, we'll use the plant type as the name" 
-                    : "If left empty, we'll use the plant type as the name"}
+                  If left empty, we'll use the plant type as the name
                 </p>
               </div>
               
@@ -477,9 +462,7 @@ export default function AddPlant() {
                   disabled={aiGenerating && !manualMode}
                 />
                 <p className="text-xs text-gray-500 mt-1">
-                  {manualMode 
-                    ? "Add a short, fun bio for your plant" 
-                    : "Add a short, fun bio for your plant (or let AI generate one)"}
+                  Add a short, fun bio for your plant
                 </p>
               </div>
             </>
@@ -492,7 +475,7 @@ export default function AddPlant() {
               onClick={toggleManualMode}
               className="text-xs text-gray-500 hover:text-gray-700 underline"
             >
-              {manualMode ? 'Switch to AI Mode' : 'Switch to Manual Mode'}
+              {manualMode ? 'Use AI' : 'Edit'}
             </button>
           </div>
         </div>
