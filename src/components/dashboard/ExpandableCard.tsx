@@ -906,19 +906,23 @@ export default function ExpandableCard({
               transition={{ type: "spring", stiffness: 300, damping: 30 }}
             >
               {plant.image ? (
-                <Image 
-                  src={plant.image} 
-                  alt={plant.name} 
-                  fill 
-                  sizes="(max-width: 768px) 100px, 120px"
-                  className="object-cover"
-                />
+                <>
+                  <Image 
+                    src={plant.image} 
+                    alt={plant.name} 
+                    fill 
+                    sizes="100vw"
+                    className="object-cover"
+                  />
+                </>
               ) : (
-                <div className="absolute inset-0 flex items-center justify-center text-gray-400">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                  </svg>
-                </div>
+                <>
+                  <div className="absolute inset-0 flex items-center justify-center text-gray-400">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                  </div>
+                </>
               )}
             </motion.div>
             
@@ -1158,15 +1162,6 @@ export default function ExpandableCard({
                         sizes="100vw"
                         className="object-cover"
                       />
-                      <button
-                        onClick={handleImageEditClick}
-                        className="absolute bottom-2 left-2 bg-white bg-opacity-70 p-2 rounded-full hover:bg-opacity-100 transition-all"
-                        aria-label="Edit plant image"
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-700" viewBox="0 0 20 20" fill="currentColor">
-                          <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
-                        </svg>
-                      </button>
                     </>
                   ) : (
                     <>
@@ -1175,15 +1170,6 @@ export default function ExpandableCard({
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                         </svg>
                       </div>
-                      <button
-                        onClick={handleImageEditClick}
-                        className="absolute bottom-2 left-2 bg-white bg-opacity-70 p-2 rounded-full hover:bg-opacity-100 transition-all"
-                        aria-label="Add plant image"
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-700" viewBox="0 0 20 20" fill="currentColor">
-                          <path fillRule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clipRule="evenodd" />
-                        </svg>
-                      </button>
                     </>
                   )}
                 </>
