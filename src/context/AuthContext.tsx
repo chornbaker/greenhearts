@@ -47,12 +47,21 @@ export function AuthProvider({ children }: AuthProviderProps) {
   useEffect(() => {
     // Only run auth state listener in browser environment
     if (typeof window !== 'undefined' && auth) {
-      const unsubscribe = onAuthStateChanged(auth, (user) => {
-        setUser(user);
-        setLoading(false);
-      });
+      try {
+        const unsubscribe = onAuthStateChanged(auth, (user) => {
+          setUser(user);
+          setLoading(false);
+        }, (error) => {
+          console.error('Auth state change error:', error);
+          setLoading(false);
+        });
 
-      return unsubscribe;
+        return unsubscribe;
+      } catch (error) {
+        console.error('Setting up auth state listener failed:', error);
+        setLoading(false);
+        return () => {};
+      }
     } else {
       // If we're in SSR or auth is not available, set loading to false
       setLoading(false);
@@ -62,28 +71,42 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const signIn = async (email: string, password: string) => {
     if (!auth) throw new Error('Firebase auth is not initialized');
-    await signInWithEmailAndPassword(auth, email, password);
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+    } catch (error: any) {
+      console.error('Sign in error:', error);
+      throw error;
+    }
   };
 
   const signUp = async (email: string, password: string) => {
     if (!auth) throw new Error('Firebase auth is not initialized');
-    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-    
-    // Create user document in Firestore
-    if (db && userCredential.user) {
-      const userRef = doc(db as Firestore, 'users', userCredential.user.uid);
-      await setDoc(userRef, {
-        uid: userCredential.user.uid,
-        email: userCredential.user.email,
-        plantHavenName: "My GreenHearts",
-        displayName: "Human",
-      }, { merge: true });
+    try {
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      
+      // Create user document in Firestore
+      if (db && userCredential.user) {
+        try {
+          const userRef = doc(db as Firestore, 'users', userCredential.user.uid);
+          await setDoc(userRef, {
+            uid: userCredential.user.uid,
+            email: userCredential.user.email,
+            plantHavenName: "My GreenHearts",
+            displayName: "Human",
+          }, { merge: true });
+        } catch (firestoreError) {
+          console.error('Error creating user document:', firestoreError);
+          // Continue even if Firestore fails - the user is still created in Auth
+        }
+      }
+    } catch (error: any) {
+      console.error('Sign up error:', error);
+      throw error;
     }
   };
 
   const signInWithGoogle = async () => {
     if (!auth) throw new Error('Firebase auth is not initialized');
-    if (!db) throw new Error('Firebase Firestore is not initialized');
     
     try {
       const provider = new GoogleAuthProvider();
@@ -93,26 +116,32 @@ export function AuthProvider({ children }: AuthProviderProps) {
       
       const result = await signInWithPopup(auth as Auth, provider);
       
-      if (result.user) {
-        // Extract first name from displayName
-        let firstName = "";
-        if (result.user.displayName) {
-          // Split the display name by spaces and take the first part
-          firstName = result.user.displayName.split(' ')[0];
+      if (result.user && db) {
+        try {
+          // Extract first name from displayName
+          let firstName = "";
+          if (result.user.displayName) {
+            // Split the display name by spaces and take the first part
+            firstName = result.user.displayName.split(' ')[0];
+          }
+          
+          // Create or update user document in Firestore
+          const userRef = doc(db as Firestore, 'users', result.user.uid);
+          await setDoc(userRef, {
+            uid: result.user.uid,
+            email: result.user.email,
+            displayName: firstName || "Human",
+            plantHavenName: "My GreenHearts",
+            photoURL: result.user.photoURL,
+          }, { merge: true });
+        } catch (firestoreError) {
+          console.error('Error creating/updating user document after Google sign-in:', firestoreError);
+          // Continue even if Firestore fails - the user is still authenticated
         }
-        
-        // Create/update user document in Firestore
-        const userRef = doc(db as Firestore, 'users', result.user.uid);
-        await setDoc(userRef, {
-          uid: result.user.uid,
-          email: result.user.email,
-          plantHavenName: "My GreenHearts",
-          displayName: firstName,
-        }, { merge: true });
       }
-    } catch (error) {
-      console.error('Error during Google sign-in:', error);
-      throw error; // Re-throw to be handled by the component
+    } catch (error: any) {
+      console.error('Google sign in error:', error);
+      throw error;
     }
   };
 
