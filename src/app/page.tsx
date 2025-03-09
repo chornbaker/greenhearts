@@ -219,8 +219,8 @@ export default function Home() {
               <Logo size="small" showText={true} />
             </div>
             
-            <div className="text-gray-400 font-light tracking-wide flex items-center">
-              Created with <span className="text-red-400 mx-1">❤</span> by Charles for Kristen
+            <div className="text-gray-400 font-light italic tracking-wide">
+              Created with love by Charles for Kristen
             </div>
           </div>
           
