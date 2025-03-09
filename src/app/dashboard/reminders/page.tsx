@@ -4,11 +4,9 @@ import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { useAuth } from '@/context/AuthContext';
 import { getUserPlants } from '@/services/plants';
-import { Plant } from '@/types';
 
 export default function Reminders() {
   const { user } = useAuth();
-  const [plants, setPlants] = useState<Plant[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [selectedDay, setSelectedDay] = useState(0); // 0 = today, 1 = tomorrow, etc.
@@ -17,9 +15,9 @@ export default function Reminders() {
     const fetchPlants = async () => {
       if (!user) return;
       
+      setLoading(true);
       try {
-        const userPlants = await getUserPlants(user.uid);
-        setPlants(userPlants);
+        await getUserPlants(user.uid);
       } catch (error) {
         console.error('Error fetching plants:', error);
         setError('Failed to load your plants. Please try again later.');

@@ -7,14 +7,7 @@ import { getUserPlants, waterPlant as waterPlantService } from '@/services/plant
 import { getUserProfile } from '@/services/user';
 import { Plant } from '@/types';
 import { useWaterMessages } from '@/context/WaterMessageContext';
-import { getDaysOverdue, isDueToday, getWateringStatusText } from '@/utils/dateUtils';
-
-// Water droplet icon component - simplified version
-const WaterDropIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-5 w-5">
-    <path d="M12 2.5c-1.7 2.3-6 7.6-6 11.5 0 3.3 2.7 6 6 6s6-2.7 6-6c0-3.9-4.3-9.2-6-11.5z" />
-  </svg>
-);
+import { isDueToday, getWateringStatusText } from '@/utils/dateUtils';
 
 export default function Schedule() {
   const { user } = useAuth();

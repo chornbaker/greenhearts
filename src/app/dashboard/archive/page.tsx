@@ -1,13 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Image from 'next/image';
 import { useAuth } from '@/context/AuthContext';
 import { getUserPlants, unarchivePlant, deletePlant } from '@/services/plants';
 import { Plant } from '@/types';
 import { Dialog, Transition } from '@headlessui/react';
 import { Fragment } from 'react';
-import { getDaysOverdue, getWateringStatusText } from '@/utils/dateUtils';
 import { motion } from 'framer-motion';
 
 export default function Archive() {
@@ -20,38 +19,26 @@ export default function Archive() {
   const [selectedPlant, setSelectedPlant] = useState<Plant | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
 
+  const fetchArchivedPlants = useCallback(async () => {
+    if (!user) return;
+    
+    setLoading(true);
+    try {
+      const plants = await getUserPlants(user.uid, true);
+      setArchivedPlants(plants);
+    } catch (error) {
+      console.error('Error fetching archived plants:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, [user]);
+
+  // Fetch archived plants when component mounts
   useEffect(() => {
     if (user) {
       fetchArchivedPlants();
     }
-  }, [user]);
-
-  const fetchArchivedPlants = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      
-      // Get all plants including archived ones
-      const plants = await getUserPlants(user!.uid, true);
-      
-      // Filter to only show archived plants
-      const archived = plants.filter(plant => plant.archived);
-      
-      // Sort by archive date, most recent first
-      archived.sort((a, b) => {
-        if (!a.archivedAt) return 1;
-        if (!b.archivedAt) return -1;
-        return b.archivedAt.getTime() - a.archivedAt.getTime();
-      });
-      
-      setArchivedPlants(archived);
-    } catch (error) {
-      console.error('Error fetching archived plants:', error);
-      setError('Failed to load archived plants. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, [user, fetchArchivedPlants]);
 
   const handleUnarchiveClick = (plant: Plant) => {
     setSelectedPlant(plant);

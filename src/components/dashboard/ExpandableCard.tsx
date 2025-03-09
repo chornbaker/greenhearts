@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Plant, PlantHealth } from '@/types';
 import { updatePlant, waterPlant, archivePlant, deletePlant } from '@/services/plants';
 import AutocompleteInput from '@/components/AutocompleteInput';
-import { getDaysOverdue, isDueToday, getWateringStatusText } from '@/utils/dateUtils';
+import { getDaysOverdue, getWateringStatusText } from '@/utils/dateUtils';
 import { Dialog, Transition } from '@headlessui/react';
 
 // Predefined room/space options
@@ -396,11 +396,6 @@ export default function ExpandableCard({
     setIsEditingLocation(true);
   };
 
-  // Handle location change
-  const handleLocationChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setEditedLocation(e.target.value);
-  };
-
   // Handle location update
   const handleLocationUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -410,10 +405,17 @@ export default function ExpandableCard({
     
     try {
       setIsUpdating(true);
-      await onUpdate(plant.id, { location: editedLocation });
+      
+      // Update the plant with the new location
+      await onUpdate(plant.id, {
+        location: editedLocation
+      });
+      
+      setIsEditingLocation(false);
+    } catch (error) {
+      console.error('Error updating location:', error);
     } finally {
       setIsUpdating(false);
-      setIsEditingLocation(false);
     }
   };
 
@@ -485,12 +487,6 @@ export default function ExpandableCard({
     }
   };
 
-  // Handle delete button click
-  const handleDeleteClick = (e: React.MouseEvent) => {
-    e.stopPropagation(); // Prevent the card click event
-    setShowDeleteDialog(true);
-  };
-
   // Handle delete confirm
   const handleDeleteConfirm = async () => {
     try {
@@ -498,7 +494,6 @@ export default function ExpandableCard({
       
       await deletePlant(plant.id);
       
-      // Call onDelete callback if provided
       if (onDelete) {
         onDelete(plant.id);
       }
@@ -815,9 +810,9 @@ export default function ExpandableCard({
                   transition={{ delay: 0.1 }}
                 >
                   <p className="text-green-800 italic relative">
-                    <span className="text-3xl absolute -top-2 -left-2 text-green-300">"</span>
+                    <span className="text-3xl absolute -top-2 -left-2 text-green-300">&quot;</span>
                     <span className="ml-3">{plant.bio}</span>
-                    <span className="text-3xl absolute -bottom-5 -right-2 text-green-300">"</span>
+                    <span className="text-3xl absolute -bottom-5 -right-2 text-green-300">&quot;</span>
                   </p>
                   {plant.personalityType && (
                     <div className="mt-2 flex justify-end">

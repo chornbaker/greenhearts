@@ -41,13 +41,13 @@ export const updateUserProfile = async (userId: string, data: UserProfile): Prom
     const userSnap = await getDoc(userRef);
     
     if (userSnap.exists()) {
-      await updateDoc(userRef, data as { [key: string]: any });
+      await updateDoc(userRef, data as { [key: string]: string | number | boolean | null | undefined });
     } else {
       // Create the document if it doesn't exist
       await setDoc(userRef, {
         uid: userId,
         ...data
-      } as { [key: string]: any });
+      } as { [key: string]: string | number | boolean | null | undefined });
     }
   } catch (error) {
     console.error('Error updating user profile:', error);

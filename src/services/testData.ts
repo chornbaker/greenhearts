@@ -1,20 +1,16 @@
 import { 
   collection, 
-  doc, 
   getDocs, 
-  deleteDoc, 
   query, 
   where, 
-  writeBatch,
-  serverTimestamp
+  writeBatch
 } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { db, storage } from '@/lib/firebase';
-import { Plant, PlantHealth, CareInstructions } from '@/types';
+import { PlantHealth, CareInstructions } from '@/types';
 import { createPlant } from './plants';
 
 const PLANTS_COLLECTION = 'plants';
-const USERS_COLLECTION = 'users';
 
 // Mock for the Claude API personality generation since we can't directly call it from a script
 const mockGeneratePlantPersonality = (species: string, locationType: string): {

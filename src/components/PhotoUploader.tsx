@@ -37,7 +37,10 @@ export default function PhotoUploader({
   // Detect if the device is mobile
   useEffect(() => {
     const checkMobile = () => {
-      const userAgent = navigator.userAgent || navigator.vendor || (window as any).opera;
+      const userAgent = 
+        typeof navigator !== 'undefined' 
+          ? (navigator.userAgent || navigator.vendor || ((window as Window & typeof globalThis & { opera?: string }).opera || ''))
+          : '';
       const isMobileDevice = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent.toLowerCase());
       setIsMobile(isMobileDevice);
     };

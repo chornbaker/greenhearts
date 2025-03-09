@@ -99,7 +99,7 @@ export default function Home() {
               <div className="p-6">
                 <h3 className="text-xl font-bold text-green-700 text-center mb-2">Track Care</h3>
                 <p className="text-gray-600 text-center">
-                  Log watering and care activities with a simple tap. Monitor your plants' health and growth over time.
+                  Log watering and care activities with a simple tap. Monitor your plants&apos; health and growth over time.
                 </p>
               </div>
             </div>
@@ -156,7 +156,7 @@ export default function Home() {
                 </div>
               </div>
               <p className="text-gray-600 italic">
-                "Ever since my human started using GreenHearts, I've been getting the perfect amount of water! No more drowning or drought for me. My fronds have never looked better!"
+                &quot;Ever since my human started using GreenHearts, I&apos;ve been getting the perfect amount of water! No more drowning or drought for me. My fronds have never looked better!&quot;
               </p>
             </div>
             
@@ -172,7 +172,7 @@ export default function Home() {
                 </div>
               </div>
               <p className="text-gray-600 italic">
-                "As a desert dweller, I hate being overwatered. Thanks to GreenHearts, my human finally understands I only need water once a month! I'm no longer sitting in soggy soil!"
+                &quot;As a desert dweller, I hate being overwatered. Thanks to GreenHearts, my human finally understands I only need water once a month! I&apos;m no longer sitting in soggy soil!&quot;
               </p>
             </div>
             
@@ -188,7 +188,7 @@ export default function Home() {
                 </div>
               </div>
               <p className="text-gray-600 italic">
-                "I used to be so neglected, but now my human gets reminders to check on me! My new leaves are huge and I've got so many beautiful fenestrations. GreenHearts saved my life!"
+                &quot;I used to be so neglected, but now my human gets reminders to check on me! My new leaves are huge and I&apos;ve got so many beautiful fenestrations. GreenHearts saved my life!&quot;
               </p>
             </div>
           </div>
@@ -200,7 +200,7 @@ export default function Home() {
         <div className="max-w-4xl mx-auto text-center px-6">
           <h2 className="text-3xl md:text-4xl font-bold mb-6">Ready to Give Your Plants Some Love?</h2>
           <p className="text-xl mb-8 opacity-90 italic">
-            "We plants have been waiting for someone to understand our needs! With GreenHearts, your leafy friends will finally get the care they deserve. We're rooting for you to join!"
+            &quot;We plants have been waiting for someone to understand our needs! With GreenHearts, your leafy friends will finally get the care they deserve. We&apos;re rooting for you to join!&quot;
           </p>
           <Link 
             href="/signup" 

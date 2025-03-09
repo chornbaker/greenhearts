@@ -13,7 +13,6 @@ import ButtonSelector from '@/components/ButtonSelector';
 import AutocompleteInput from '@/components/AutocompleteInput';
 import DateSelector from '@/components/DateSelector';
 import PhotoUploader from '@/components/PhotoUploader';
-import { Combobox, Transition } from '@headlessui/react';
 
 // Predefined room/space options
 const INDOOR_LOCATIONS = [
@@ -48,13 +47,6 @@ const PERSONALITIES = [
   { value: 'adventurous', label: 'Adventurous' },
   { value: 'wise', label: 'Wise' }
 ];
-
-// Add type for Combobox event handlers
-type ComboboxInputEvent = React.ChangeEvent<HTMLInputElement>;
-type ComboboxOptionRenderProp = {
-  selected: boolean;
-  active: boolean;
-};
 
 export default function AddPlant() {
   const { user } = useAuth();
@@ -103,16 +95,72 @@ export default function AddPlant() {
   // Generate AI personality when all required fields are filled for the first time
   useEffect(() => {
     if (requiredFieldsFilled && !aiGenerated && !manualMode && !aiGenerating) {
-      generateAiPersonality();
+      const generatePersonality = async () => {
+        if (!requiredFieldsFilled || aiGenerating) return;
+        
+        setAiGenerating(true);
+        try {
+          const personality = await generatePlantPersonality({
+            species,
+            locationType,
+            locationSpace,
+            sunlight,
+            soil,
+            potSize,
+            imageUrl: photoUrl || undefined
+          });
+          
+          // Update all fields with AI-generated content
+          setName(personality.name);
+          setPersonality(personality.personalityType.toLowerCase());
+          setBio(personality.bio);
+          setAiGenerated(true);
+        } catch (error) {
+          console.error('Error generating plant personality:', error);
+          // Don't set error message to avoid confusing the user
+        } finally {
+          setAiGenerating(false);
+        }
+      };
+      
+      generatePersonality();
     }
-  }, [species, locationType, sunlight, soil, potSize, photoUrl, aiGenerated, manualMode]);
+  }, [requiredFieldsFilled, aiGenerated, manualMode, aiGenerating, species, locationType, locationSpace, sunlight, soil, potSize, photoUrl]);
   
   // Generate care information when all required fields are filled for the first time
   useEffect(() => {
     if (requiredFieldsFilled && !careInfoGenerated && !manualMode && !aiGenerating) {
-      generateAiCareInfo();
+      const generateCareInfo = async () => {
+        if (!requiredFieldsFilled || aiGenerating) return;
+        
+        setAiGenerating(true);
+        try {
+          const careInfo = await generatePlantCareInfo({
+            species,
+            locationType,
+            locationSpace,
+            sunlight,
+            soil,
+            potSize,
+            imageUrl: photoUrl || undefined
+          });
+          
+          // Update all fields with AI-generated content
+          setWateringFrequency(careInfo.wateringSchedule.frequency);
+          setWateringDescription(careInfo.wateringSchedule.description);
+          setCareInstructions(careInfo.careInstructions);
+          setCareInfoGenerated(true);
+        } catch (error) {
+          console.error('Error generating plant care information:', error);
+          // Don't set error message to avoid confusing the user
+        } finally {
+          setAiGenerating(false);
+        }
+      };
+      
+      generateCareInfo();
     }
-  }, [species, locationType, sunlight, soil, potSize, photoUrl, careInfoGenerated, manualMode]);
+  }, [requiredFieldsFilled, careInfoGenerated, manualMode, aiGenerating, species, locationType, locationSpace, sunlight, soil, potSize, photoUrl]);
   
   // Fetch user profile to get display name
   useEffect(() => {
@@ -149,62 +197,6 @@ export default function AddPlant() {
   const handlePhotoRemoved = () => {
     setPhotoFile(null);
     setPhotoUrl(null);
-  };
-  
-  const generateAiPersonality = async () => {
-    if (!requiredFieldsFilled || aiGenerating) return;
-    
-    setAiGenerating(true);
-    try {
-      const personality = await generatePlantPersonality({
-        species,
-        locationType,
-        locationSpace,
-        sunlight,
-        soil,
-        potSize,
-        imageUrl: photoUrl || undefined
-      });
-      
-      // Update all fields with AI-generated content
-      setName(personality.name);
-      setPersonality(personality.personalityType.toLowerCase());
-      setBio(personality.bio);
-      setAiGenerated(true);
-    } catch (error) {
-      console.error('Error generating plant personality:', error);
-      // Don't set error message to avoid confusing the user
-    } finally {
-      setAiGenerating(false);
-    }
-  };
-  
-  const generateAiCareInfo = async () => {
-    if (!requiredFieldsFilled || aiGenerating) return;
-    
-    setAiGenerating(true);
-    try {
-      const careInfo = await generatePlantCareInfo({
-        species,
-        locationType,
-        locationSpace,
-        sunlight,
-        soil,
-        potSize,
-        imageUrl: photoUrl || undefined
-      });
-      
-      // Update all fields with AI-generated content
-      setWateringFrequency(careInfo.wateringSchedule.frequency);
-      setWateringDescription(careInfo.wateringSchedule.description);
-      setCareInstructions(careInfo.careInstructions);
-      setCareInfoGenerated(true);
-    } catch (error) {
-      console.error('Error generating plant care information:', error);
-      // Don't set error message to avoid confusing the user
-    } finally {
-      setAiGenerating(false);
-    }
   };
   
   const toggleManualMode = () => {
@@ -414,7 +406,11 @@ export default function AddPlant() {
             {!manualMode && aiGenerated && (
               <button
                 type="button"
-                onClick={generateAiPersonality}
+                onClick={() => {
+                  setAiGenerated(false);
+                  setPersonality('');
+                  setBio('');
+                }}
                 disabled={aiGenerating || !requiredFieldsFilled}
                 className="text-xs bg-green-600 text-white p-1 rounded-full hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
                 aria-label="Refresh personality"
@@ -432,7 +428,11 @@ export default function AddPlant() {
                 <div className="text-center mb-2">
                   <button
                     type="button"
-                    onClick={generateAiPersonality}
+                    onClick={() => {
+                      setAiGenerated(true);
+                      setPersonality('');
+                      setBio('');
+                    }}
                     disabled={aiGenerating || !requiredFieldsFilled}
                     className="px-3 py-1 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
@@ -486,7 +486,7 @@ export default function AddPlant() {
                   disabled={aiGenerating}
                 />
                 <p className="text-xs text-gray-500 mt-1">
-                  If left empty, we'll use the plant type as the name
+                  If left empty, we&apos;ll use the plant type as the name
                 </p>
               </div>
               
@@ -540,9 +540,9 @@ export default function AddPlant() {
                   rows={3}
                   disabled={aiGenerating && !manualMode}
                 />
-                <p className="text-xs text-gray-500 mt-1">
-                  Add a short, fun bio for your plant
-                </p>
+                <div className="text-sm text-gray-500 mt-2">
+                  Don&apos;t worry about filling in all the details - our AI will help generate care instructions and a fun personality for your plant!
+                </div>
               </div>
             </>
           )}
@@ -566,7 +566,12 @@ export default function AddPlant() {
             {!manualMode && careInfoGenerated && (
               <button
                 type="button"
-                onClick={generateAiCareInfo}
+                onClick={() => {
+                  setCareInfoGenerated(false);
+                  setWateringFrequency(7);
+                  setWateringDescription('');
+                  setCareInstructions({});
+                }}
                 disabled={aiGenerating || !requiredFieldsFilled}
                 className="text-xs bg-green-600 text-white p-1 rounded-full hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
                 aria-label="Refresh care info"
@@ -584,7 +589,12 @@ export default function AddPlant() {
                 <div className="text-center mb-2">
                   <button
                     type="button"
-                    onClick={generateAiCareInfo}
+                    onClick={() => {
+                      setCareInfoGenerated(true);
+                      setWateringFrequency(7);
+                      setWateringDescription('');
+                      setCareInstructions({});
+                    }}
                     disabled={aiGenerating || !requiredFieldsFilled}
                     className="px-3 py-1 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
@@ -737,7 +747,10 @@ export default function AddPlant() {
               onClick={() => {
                 setManualMode(!manualMode);
                 if (!careInfoGenerated && !manualMode) {
-                  generateAiCareInfo();
+                  setCareInfoGenerated(true);
+                  setWateringFrequency(7);
+                  setWateringDescription('');
+                  setCareInstructions({});
                 }
               }}
               className="text-xs text-gray-500 hover:text-gray-700 underline"

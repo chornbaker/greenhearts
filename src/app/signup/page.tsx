@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import Logo from '@/components/Logo';
@@ -39,15 +38,19 @@ export default function Signup() {
   };
 
   const handleGoogleSignIn = async () => {
-    setError('');
     setLoading(true);
+    setError('');
     
     try {
       await signInWithGoogle();
       router.push('/dashboard');
-    } catch (error: any) {
-      console.error('Google sign-in error:', error);
-      setError(error.message || 'Failed to sign in with Google. Please try again.');
+    } catch (error: unknown) {
+      console.error('Google sign in error:', error);
+      if (error instanceof Error) {
+        setError(error.message);
+      } else {
+        setError('Failed to sign in with Google. Please try again.');
+      }
     } finally {
       setLoading(false);
     }
