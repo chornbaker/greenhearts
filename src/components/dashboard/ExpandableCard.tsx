@@ -31,6 +31,18 @@ const OUTDOOR_LOCATIONS = [
   'Other'
 ];
 
+// Personality types
+const PERSONALITIES = [
+  { value: 'cheerful', label: 'Cheerful' },
+  { value: 'dramatic', label: 'Dramatic' },
+  { value: 'zen', label: 'Zen' },
+  { value: 'sassy', label: 'Sassy' },
+  { value: 'royal', label: 'Royal' },
+  { value: 'shy', label: 'Shy' },
+  { value: 'adventurous', label: 'Adventurous' },
+  { value: 'wise', label: 'Wise' }
+];
+
 // Water droplet icon component
 const WaterDropIcon = ({ className = "h-5 w-5" }: { className?: string }) => (
   <div 
@@ -119,6 +131,13 @@ export default function ExpandableCard({
   const [newImageFile, setNewImageFile] = useState<File | null>(null);
   const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // New state variables for comprehensive edit mode
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [editedName, setEditedName] = useState('');
+  const [editedSpecies, setEditedSpecies] = useState('');
+  const [editedBio, setEditedBio] = useState('');
+  const [editedPersonalityType, setEditedPersonalityType] = useState('');
 
   // Calculate if the plant needs water
   const needsWater = plant.nextWateringDate && plant.nextWateringDate <= new Date();
@@ -570,6 +589,74 @@ export default function ExpandableCard({
     setImagePreviewUrl(null);
   };
 
+  // Handle edit mode toggle
+  const handleEditClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    
+    // Initialize edit form with current values
+    setEditedName(plant.name);
+    setEditedSpecies(plant.species || '');
+    setEditedLocation(plant.location || '');
+    setEditedHealth(plant.health || PlantHealth.Good);
+    setEditedBio(plant.bio || '');
+    setEditedPersonalityType(plant.personalityType || '');
+    
+    setIsEditMode(true);
+  };
+  
+  // Handle save all edits
+  const handleSaveEdits = async (e: React.FormEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (!onUpdate) return;
+    
+    setIsUpdating(true);
+    try {
+      // Prepare updates object
+      const updates: Partial<Plant> = {
+        name: editedName,
+        species: editedSpecies,
+        location: editedLocation,
+        health: editedHealth,
+        bio: editedBio,
+        personalityType: editedPersonalityType
+      };
+      
+      // If there's a new image, upload it
+      if (newImageFile) {
+        // Import the uploadPlantImage function dynamically
+        const { uploadPlantImage } = await import('@/services/storage');
+        
+        // Upload the new image
+        const imageUrl = await uploadPlantImage(plant.userId, newImageFile);
+        
+        // Add image URL to updates
+        updates.image = imageUrl;
+      }
+      
+      // Update the plant with all changes
+      await onUpdate(plant.id, updates);
+      
+      // Reset edit mode
+      setIsEditMode(false);
+      setNewImageFile(null);
+      setImagePreviewUrl(null);
+    } catch (error) {
+      console.error('Error updating plant:', error);
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+  
+  // Handle cancel edit
+  const handleCancelEdit = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIsEditMode(false);
+    setNewImageFile(null);
+    setImagePreviewUrl(null);
+  };
+
   return (
     <>
       <motion.div 
@@ -594,24 +681,217 @@ export default function ExpandableCard({
         }}
         onClick={handleClick}
       >
-        {/* Trash icon - only show in fully expanded view */}
-        {expansionState === ExpansionState.FullyExpanded && (
-          <button
-            onClick={(e) => {
-              e.stopPropagation(); // Prevent card expansion
-              handleArchiveClick(e);
-            }}
-            className="absolute bottom-2 right-2 text-gray-400 hover:text-gray-600 z-10"
-            aria-label="Archive or delete plant"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
-            </svg>
-          </button>
+        {/* Action buttons - only show in fully expanded view */}
+        {expansionState === ExpansionState.FullyExpanded && !isEditMode && (
+          <div className="absolute bottom-2 right-2 flex space-x-2 z-10">
+            {/* Edit button */}
+            <button
+              onClick={handleEditClick}
+              className="text-gray-400 hover:text-gray-600"
+              aria-label="Edit plant"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+              </svg>
+            </button>
+            
+            {/* Archive/Delete button */}
+            <button
+              onClick={(e) => {
+                e.stopPropagation(); // Prevent card expansion
+                handleArchiveClick(e);
+              }}
+              className="text-gray-400 hover:text-gray-600"
+              aria-label="Archive or delete plant"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+              </svg>
+            </button>
+          </div>
         )}
         
-        {/* Content Container - Different layout based on expansion state */}
-        {expansionState !== ExpansionState.FullyExpanded ? (
+        {/* Content Container - Different layout based on expansion state and edit mode */}
+        {isEditMode ? (
+          // Edit Mode View
+          <div className="p-4">
+            <form onSubmit={handleSaveEdits} onClick={(e) => e.stopPropagation()}>
+              <h2 className="text-xl font-semibold text-gray-800 mb-4">Edit Plant</h2>
+              
+              {/* Image Upload Section */}
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">Plant Image</label>
+                <div className="flex items-center space-x-4">
+                  <div className="relative w-24 h-24 bg-gray-100 rounded-lg overflow-hidden">
+                    {imagePreviewUrl ? (
+                      <Image 
+                        src={imagePreviewUrl} 
+                        alt="Preview" 
+                        fill 
+                        sizes="96px"
+                        className="object-cover"
+                      />
+                    ) : plant.image ? (
+                      <Image 
+                        src={plant.image} 
+                        alt={plant.name} 
+                        fill 
+                        sizes="96px"
+                        className="object-cover"
+                      />
+                    ) : (
+                      <div className="absolute inset-0 flex items-center justify-center text-gray-400">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                      </div>
+                    )}
+                  </div>
+                  
+                  <div>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*"
+                      onChange={handleFileChange}
+                      className="hidden"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600 text-sm"
+                      disabled={isUpdating}
+                    >
+                      {plant.image ? "Change Image" : "Add Image"}
+                    </button>
+                    {newImageFile && (
+                      <p className="text-xs text-gray-500 mt-1">{newImageFile.name}</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+              
+              {/* Basic Info Fields */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                {/* Name */}
+                <div>
+                  <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
+                    Name
+                  </label>
+                  <input
+                    id="name"
+                    type="text"
+                    value={editedName}
+                    onChange={(e) => setEditedName(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    required
+                  />
+                </div>
+                
+                {/* Species */}
+                <div>
+                  <label htmlFor="species" className="block text-sm font-medium text-gray-700 mb-1">
+                    Species
+                  </label>
+                  <input
+                    id="species"
+                    type="text"
+                    value={editedSpecies}
+                    onChange={(e) => setEditedSpecies(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  />
+                </div>
+                
+                {/* Location */}
+                <div>
+                  <label htmlFor="location" className="block text-sm font-medium text-gray-700 mb-1">
+                    Location
+                  </label>
+                  <AutocompleteInput
+                    value={editedLocation}
+                    onChange={setEditedLocation}
+                    options={getLocationOptions(editedLocation || '')}
+                    placeholder="Enter or select a room/space"
+                  />
+                </div>
+                
+                {/* Health */}
+                <div>
+                  <label htmlFor="health" className="block text-sm font-medium text-gray-700 mb-1">
+                    Health
+                  </label>
+                  <select
+                    id="health"
+                    value={editedHealth}
+                    onChange={(e) => setEditedHealth(e.target.value as PlantHealth)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  >
+                    <option value={PlantHealth.Excellent}>Excellent</option>
+                    <option value={PlantHealth.Good}>Good</option>
+                    <option value={PlantHealth.Fair}>Fair</option>
+                    <option value={PlantHealth.Poor}>Poor</option>
+                  </select>
+                </div>
+              </div>
+              
+              {/* Personality Type */}
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Personality Type
+                </label>
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                  {PERSONALITIES.map((p) => (
+                    <button
+                      key={p.value}
+                      type="button"
+                      className={`w-full px-3 py-2 text-sm rounded-lg transition-colors ${
+                        editedPersonalityType === p.value
+                          ? 'bg-green-600 text-white'
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      }`}
+                      onClick={() => setEditedPersonalityType(p.value)}
+                    >
+                      {p.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              
+              {/* Bio */}
+              <div className="mb-4">
+                <label htmlFor="bio" className="block text-sm font-medium text-gray-700 mb-1">
+                  Bio
+                </label>
+                <textarea
+                  id="bio"
+                  value={editedBio}
+                  onChange={(e) => setEditedBio(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  rows={3}
+                />
+              </div>
+              
+              {/* Action Buttons */}
+              <div className="flex justify-end space-x-2">
+                <button
+                  type="button"
+                  onClick={handleCancelEdit}
+                  className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
+                  disabled={isUpdating}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600"
+                  disabled={isUpdating}
+                >
+                  {isUpdating ? "Saving..." : "Save Changes"}
+                </button>
+              </div>
+            </form>
+          </div>
+        ) : expansionState !== ExpansionState.FullyExpanded ? (
           // Collapsed and Expanded views - horizontal layout
           <div className="flex h-full">
             {/* Image Section */}
@@ -981,7 +1261,7 @@ export default function ExpandableCard({
                       <AutocompleteInput
                         value={editedLocation}
                         onChange={setEditedLocation}
-                        options={getLocationOptions(plant.location || '')}
+                        options={getLocationOptions(editedLocation || '')}
                         placeholder="Enter or select a room/space"
                       />
                       <div className="flex gap-2 mt-2">
