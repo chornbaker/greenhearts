@@ -75,7 +75,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       await setDoc(userRef, {
         uid: userCredential.user.uid,
         email: userCredential.user.email,
-        plantHavenName: "My Plant Haven",
+        plantHavenName: "My GreenHearts",
         displayName: "Human",
       }, { merge: true });
     }
@@ -106,7 +106,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         await setDoc(userRef, {
           uid: result.user.uid,
           email: result.user.email,
-          plantHavenName: "My Plant Haven",
+          plantHavenName: "My GreenHearts",
           displayName: firstName,
         }, { merge: true });
       }

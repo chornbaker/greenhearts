@@ -9,7 +9,7 @@ import Link from 'next/link';
 export default function Profile() {
   const { user, signOut } = useAuth();
   const router = useRouter();
-  const [plantHavenName, setPlantHavenName] = useState('My Plant Haven');
+  const [plantHavenName, setPlantHavenName] = useState('My GreenHearts');
   const [displayName, setDisplayName] = useState('');
   const [isEditingHavenName, setIsEditingHavenName] = useState(false);
   const [isEditingDisplayName, setIsEditingDisplayName] = useState(false);

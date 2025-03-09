@@ -1,11 +1,10 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
 import Image from 'next/image';
 import { useAuth } from '@/context/AuthContext';
-import { getUserPlants, waterPlant, updatePlant, saveThirstyMessages, getThirstyMessages } from '@/services/plants';
+import { getUserPlants, waterPlant, updatePlant } from '@/services/plants';
 import { getUserProfile } from '@/services/user';
 import { Plant } from '@/types';
 import ExpandableCard from '@/components/dashboard/ExpandableCard';
@@ -22,7 +21,7 @@ export default function Dashboard() {
   const [plants, setPlants] = useState<Plant[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [plantHavenName, setPlantHavenName] = useState('My Plant Haven');
+  const [plantHavenName, setPlantHavenName] = useState('My GreenHearts');
   const [displayName, setDisplayName] = useState('');
   const [organizationView, setOrganizationView] = useState<OrganizationView>('location');
   const router = useRouter();
@@ -147,7 +146,7 @@ export default function Dashboard() {
       if (!wasOverdue && isNowOverdue && updatedPlant.personalityType) {
         try {
           const daysOverdue = getDaysOverdue(updatedPlant);
-          const message = await generateThirstyPlantMessage({
+          await generateThirstyPlantMessage({
             name: updatedPlant.name,
             species: updatedPlant.species || '',
             personalityType: updatedPlant.personalityType,
@@ -155,25 +154,6 @@ export default function Dashboard() {
             userName: displayName || undefined,
             location: updatedPlant.location
           });
-          
-          // Update the thirsty messages state
-          // const updatedMessages = {
-          //   ...thirstyMessages,
-          //   [plantId]: message
-          // };
-          // setThirstyMessages(updatedMessages);
-          
-          // Update localStorage
-          // localStorage.setItem('thirstyMessages', JSON.stringify(updatedMessages));
-          
-          // Update Firebase
-          // if (user) {
-          //   try {
-          //     await saveThirstyMessages(user.uid, updatedMessages);
-          //   } catch (error) {
-          //     console.error('Error updating thirsty messages in Firebase:', error);
-          //   }
-          // }
         } catch (error) {
           console.error(`Error generating message for ${updatedPlant.name}:`, error);
         }
@@ -458,6 +438,7 @@ export default function Dashboard() {
     };
     
     generateMessages();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [plantsNeedingWater, loading, user]);
 
   // Handle plant archive
