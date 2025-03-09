@@ -1,6 +1,6 @@
 'use client';
 
-import { Geist, Geist_Mono } from "next/font/google";
+import { Inter, Roboto_Mono } from "next/font/google";
 import { Figtree } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/context/AuthContext";
@@ -8,12 +8,12 @@ import { WaterReminderProvider } from '@/context/WaterReminderContext';
 import { metadata } from "./metadata";
 import { WaterMessageProvider } from '@/context/WaterMessageContext';
 
-const geistSans = Geist({
+const inter = Inter({
   variable: "--font-geist-sans",
   subsets: ["latin"],
 });
 
-const geistMono = Geist_Mono({
+const robotoMono = Roboto_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
 });
@@ -38,7 +38,7 @@ export default function RootLayout({
         <link rel="apple-touch-icon" href="/images/greenhearts-logo.png" />
       </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} ${figtree.variable} antialiased`}
+        className={`${inter.variable} ${robotoMono.variable} ${figtree.variable} antialiased`}
       >
         <AuthProvider>
           <WaterMessageProvider>
