@@ -34,8 +34,9 @@ export default function RootLayout({
       <head>
         <title>{metadata.title as string}</title>
         <meta name="description" content={metadata.description as string} />
-        <link rel="icon" href="/images/greenhearts-logo.png" />
+        <link rel="icon" href="/images/greenhearts-logo.png" type="image/png" />
         <link rel="apple-touch-icon" href="/images/greenhearts-logo.png" />
+        <link rel="shortcut icon" href="/images/greenhearts-logo.png" type="image/png" />
       </head>
       <body
         className={`${inter.variable} ${robotoMono.variable} ${figtree.variable} antialiased`}
