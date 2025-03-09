@@ -114,6 +114,12 @@ export default function ExpandableCard({
   const cardRef = useRef<HTMLDivElement>(null);
   const locationInputRef = useRef<HTMLInputElement>(null);
 
+  // New state variables for image editing
+  const [isEditingImage, setIsEditingImage] = useState(false);
+  const [newImageFile, setNewImageFile] = useState<File | null>(null);
+  const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   // Calculate if the plant needs water
   const needsWater = plant.nextWateringDate && plant.nextWateringDate <= new Date();
   
@@ -506,6 +512,64 @@ export default function ExpandableCard({
     }
   };
 
+  // Handle image edit button click
+  const handleImageEditClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIsEditingImage(true);
+  };
+  
+  // Handle file selection
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setNewImageFile(file);
+      
+      // Create a preview URL
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreviewUrl(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+  
+  // Handle image update
+  const handleImageUpdate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (!newImageFile || !onUpdate) return;
+    
+    setIsUpdating(true);
+    try {
+      // Import the uploadPlantImage function dynamically to avoid circular dependencies
+      const { uploadPlantImage } = await import('@/services/storage');
+      
+      // Upload the new image
+      const imageUrl = await uploadPlantImage(plant.userId, newImageFile);
+      
+      // Update the plant with the new image URL
+      await onUpdate(plant.id, { image: imageUrl });
+      
+      // Reset state
+      setIsEditingImage(false);
+      setNewImageFile(null);
+      setImagePreviewUrl(null);
+    } catch (error) {
+      console.error('Error updating plant image:', error);
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+  
+  // Handle cancel image edit
+  const handleCancelImageEdit = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIsEditingImage(false);
+    setNewImageFile(null);
+    setImagePreviewUrl(null);
+  };
+
   return (
     <>
       <motion.div 
@@ -519,7 +583,7 @@ export default function ExpandableCard({
             ? '100px' 
             : expansionState === ExpansionState.Expanded 
               ? '180px' 
-              : 'auto',
+              : '500px',
           borderRadius: 12,
           zIndex: expansionState === ExpansionState.FullyExpanded ? 5 : 1,
         }}
@@ -745,20 +809,104 @@ export default function ExpandableCard({
           <div className="flex flex-col">
             {/* Full-width image */}
             <div className="relative w-full h-48 md:h-64 bg-gray-100">
-              {plant.image ? (
-                <Image 
-                  src={plant.image} 
-                  alt={plant.name} 
-                  fill 
-                  sizes="100vw"
-                  className="object-cover"
-                />
-              ) : (
-                <div className="absolute inset-0 flex items-center justify-center text-gray-400">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                  </svg>
+              {isEditingImage ? (
+                <div className="absolute inset-0 p-4 flex flex-col items-center justify-center bg-gray-50">
+                  <form onSubmit={handleImageUpdate} onClick={(e) => e.stopPropagation()} className="w-full">
+                    {imagePreviewUrl ? (
+                      <div className="relative w-full h-32 mb-3">
+                        <Image 
+                          src={imagePreviewUrl} 
+                          alt="Preview" 
+                          fill 
+                          sizes="100vw"
+                          className="object-contain"
+                        />
+                      </div>
+                    ) : (
+                      <div className="flex items-center justify-center h-32 mb-3 border-2 border-dashed border-gray-300 rounded-lg">
+                        <p className="text-gray-500 text-center">
+                          {newImageFile ? newImageFile.name : "No file selected"}
+                        </p>
+                      </div>
+                    )}
+                    
+                    <div className="flex flex-col gap-2">
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/*"
+                        onChange={handleFileChange}
+                        className="hidden"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => fileInputRef.current?.click()}
+                        className="px-3 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 text-sm"
+                        disabled={isUpdating}
+                      >
+                        {newImageFile ? "Change Image" : "Select Image"}
+                      </button>
+                      
+                      <div className="flex gap-2 mt-2">
+                        <button
+                          type="submit"
+                          className="flex-1 px-3 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 text-sm"
+                          disabled={!newImageFile || isUpdating}
+                        >
+                          {isUpdating ? "Saving..." : "Save"}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleCancelImageEdit}
+                          className="flex-1 px-3 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 text-sm"
+                          disabled={isUpdating}
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  </form>
                 </div>
+              ) : (
+                <>
+                  {plant.image ? (
+                    <>
+                      <Image 
+                        src={plant.image} 
+                        alt={plant.name} 
+                        fill 
+                        sizes="100vw"
+                        className="object-cover"
+                      />
+                      <button
+                        onClick={handleImageEditClick}
+                        className="absolute bottom-2 left-2 bg-white bg-opacity-70 p-2 rounded-full hover:bg-opacity-100 transition-all"
+                        aria-label="Edit plant image"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-700" viewBox="0 0 20 20" fill="currentColor">
+                          <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                        </svg>
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <div className="absolute inset-0 flex items-center justify-center text-gray-400">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                      </div>
+                      <button
+                        onClick={handleImageEditClick}
+                        className="absolute bottom-2 left-2 bg-white bg-opacity-70 p-2 rounded-full hover:bg-opacity-100 transition-all"
+                        aria-label="Add plant image"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-700" viewBox="0 0 20 20" fill="currentColor">
+                          <path fillRule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clipRule="evenodd" />
+                        </svg>
+                      </button>
+                    </>
+                  )}
+                </>
               )}
             </div>
             
