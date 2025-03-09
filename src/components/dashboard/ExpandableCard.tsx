@@ -532,12 +532,6 @@ export default function ExpandableCard({
     }
   };
 
-  // Handle image edit button click
-  const handleImageEditClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setIsEditingImage(true);
-  };
-  
   // Handle file selection
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
