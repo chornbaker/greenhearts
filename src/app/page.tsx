@@ -219,11 +219,8 @@ export default function Home() {
               <Logo size="small" showText={true} />
             </div>
             
-            <div className="flex flex-col md:flex-row gap-6 md:gap-12">
-              <Link href="/about" className="text-gray-600 hover:text-green-700">About</Link>
-              <Link href="/privacy" className="text-gray-600 hover:text-green-700">Privacy</Link>
-              <Link href="/terms" className="text-gray-600 hover:text-green-700">Terms</Link>
-              <Link href="/contact" className="text-gray-600 hover:text-green-700">Contact</Link>
+            <div className="text-gray-600">
+              Created with love by Charles for Kristen
             </div>
           </div>
           
