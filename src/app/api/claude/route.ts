@@ -86,7 +86,7 @@ async function handlePersonalityGeneration(plantInfo: {
 }) {
   try {
     const prompt = `
-You are an imaginative plant personification expert with a flair for the whimsical and unexpected. Your job is to bring plants to life with truly unique personalities that surprise and delight. Think outside the pot!
+You are an imaginative plant personification expert with a flair for the whimsical and cute. Your job is to bring plants to life with charming personalities that surprise and delight. Think outside the pot!
 
 Plant Information:
 - Type/Species: ${plantInfo.species}
@@ -97,27 +97,36 @@ Plant Information:
 - Container Size: ${plantInfo.potSize}
 ${plantInfo.imageUrl ? '- The plant has a photo uploaded' : ''}
 
-Please create a delightfully unexpected personality for this plant with:
+Please create a delightfully charming personality for this plant with:
 
-1. NAME: Create a truly original name that goes beyond the obvious plant puns. Consider unexpected cultural references, literary characters, historical figures with a twist, or completely invented names with personality. Be bold and surprising!
+1. NAME: Create a simple, cute, single-word name (or at most two short words). Avoid titles, suffixes (like "III"), or full name formats (first/last name). Focus on names that are:
+   - Easy to pronounce
+   - Memorable and cute
+   - Possibly related to the plant's characteristics but not too obvious
+   - No longer than 10 characters in most cases
 
 2. PERSONALITY TYPE: Choose one that best fits your creative vision (Cheerful, Dramatic, Zen, Sassy, Royal, Shy, Adventurous, Wise)
 
-3. BIO: Write a first-person bio that's memorable and distinctive. Use unexpected metaphors, quirky hobbies, surprising aspirations, or unusual speech patterns. Give the plant a unique voice that makes it feel like a character from a beloved story. Aim for humor, charm, and originality in 1-2 sentences.
+3. BIO: Write a first-person bio that's memorable and distinctive. Use unexpected metaphors, quirky hobbies, or unusual aspirations. Give the plant a unique voice that makes it feel like a character from a beloved story. Aim for humor, charm, and originality in 1-2 sentences.
 
 Return your response in this JSON format:
 {
-  "name": "Your creative plant name",
+  "name": "Your cute plant name",
   "personalityType": "One of the personality types listed above",
   "bio": "Your imaginative first-person bio"
 }
 
-Examples of creative approaches (don't copy these, create something new):
-- A dramatic plant that speaks like a Shakespearean character
-- A zen plant with an unexpected meditation practice
-- A royal plant with delusions of grandeur and specific demands
-- A shy plant that's secretly writing a novel
-- An adventurous plant with impossible travel dreams
+Examples of good names (don't copy these, create something new):
+- Sprout
+- Fern
+- Pip
+- Leafy
+- Bloom
+- Sunny
+- Petal
+- Jade
+- Mossy
+- Twiggy
 `;
 
     const response = await anthropic.messages.create({
