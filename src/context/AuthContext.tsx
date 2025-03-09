@@ -73,7 +73,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     if (!auth) throw new Error('Firebase auth is not initialized');
     try {
       await signInWithEmailAndPassword(auth, email, password);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Sign in error:', error);
       throw error;
     }
@@ -99,7 +99,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
           // Continue even if Firestore fails - the user is still created in Auth
         }
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Sign up error:', error);
       throw error;
     }
@@ -139,7 +139,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
           // Continue even if Firestore fails - the user is still authenticated
         }
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Google sign in error:', error);
       throw error;
     }

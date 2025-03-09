@@ -1,7 +1,7 @@
 // Firebase configuration
 import { initializeApp, getApps, FirebaseApp } from 'firebase/app';
 import { getAuth, Auth, browserLocalPersistence, browserSessionPersistence, inMemoryPersistence, setPersistence } from 'firebase/auth';
-import { getFirestore, Firestore, initializeFirestore, CACHE_SIZE_UNLIMITED, persistentLocalCache, persistentMultipleTabManager, memoryLocalCache } from 'firebase/firestore';
+import { Firestore, initializeFirestore, CACHE_SIZE_UNLIMITED, persistentLocalCache, persistentMultipleTabManager, memoryLocalCache } from 'firebase/firestore';
 import { getStorage, FirebaseStorage } from 'firebase/storage';
 
 // Your web app's Firebase configuration
