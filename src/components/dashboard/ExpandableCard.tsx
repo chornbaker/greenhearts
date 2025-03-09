@@ -138,6 +138,7 @@ export default function ExpandableCard({
   const [editedSpecies, setEditedSpecies] = useState('');
   const [editedBio, setEditedBio] = useState('');
   const [editedPersonalityType, setEditedPersonalityType] = useState('');
+  const [editedWateringFrequency, setEditedWateringFrequency] = useState<number>(7);
 
   // Calculate if the plant needs water
   const needsWater = plant.nextWateringDate && plant.nextWateringDate <= new Date();
@@ -600,6 +601,7 @@ export default function ExpandableCard({
     setEditedHealth(plant.health || PlantHealth.Good);
     setEditedBio(plant.bio || '');
     setEditedPersonalityType(plant.personalityType || '');
+    setEditedWateringFrequency(plant.wateringSchedule?.frequency || 7);
     
     setIsEditMode(true);
   };
@@ -620,7 +622,11 @@ export default function ExpandableCard({
         location: editedLocation,
         health: editedHealth,
         bio: editedBio,
-        personalityType: editedPersonalityType
+        personalityType: editedPersonalityType,
+        wateringSchedule: {
+          frequency: editedWateringFrequency,
+          description: plant.wateringSchedule?.description || `Water every ${editedWateringFrequency} days`
+        }
       };
       
       // If there's a new image, upload it
@@ -831,6 +837,27 @@ export default function ExpandableCard({
                     <option value={PlantHealth.Fair}>Fair</option>
                     <option value={PlantHealth.Poor}>Poor</option>
                   </select>
+                </div>
+                
+                {/* Watering Frequency */}
+                <div>
+                  <label htmlFor="wateringFrequency" className="block text-sm font-medium text-gray-700 mb-1">
+                    Watering Frequency (days)
+                  </label>
+                  <div className="flex items-center">
+                    <input
+                      id="wateringFrequency"
+                      type="number"
+                      min="1"
+                      max="60"
+                      value={editedWateringFrequency}
+                      onChange={(e) => setEditedWateringFrequency(Math.max(1, parseInt(e.target.value) || 7))}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    />
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Water every {editedWateringFrequency} day{editedWateringFrequency !== 1 ? 's' : ''}
+                  </p>
                 </div>
               </div>
               
