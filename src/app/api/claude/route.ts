@@ -99,11 +99,11 @@ ${plantInfo.imageUrl ? '- The plant has a photo uploaded' : ''}
 
 Please create a delightfully charming personality for this plant with:
 
-1. NAME: Create a simple, cute, single-word name (or at most two short words). Avoid titles, suffixes (like "III"), or full name formats (first/last name). Focus on names that are:
-   - Easy to pronounce
-   - Memorable and cute
-   - Possibly related to the plant's characteristics but not too obvious
-   - No longer than 10 characters in most cases
+1. NAME: Create a name with variety and personality. About 70% of the time, use a simple, cute, single-word name (or at most two short words). For the other 30%, feel free to be more creative with a longer or more elaborate name. Guidelines:
+   - Most names should be easy to pronounce and memorable
+   - Avoid overused suffixes like "III" or "Jr."
+   - Mix it up! Sometimes use a simple name like "Pip" or "Fern", other times something more distinctive like "Professor Frond" or "Lady Greenleaf"
+   - Let the plant's characteristics influence the name, but don't be too obvious
 
 2. PERSONALITY TYPE: Choose one that best fits your creative vision (Cheerful, Dramatic, Zen, Sassy, Royal, Shy, Adventurous, Wise)
 
@@ -111,7 +111,7 @@ Please create a delightfully charming personality for this plant with:
 
 Return your response in this JSON format:
 {
-  "name": "Your cute plant name",
+  "name": "Your plant name",
   "personalityType": "One of the personality types listed above",
   "bio": "Your imaginative first-person bio"
 }
@@ -122,10 +122,10 @@ Examples of good names (don't copy these, create something new):
 - Pip
 - Leafy
 - Bloom
-- Sunny
-- Petal
-- Jade
-- Mossy
+- Professor Frond
+- Lady Greenleaf
+- Sir Cactus
+- Misty Morning
 - Twiggy
 `;
 
