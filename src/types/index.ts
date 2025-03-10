@@ -29,6 +29,7 @@ export interface Plant {
   archived?: boolean; // Whether the plant is archived
   archivedAt?: Date; // When the plant was archived
   archivedReason?: string; // Reason for archiving (e.g., "Died", "Given away", etc.)
+  recognitionData?: PlantRecognitionData; // New field for plant recognition data
 }
 
 export interface WateringSchedule {
@@ -56,6 +57,51 @@ export enum PlantHealth {
   Poor = 'poor',
 }
 
+// Plant Recognition types
+export interface PlantRecognitionData {
+  recognizedSpecies: string;
+  scientificName?: string; // Scientific name of the recognized species
+  confidence: number;
+  description?: string; // Brief description of the plant
+  alternativeSpecies?: AlternativeSpecies[];
+  recognizedAt: Date;
+  imageUrl?: string;
+  distinctiveFeatures?: string[]; // Distinctive features of the plant
+}
+
+export interface AlternativeSpecies {
+  name: string;
+  scientificName?: string;
+  confidence: number;
+}
+
+export interface PlantRecognitionResult {
+  success: boolean;
+  data?: PlantRecognitionData;
+  error?: string;
+}
+
+export interface PlantCareGuide {
+  species: string;
+  scientificName?: string;
+  commonNames?: string[];
+  description?: string;
+  careInstructions: CareInstructions;
+  wateringSchedule: {
+    frequency: number;
+    description: string;
+  };
+  seasonalCare?: SeasonalCare;
+  tips?: string[];
+}
+
+export interface SeasonalCare {
+  spring?: string;
+  summer?: string;
+  fall?: string;
+  winter?: string;
+}
+
 // Notification types
 export interface Notification {
   id: string;
@@ -71,6 +117,7 @@ export enum NotificationType {
   Watering = 'watering',
   Health = 'health',
   System = 'system',
+  Recognition = 'recognition', // New notification type for plant recognition
 }
 
 // API Response types

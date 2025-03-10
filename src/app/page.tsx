@@ -37,6 +37,12 @@ export default function Home() {
             >
               Get Started
             </Link>
+            <Link 
+              href="/identify" 
+              className="bg-white hover:bg-gray-100 text-green-700 py-4 px-10 rounded-full text-xl font-medium transition-all shadow-lg hover:shadow-xl w-full max-w-xs"
+            >
+              Identify a Plant
+            </Link>
             <p className="text-white text-shadow">
               Already have an account? <Link href="/login" className="text-white underline hover:text-green-200 font-medium">Sign In</Link>
             </p>
@@ -65,7 +71,7 @@ export default function Home() {
             How GreenHearts Works
           </h2>
           
-          <div className="grid md:grid-cols-3 gap-12">
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-12">
             {/* Feature 1 */}
             <div className="bg-white rounded-3xl shadow-lg overflow-hidden transform transition-all hover:scale-105">
               <div className="h-48 relative">
@@ -85,7 +91,26 @@ export default function Home() {
               </div>
             </div>
             
-            {/* Feature 2 */}
+            {/* Feature 2 - Plant Identification */}
+            <div className="bg-white rounded-3xl shadow-lg overflow-hidden transform transition-all hover:scale-105">
+              <div className="h-48 relative">
+                <Image 
+                  src="/images/landing/feature-2.jpg" 
+                  alt="Identify plants" 
+                  fill 
+                  sizes="(max-width: 768px) 100vw, 33vw"
+                  style={{ objectFit: 'cover' }}
+                />
+              </div>
+              <div className="p-6">
+                <h3 className="text-xl font-bold text-green-700 text-center mb-2">Identify Plants</h3>
+                <p className="text-gray-600 text-center">
+                  Take a photo of any plant and our AI will identify it and provide detailed care instructions tailored to your plant.
+                </p>
+              </div>
+            </div>
+            
+            {/* Feature 3 */}
             <div className="bg-white rounded-3xl shadow-lg overflow-hidden transform transition-all hover:scale-105">
               <div className="h-48 relative">
                 <Image 
@@ -104,7 +129,7 @@ export default function Home() {
               </div>
             </div>
             
-            {/* Feature 3 */}
+            {/* Feature 4 */}
             <div className="bg-white rounded-3xl shadow-lg overflow-hidden transform transition-all hover:scale-105">
               <div className="h-48 relative">
                 <Image 
@@ -118,7 +143,7 @@ export default function Home() {
               <div className="p-6">
                 <h3 className="text-xl font-bold text-green-700 text-center mb-2">Get Reminders</h3>
                 <p className="text-gray-600 text-center">
-                  Receive timely reminders for watering and care. Sync with your calendar to never forget plant care again.
+                  Receive timely notifications for watering and care tasks. Never forget to care for your plants again.
                 </p>
               </div>
             </div>
